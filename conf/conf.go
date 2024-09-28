@@ -11,9 +11,11 @@ var ConfigInstance = NewConfig()
 
 type Config struct {
 	Server struct {
-		Listen    string `yaml:"listen"`
-		SavePath  string `yaml:"save_dir"`
-		MaxWorker int    `yaml:"maxWorker"`
+		Listen     string `yaml:"listen"`
+		SavePath   string `yaml:"save_dir"`
+		MaxWorker  int    `yaml:"maxWorker"`
+		Dsn        string `yaml:"dsn"`
+		StaticPath string `yaml:"staticPath"`
 	} `yaml:"server"`
 	Log struct {
 		Path  string `yaml:"path"`
@@ -25,7 +27,9 @@ type Config struct {
 func NewConfig() *Config {
 	c := new(Config)
 	c.Server.Listen = ":2045"
-	c.Server.SavePath = "../../m3u8"
+	c.Server.SavePath = "./download"
+	c.Server.Dsn = "./data.db"
+	c.Server.StaticPath = "./resource/static"
 	c.Server.MaxWorker = 1
 	c.Log.Level = "debug"
 	c.Log.Path = "./log"

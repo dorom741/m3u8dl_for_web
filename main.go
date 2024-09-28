@@ -22,16 +22,11 @@ func main() {
 		panic("配置文件不存在")
 	}
 
-	staticPath, err := searchPath("./static")
-	if err != nil {
-		panic("静态资源文件不存在")
-	}
-
 	conf.InitConf(configFilePath)
 	infra.InitLogger(*conf.ConfigInstance)
-	infra.InitGORM("./data.db", infra.Logger)
+	infra.InitGORM(conf.ConfigInstance.Server.Dsn, infra.Logger)
 	infra.DataDB.AutoMigrate(&model.TaskRecord{})
-	run(staticPath)
+	run(conf.ConfigInstance.Server.StaticPath)
 
 }
 
@@ -40,18 +35,20 @@ func searchPath(filePath string) (string, error) {
 	if err == nil {
 		return filePath, nil
 	}
-	if errors.Is(os.ErrNotExist, err) {
-		filePathOnParent := path.Join("../", filePath)
-		_, err = os.Stat(filePathOnParent)
-		return filePathOnParent, err
-
+	if !errors.Is(os.ErrNotExist, err) {
+		return "", err
 	}
 
-	return "", err
+	filePathOnParent := path.Join("re/", filePath)
+	_, err = os.Stat(filePathOnParent)
+
+	return filePathOnParent, err
+
 }
 
 func run(staticPath string) {
 	r := gin.Default()
+	r.SetTrustedProxies([]string{"*"})
 	taskController := controller.NewTaskController()
 	go service.M3u8dlWorkerInstance.WorkerRun()
 
@@ -69,12 +66,10 @@ func run(staticPath string) {
 		if len(fullPath) == 0 || fullPath == "/" {
 			fullPath = "index.html"
 		}
-
-		c.Next()
 		// 返回静态文件
 		c.File(path.Join(staticPath, fullPath)) // 请确保该文件存在
 	})
 
-	log.Infof("open http://127.0.0.1:2045/static/")
+	log.Infof("open http://127.0.0.1:2045/")
 	r.Run(conf.ConfigInstance.Server.Listen)
 }
