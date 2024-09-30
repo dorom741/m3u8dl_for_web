@@ -1,6 +1,9 @@
 package service
 
 import (
+	"os"
+	"sync/atomic"
+
 	"github.com/orestonce/m3u8d"
 
 	"m3u8dl_for_web/conf"
@@ -11,8 +14,9 @@ import (
 var M3u8dlWorkerInstance = NewM3u8dlWorker()
 
 type M3u8dlWorker struct {
-	queue     *infra.MessageQueue[model.TaskRecord]
-	maxWorker int
+	queue       *infra.MessageQueue[model.TaskRecord]
+	maxWorker   int64
+	workerCount atomic.Int64
 }
 
 func NewM3u8dlWorker() M3u8dlWorker {
@@ -24,9 +28,18 @@ func NewM3u8dlWorker() M3u8dlWorker {
 }
 
 func (worker *M3u8dlWorker) WorkerRun() {
+	taskWrap := func(taskRecord model.TaskRecord) {
+		worker.workerCount.Add(1)
+		worker.doDownload(taskRecord)
+		worker.workerCount.Add(-1)
+	}
+
 	for {
-		task := worker.queue.Pop()
-		worker.doDownload(task)
+		if worker.workerCount.Load() < int64(worker.maxWorker) {
+			task := worker.queue.Pop()
+			go taskWrap(task)
+		}
+
 	}
 }
 
@@ -66,6 +79,11 @@ func (worker *M3u8dlWorker) doDownload(taskRecord model.TaskRecord) {
 	}
 
 	infra.Logger.Infof("m3u8 url:%s download is success,save to %s", req.M3u8Url, resp.SaveFileTo)
+	err := os.Chmod(resp.SaveFileTo, 0777) // 注意前面的 0，表示八进制
+	if err != nil {
+		infra.Logger.Warnf("set permissive permissions on '%s' error ", resp.SaveFileTo)
+		return
+	}
 
 	taskRecord.Finish("")
 
