@@ -20,7 +20,6 @@ func LoggerMiddleware() gin.HandlerFunc {
 		//    hostName = "Unknown"
 		//}
 		statusCode := c.Writer.Status()
-		//clientIP := c.ClientIP()
 		//userAgent := c.Request.UserAgent()
 		dataSize := c.Writer.Size()
 		if dataSize < 0 {
@@ -30,11 +29,11 @@ func LoggerMiddleware() gin.HandlerFunc {
 		url := c.Request.RequestURI
 		Log := infra.Logger.WithFields(logrus.Fields{
 			//"HostName": hostName,
-			"SpendTime": spendTime,
+			"elapsed": spendTime,
 			"path":      url,
 			"Method":    method,
 			"status":    statusCode,
-			//"Ip": clientIP,
+			"ip": c.ClientIP(),
 			//"DataSize": dataSize,
 			//"UserAgent": userAgent,
 		})

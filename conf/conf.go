@@ -22,6 +22,18 @@ type Config struct {
 		Level string `yaml:"level"`
 		LogNu int    `yaml:"log_Nu"`
 	} `yaml:"log"`
+
+	Groq struct {
+		ApiKey    string `yaml:"apiKey"`
+		CachePath string `yaml:"cachePath"`
+	} `yaml:"Groq"`
+
+	Translation struct {
+		DeeplX *struct {
+			Url    string `yaml:"url"`
+			ApiKey string `yaml:"apiKey"`
+		} `yaml:"deeplX"`
+	} `yaml:"translation"`
 }
 
 func NewConfig() *Config {

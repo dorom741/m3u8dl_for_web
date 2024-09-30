@@ -11,6 +11,7 @@ import (
 	"m3u8dl_for_web/conf"
 	"m3u8dl_for_web/controller"
 	"m3u8dl_for_web/infra"
+	"m3u8dl_for_web/infra/middleware"
 	"m3u8dl_for_web/model"
 	"m3u8dl_for_web/service"
 )
@@ -51,6 +52,8 @@ func run(staticPath string) {
 	r.SetTrustedProxies([]string{"*"})
 	taskController := controller.NewTaskController()
 	go service.M3u8dlWorkerInstance.WorkerRun()
+
+	r.Use(middleware.LoggerMiddleware())
 
 	apiGroup := r.Group("/api")
 	apiGroup.POST("/addTask", taskController.AddTask)

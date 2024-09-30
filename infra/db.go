@@ -1,16 +1,18 @@
 package infra
 
 import (
+	"strings"
+	"time"
+
 	"github.com/glebarez/sqlite"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"time"
 )
 
 var DataDB *gorm.DB
 
-func InitGORM(dbUrl string,customerLogger logger.Writer ) {
-	var err error
+func InitGORM(dsn string,customerLogger logger.Writer )  {
 	slowLogger := logger.New(
 		//设置Logger
 		customerLogger,
@@ -21,8 +23,25 @@ func InitGORM(dbUrl string,customerLogger logger.Writer ) {
 			LogLevel: logger.Error,
 		},
 	)
+
+	var (
+		driverName = strings.Split(dsn, ":")[0]
+		dataSourceName  = dsn[:len(driverName)+1]
+		err error
+		 dialector gorm.Dialector
+	)
+
+
+	switch driverName {
+		case "mysql":
+			dialector = mysql.Open(dataSourceName)
+		case "sqlite":
+			dialector = sqlite.Open(dataSourceName)
+
+	}
+
 	// 调用 Open 方法，传入驱动名和连接字符串
-	DataDB, err = gorm.Open(sqlite.Open(dbUrl), &gorm.Config{
+	DataDB, err = gorm.Open(dialector, &gorm.Config{
 		Logger: slowLogger,
 	})
 	// 检查是否有错误
