@@ -3,7 +3,7 @@ server:
   name: "default"
   save_dir: "./download"
   work_max: 8
-  dsn: "./data.db"
+  dsn: "sqlite:./data.db"
   staticPath: "./resource/static"
 
 log:
