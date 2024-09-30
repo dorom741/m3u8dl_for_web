@@ -6,7 +6,7 @@ type MessageQueue[T any] struct {
 	queue chan T
 }
 
-func NewMessageQueue[T any](max_worker int ) *MessageQueue[T] {
+func NewMessageQueue[T any](max_worker int64 ) *MessageQueue[T] {
 	return &MessageQueue[T]{
 		queue: make(chan T, max_worker),
 	}

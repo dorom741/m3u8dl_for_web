@@ -13,7 +13,7 @@ type Config struct {
 	Server struct {
 		Listen     string `yaml:"listen"`
 		SavePath   string `yaml:"save_dir"`
-		MaxWorker  int    `yaml:"maxWorker"`
+		MaxWorker  int64    `yaml:"maxWorker"`
 		Dsn        string `yaml:"dsn"`
 		StaticPath string `yaml:"staticPath"`
 	} `yaml:"server"`
