@@ -10,3 +10,13 @@ log:
   path: "./log.log"
   level: "debug"
   logNu: "10"
+
+
+groq:
+  apiKey: ""
+  cachePath: ""
+
+translation:
+  deeplX:
+    url: ""
+    apiKey: ""
