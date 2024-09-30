@@ -16,12 +16,13 @@ func (service *MediaService) SplitAudio(inputFile string, ouputDir string, outpu
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	rotateFileWriter, err := split_writer.NewRotateFileWriter(outputName, splitSize)
 	if err != nil {
 		return nil, err
 	}
-
+	defer rotateFileWriter.Close()
 	extract_audio.SplitAudio(file, rotateFileWriter)
 
 	return rotateFileWriter.WritedFileList(), nil
