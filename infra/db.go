@@ -12,7 +12,7 @@ import (
 
 var DataDB *gorm.DB
 
-func InitGORM(dsn string,customerLogger logger.Writer )  {
+func InitGORM(dsn string, customerLogger logger.Writer) {
 	slowLogger := logger.New(
 		//设置Logger
 		customerLogger,
@@ -25,18 +25,17 @@ func InitGORM(dsn string,customerLogger logger.Writer )  {
 	)
 
 	var (
-		driverName = strings.Split(dsn, ":")[0]
-		dataSourceName  = dsn[:len(driverName)+1]
-		err error
-		 dialector gorm.Dialector
+		driverName     = strings.Split(dsn, ":")[0]
+		dataSourceName = dsn[len(driverName)+1:]
+		err            error
+		dialector      gorm.Dialector
 	)
 
-
 	switch driverName {
-		case "mysql":
-			dialector = mysql.Open(dataSourceName)
-		case "sqlite":
-			dialector = sqlite.Open(dataSourceName)
+	case "mysql":
+		dialector = mysql.Open(dataSourceName)
+	case "sqlite":
+		dialector = sqlite.Open(dataSourceName)
 
 	}
 

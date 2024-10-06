@@ -12,12 +12,12 @@ import (
 )
 
 type TaskController struct {
-	worker service.M3u8dlWorker
+	m3u8dlService *service.M3u8dlService
 }
 
 func NewTaskController() TaskController {
 	return TaskController{
-		worker: service.M3u8dlWorkerInstance,
+		m3u8dlService: service.M3u8dlServiceInstance,
 	}
 }
 
@@ -47,7 +47,13 @@ func (controller *TaskController) AddTask(c *gin.Context) {
 			c.JSON(400, gin.H{"err": err.Error()})
 			return
 		}
-		service.M3u8dlWorkerInstance.AddTask(taskRecord)
+		err = controller.m3u8dlService.AddTask(taskRecord)
+		if err != nil {
+			if err != nil {
+				c.JSON(400, gin.H{"err": err.Error()})
+				return
+			}
+		}
 	}
 
 	c.JSON(200, gin.H{"msg": "ok"})

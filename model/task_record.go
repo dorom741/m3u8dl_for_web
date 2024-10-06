@@ -3,8 +3,8 @@ package model
 import (
 	"github.com/orestonce/m3u8d"
 	"gorm.io/gorm"
-
 	"m3u8dl_for_web/infra"
+	"path/filepath"
 )
 
 const (
@@ -22,16 +22,16 @@ type TaskRecord struct {
 	SaveDir string `gorm:"not null"`                 // 保存目录，非空
 	State   int    `gorm:"not null"`                 // 状态，非空
 	Info    string `gorm:"not null"`                 // 信息，非空
-	Reult   string
+	Result  string
 
 	Headers map[string][]string `gorm:"-"`
 }
 
-func (taskRecord TaskRecord) TableName() string {
+func (taskRecord *TaskRecord) TableName() string {
 	return "task_record"
 }
 
-func (taskRecord TaskRecord) ToStartDownloadReq() m3u8d.StartDownload_Req {
+func (taskRecord *TaskRecord) ToStartDownloadReq() m3u8d.StartDownload_Req {
 	return m3u8d.StartDownload_Req{
 		M3u8Url:                  taskRecord.URL,
 		Insecure:                 true,
@@ -73,7 +73,7 @@ func (taskRecord *TaskRecord) Finish(result string) error {
 
 	if len(result) > 0 {
 		taskRecord.State = StateError
-		taskRecord.Reult = result
+		taskRecord.Result = result
 
 	}
 	db := infra.DataDB.Model(taskRecord)
@@ -82,7 +82,7 @@ func (taskRecord *TaskRecord) Finish(result string) error {
 
 func (taskRecord *TaskRecord) GetNotWorkingWork() ([]TaskRecord, error) {
 
-	taskRecordList := []TaskRecord{}
+	var taskRecordList []TaskRecord
 	db := infra.DataDB
 	db.Error = nil
 	db.Model(taskRecord)
@@ -92,4 +92,8 @@ func (taskRecord *TaskRecord) GetNotWorkingWork() ([]TaskRecord, error) {
 	}
 
 	return taskRecordList, nil
+}
+
+func (taskRecord *TaskRecord) GetSavePath() string {
+	return filepath.Join(taskRecord.SaveDir, taskRecord.Name+".mp4")
 }

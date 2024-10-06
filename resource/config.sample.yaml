@@ -1,5 +1,5 @@
 server:
-  port: ":2045"
+  listen: ":2045"
   name: "default"
   save_dir: "./download"
   work_max: 8
@@ -9,7 +9,8 @@ server:
 log:
   path: "./log.log"
   level: "debug"
-  logNu: "10"
+  maxSize: 10 #  M
+  maxAge: "30" # days
 
 
 groq:

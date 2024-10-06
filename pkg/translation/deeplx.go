@@ -9,24 +9,23 @@ import (
 	"net/http"
 )
 
-type DeepLTranslation struct {
+type DeepLXTranslation struct {
 	Url    string
 	client *http.Client
 }
 
-
-func NewDeepLTranslation(url string) *DeepLTranslation {
-	return &DeepLTranslation{
-		Url: url,
+func NewDeepLTranslation(url string) *DeepLXTranslation {
+	return &DeepLXTranslation{
+		Url:    url,
 		client: &http.Client{},
 	}
 }
 
-type TranslationRresult struct {
+type Result struct {
 	Data string
 }
 
-func (translation *DeepLTranslation) Translation(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
+func (translation *DeepLXTranslation) Translation(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
 	var (
 		postDataReader = new(bytes.Buffer)
 		postData       = map[string]string{
@@ -58,7 +57,7 @@ func (translation *DeepLTranslation) Translation(ctx context.Context, text strin
 		return "", fmt.Errorf("request error status:%d err:%s", response.StatusCode, body)
 	}
 
-	result := new(TranslationRresult)
+	result := new(Result)
 
 	if err := json.Unmarshal(body, result); err != nil {
 		return "", err

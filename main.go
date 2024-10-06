@@ -6,14 +6,10 @@ import (
 	"path"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-
 	"m3u8dl_for_web/conf"
 	"m3u8dl_for_web/controller"
 	"m3u8dl_for_web/infra"
-	"m3u8dl_for_web/infra/middleware"
 	"m3u8dl_for_web/model"
-	"m3u8dl_for_web/service"
 )
 
 func main() {
@@ -26,7 +22,10 @@ func main() {
 	conf.InitConf(configFilePath)
 	infra.InitLogger(*conf.ConfigInstance)
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, infra.Logger)
-	infra.DataDB.AutoMigrate(&model.TaskRecord{})
+	err = infra.DataDB.AutoMigrate(&model.TaskRecord{})
+	if err != nil {
+		panic(err)
+	}
 	run(conf.ConfigInstance.Server.StaticPath)
 
 }
@@ -49,11 +48,10 @@ func searchPath(filePath string) (string, error) {
 
 func run(staticPath string) {
 	r := gin.Default()
-	r.SetTrustedProxies([]string{"*"})
+	_ = r.SetTrustedProxies([]string{"*"})
 	taskController := controller.NewTaskController()
-	go service.M3u8dlWorkerInstance.WorkerRun()
 
-	r.Use(middleware.LoggerMiddleware())
+	//r.Use(middleware.LoggerMiddleware())
 
 	apiGroup := r.Group("/api")
 	apiGroup.POST("/addTask", taskController.AddTask)
@@ -73,6 +71,9 @@ func run(staticPath string) {
 		c.File(path.Join(staticPath, fullPath)) // 请确保该文件存在
 	})
 
-	log.Infof("open http://127.0.0.1:2045/")
-	r.Run(conf.ConfigInstance.Server.Listen)
+	//log.Infof("open http://127.0.0.1:2045/")
+	err := r.Run(conf.ConfigInstance.Server.Listen)
+	if err != nil {
+		panic(err)
+	}
 }

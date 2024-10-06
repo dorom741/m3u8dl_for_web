@@ -1,4 +1,4 @@
-FROM golang:1.22 AS build
+FROM golang:1.23 AS build
 
 # ENV GOPROXY=https://goproxy.cn,direct
 # 设置工作目录
@@ -13,7 +13,7 @@ RUN CGO_ENABLED=0 go build -o app
 FROM alpine:latest
 
 ENV GIN_MODE=release
-RUN set -ex  && apk add --no-cache ca-certificates bash
+RUN set -ex  && apk add --no-cache ca-certificates bash ffmpeg
 
 WORKDIR /app
 

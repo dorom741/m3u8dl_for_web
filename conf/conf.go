@@ -13,14 +13,15 @@ type Config struct {
 	Server struct {
 		Listen     string `yaml:"listen"`
 		SavePath   string `yaml:"save_dir"`
-		MaxWorker  int64    `yaml:"maxWorker"`
+		MaxWorker  int64  `yaml:"maxWorker"`
 		Dsn        string `yaml:"dsn"`
 		StaticPath string `yaml:"staticPath"`
 	} `yaml:"server"`
 	Log struct {
-		Path  string `yaml:"path"`
-		Level string `yaml:"level"`
-		LogNu int    `yaml:"log_Nu"`
+		Path    string `yaml:"path"`
+		Level   string `yaml:"level"`
+		MaxSize int    `yaml:"maxSize"`
+		MaxAge  int    `yaml:"maxAge"`
 	} `yaml:"log"`
 
 	Groq struct {
@@ -45,7 +46,8 @@ func NewConfig() *Config {
 	c.Server.MaxWorker = 1
 	c.Log.Level = "debug"
 	c.Log.Path = "./log"
-	c.Log.LogNu = 10
+	c.Log.MaxSize = 10
+	c.Log.MaxAge = 30
 	return c
 }
 
@@ -64,11 +66,7 @@ func InitConf(configFilePath string) {
 	if err != nil {
 		log.Fatalf("无法解析YAML文件：%v", err)
 	}
-	// ConfMap = make(map[string]interface{})
-	// ConfMap["Init.Port"] = config.Init.Port
-	// ConfMap["log_Nu"] = config.Log.LogNu
-	// ConfMap["save_dir"] = config.Init.SavePath
-	// ConfMap["work_max"] = config.Init.WorkMax
+
 	if !CheckWritePermission(ConfigInstance.Server.SavePath) {
 		panic("save_dir: " + ConfigInstance.Server.SavePath + " can not write")
 	}
