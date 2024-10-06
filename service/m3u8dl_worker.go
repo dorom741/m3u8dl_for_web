@@ -1,6 +1,7 @@
 package service
 
 import (
+	"io"
 	"os"
 	"sync/atomic"
 
@@ -66,7 +67,10 @@ func (worker *M3u8dlWorker) doDownload(taskRecord model.TaskRecord) {
 	}
 
 	resp := downloadEnv.WaitDownloadFinish()
-	if resp.ErrMsg != "" {
+	if io.ErrUnexpectedEOF.Error() == resp.ErrMsg {
+		infra.Logger.Warnf("m3u8 '%s' merge error:%s,retry with ffmpeg", req.M3u8Url, resp.ErrMsg)
+
+	} else if resp.ErrMsg != "" {
 		infra.Logger.Errorf("m3u8 '%s' download error %s", req.M3u8Url, resp.ErrMsg)
 		taskRecord.Finish(resp.ErrMsg)
 		return
