@@ -6,11 +6,19 @@ type Response struct {
 	Data    interface{} `json:"data"`
 }
 
-type BatchAddTaskReq []AddTaskReq
+type BatchAddM3u8dlTaskReq []AddM3u8dlTaskReq
 
-type AddTaskReq struct {
+type AddM3u8dlTaskReq struct {
 	Name           string            `json:"name"`
 	URL            string            `json:"url"`
 	SaveDir        string            `json:"saveDir"`
 	RequestHeaders map[string]string `json:"requestHeaders"`
 }
+
+
+type AddGenerateSubtitleTaskReq struct {
+	Filepath string
+	SaveSubtitleFilePath string
+}
+
+

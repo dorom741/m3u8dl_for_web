@@ -49,13 +49,13 @@ func searchPath(filePath string) (string, error) {
 func run(staticPath string) {
 	r := gin.Default()
 	_ = r.SetTrustedProxies([]string{"*"})
-	taskController := controller.NewTaskController()
 
 	//r.Use(middleware.LoggerMiddleware())
 
 	apiGroup := r.Group("/api")
-	apiGroup.POST("/addTask", taskController.AddTask)
-	apiGroup.POST("/addTaskByAria2", taskController.AddTaskByAria2)
+	apiGroup.POST("/addM3u8dlTask", controller.TaskControllerInstance.AddM3u8dlTask)
+	apiGroup.POST("/addGenerateSubtitleTask", controller.TaskControllerInstance.AddGenerateSubtitleTask)
+	// apiGroup.POST("/addM3u8dlTaskByAria2", taskController.AddTaskByAria2)
 
 	apiGroup.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{})

@@ -18,7 +18,7 @@ import (
 )
 
 var _ queue_worker.QueueWorkerConsumer[model.TaskRecord] = &M3u8dlService{}
-var M3u8dlServiceInstance = NewM3u8dlService()
+
 
 type M3u8dlService struct {
 	worker queue_worker.QueueWorker[model.TaskRecord]

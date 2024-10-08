@@ -1,10 +1,11 @@
 package model
 
 import (
+	"path/filepath"
+
 	"github.com/orestonce/m3u8d"
 	"gorm.io/gorm"
 	"m3u8dl_for_web/infra"
-	"path/filepath"
 )
 
 const (
@@ -23,6 +24,7 @@ type TaskRecord struct {
 	State   int    `gorm:"not null"`                 // 状态，非空
 	Info    string `gorm:"not null"`                 // 信息，非空
 	Result  string
+	Type    string
 
 	Headers map[string][]string `gorm:"-"`
 }
@@ -51,11 +53,10 @@ func (taskRecord *TaskRecord) ToStartDownloadReq() m3u8d.StartDownload_Req {
 }
 
 func (taskRecord *TaskRecord) Save() error {
-	var (
-		// count int64
-		db = infra.DataDB.Model(taskRecord)
-		// url = taskInfo.URL
-	)
+
+	// count int64
+	db := infra.DataDB.Model(taskRecord)
+	// url = taskInfo.URL
 
 	// infra.DataDB.Model(&TaskRecord{}).Where("url = ?", url).Count(&count)
 
@@ -65,7 +66,6 @@ func (taskRecord *TaskRecord) Save() error {
 	}
 
 	return nil
-
 }
 
 func (taskRecord *TaskRecord) Finish(result string) error {
@@ -81,7 +81,6 @@ func (taskRecord *TaskRecord) Finish(result string) error {
 }
 
 func (taskRecord *TaskRecord) GetNotWorkingWork() ([]TaskRecord, error) {
-
 	var taskRecordList []TaskRecord
 	db := infra.DataDB
 	db.Error = nil

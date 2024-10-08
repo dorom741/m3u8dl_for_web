@@ -3,6 +3,8 @@ package conf
 import (
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -24,6 +26,10 @@ type Config struct {
 		MaxAge  int    `yaml:"maxAge"`
 	} `yaml:"log"`
 
+	HttpClient struct {
+		Proxy string `yaml:"proxy"`
+	}  `yaml:"httpClient"`
+
 	Groq struct {
 		ApiKey    string `yaml:"apiKey"`
 		CachePath string `yaml:"cachePath"`
@@ -35,6 +41,20 @@ type Config struct {
 			ApiKey string `yaml:"apiKey"`
 		} `yaml:"deeplX"`
 	} `yaml:"translation"`
+}
+
+func (conf *Config) GetAbsSavePath() string {
+	fullSavePath,err := filepath.Abs(conf.Server.SavePath)
+	if err != nil {
+		fullSavePath,err = os.Getwd()
+	}
+
+	return fullSavePath
+}
+
+
+func (conf *Config) GetTempPath() string {
+	return path.Join(conf.GetAbsSavePath(),"temp")
 }
 
 func NewConfig() *Config {
