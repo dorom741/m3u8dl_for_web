@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"m3u8dl_for_web/pkg/extract_audio"
+	"m3u8dl_for_web/pkg/media"
 	"m3u8dl_for_web/pkg/split_writer"
 )
 
@@ -86,7 +86,7 @@ func (service *SubtitleService) extractAudioFromVideo(inputFile string, ouputDir
 		return nil, err
 	}
 	defer rotateFileWriter.Close()
-	if err = extract_audio.SplitAudio(file, rotateFileWriter); err != nil {
+	if err = media.SplitAudio(file, rotateFileWriter); err != nil {
 		return nil, err
 	}
 

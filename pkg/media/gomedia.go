@@ -1,14 +1,13 @@
-package extract_audio
+package media
 
 import (
 	"io"
 
 	"github.com/yapingcat/gomedia/go-mp4"
-
 	"m3u8dl_for_web/infra"
 )
 
-func  SplitAudio(input io.ReadSeeker, ouput io.Writer) error {
+func SplitAudio(input io.ReadSeeker, ouput io.Writer) error {
 	demuxer := mp4.CreateMp4Demuxer(input)
 	if infos, err := demuxer.ReadHead(); err != nil && err != io.EOF {
 		return err
