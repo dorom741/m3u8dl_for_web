@@ -1,17 +1,19 @@
 package whisper
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"m3u8dl_for_web/pkg/media"
 	"os"
 	"time"
 
 	// Package imports
 	whisper "github.com/ggerganov/whisper.cpp/bindings/go/pkg/whisper"
-	wav "github.com/go-audio/wav"
+	// wav "github.com/go-audio/wav"
 )
 
-func Process(model whisper.Model, context whisper.Context,  params Params) ([]whisper.Segment, error) {
+func Process(model whisper.Model, context whisper.Context, params Params) ([]whisper.Segment, error) {
 	var data []float32
 
 	fmt.Printf("\n%s\n", context.SystemInfo())
@@ -21,17 +23,29 @@ func Process(model whisper.Model, context whisper.Context,  params Params) ([]wh
 	}
 	defer fh.Close()
 
+	tempBuffer := new(bytes.Buffer)
+
+	media.SplitAudio(fh, tempBuffer)
+
+	data = media.ToFloat32(tempBuffer.Bytes())
+
+	// data, err = media.ConvertMp3ToFloatArray(tempBuffer)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	fmt.Printf("ConvertMp3ToFloatArray %+v\n", len(data))
+
 	// Decode the WAV file - load the full buffer
-	dec := wav.NewDecoder(fh)
-	if buf, err := dec.FullPCMBuffer(); err != nil {
-		return nil, err
-	} else if dec.SampleRate != whisper.SampleRate {
-		return nil, fmt.Errorf("unsupported sample rate: %d", dec.SampleRate)
-	} else if dec.NumChans != 1 {
-		return nil, fmt.Errorf("unsupported number of channels: %d", dec.NumChans)
-	} else {
-		data = buf.AsFloat32Buffer().Data
-	}
+	// dec := wav.NewDecoder(fh)
+	// if buf, err := dec.FullPCMBuffer(); err != nil {
+	// 	return nil, err
+	// } else if dec.SampleRate != whisper.SampleRate {
+	// 	return nil, fmt.Errorf("unsupported sample rate: %d", dec.SampleRate)
+	// } else if dec.NumChans != 1 {
+	// 	return nil, fmt.Errorf("unsupported number of channels: %d", dec.NumChans)
+	// } else {
+	// 	data = buf.AsFloat32Buffer().Data
+	// }
 
 	// Segment callback when -tokens is specified
 	var cb whisper.SegmentCallback
@@ -49,7 +63,7 @@ func Process(model whisper.Model, context whisper.Context,  params Params) ([]wh
 	}
 
 	// Process the data
-	fmt.Printf("  ...processing %q\n", params.InputPath)
+	fmt.Printf("...processing %q\n", params.InputPath)
 	context.ResetTimings()
 	if err := context.Process(data, cb, nil); err != nil {
 		return nil, err
