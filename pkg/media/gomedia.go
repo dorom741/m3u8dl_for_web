@@ -1,14 +1,12 @@
-package extract_audio
+package media
 
 import (
-	"fmt"
 	"io"
-
-	"m3u8dl_for_web/infra"
-
+	
 	"github.com/yapingcat/gomedia/go-codec"
-	"github.com/yapingcat/gomedia/go-mp4"
 	"github.com/yapingcat/gomedia/go-mpeg2"
+	"github.com/yapingcat/gomedia/go-mp4"
+	"m3u8dl_for_web/infra"
 )
 
 func SplitAudio(input io.ReadSeeker, ouput io.Writer) error {
@@ -38,6 +36,7 @@ func SplitAudio(input io.ReadSeeker, ouput io.Writer) error {
 
 	return nil
 }
+
 
 func MuxMp3ForSplit(input io.Reader, ouput io.Writer) error {
 	muxer := mpeg2.NewTSMuxer()
