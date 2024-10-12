@@ -37,11 +37,12 @@ func (writer *RotateFileWriter) createNewFile() error {
 
 	ext := path.Ext(writer.filename)
 
-	fileName := strings.ReplaceAll(writer.filename, ext, fmt.Sprintf("%d%s", writer.fileIndex, ext))
+	fileName := strings.ReplaceAll(writer.filename, ext, fmt.Sprintf("_%d%s", writer.fileIndex, ext))
 	file, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("fileName: %v\n", fileName)
 
 	writer.fileHistory = append(writer.fileHistory, fileName)
 
@@ -56,34 +57,37 @@ func (writer *RotateFileWriter) WritedFileList() []string {
 }
 
 func (writer *RotateFileWriter) Write(p []byte) (n int, err error) {
+	fmt.Printf("writer.file.Name(): %v\n", writer.file.Name())
 	writer.mu.Lock()
 	defer writer.mu.Unlock()
 
+	return writer.write(p)
+}
+
+func (writer *RotateFileWriter) write(data []byte) (n int, err error) {
 	remaining := writer.maxSize - writer.currentSize
 	hasWrite := 0
-	if remaining == 0 {
-		if err := writer.createNewFile(); err != nil {
-			return 0, err
-		}
-		return writer.Write(p)
-	}
 
-	if remaining > int64(len(p)) {
-		n, err := writer.file.Write(p)
+	if remaining > int64(len(data)) {
+		n, err := writer.file.Write(data)
 		writer.currentSize += int64(n)
 		return n, err
 	}
 
-	n, err = writer.file.Write(p[:remaining])
-	if err != nil {
-		return 0, err
+	if remaining < int64(len(data)) {
+		n, err = writer.file.Write(data[:remaining])
+		if err != nil {
+			return 0, err
+		}
+		hasWrite += n
+		data = data[remaining:]
 	}
-	hasWrite += n
 
 	if err := writer.createNewFile(); err != nil {
 		return 0, err
 	}
-	n, err = writer.Write(p[remaining:])
+
+	n, err = writer.write(data)
 	return n + int(remaining), err
 }
 
