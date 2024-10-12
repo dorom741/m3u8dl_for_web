@@ -1,12 +1,14 @@
 package media
 
 import (
+	"fmt"
 	"io"
-	
-	"github.com/yapingcat/gomedia/go-codec"
-	"github.com/yapingcat/gomedia/go-mpeg2"
-	"github.com/yapingcat/gomedia/go-mp4"
+
 	"m3u8dl_for_web/infra"
+
+	"github.com/yapingcat/gomedia/go-codec"
+	"github.com/yapingcat/gomedia/go-mp4"
+	"github.com/yapingcat/gomedia/go-mpeg2"
 )
 
 func SplitAudio(input io.ReadSeeker, ouput io.Writer) error {

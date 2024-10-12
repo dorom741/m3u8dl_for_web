@@ -1,4 +1,4 @@
-package extract_audio
+package media
 
 import (
 	"os"
