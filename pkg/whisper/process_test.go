@@ -10,16 +10,19 @@ func TestProcess(t *testing.T) {
 	modelPath := "/workplace/project/demo/m3u8dl_for_web/resource/download/ggml-base.bin"
 	inputPath := "/workplace/project/demo/whisper.cpp/samples/jfk.mp3"
 
+	params := Params{
+		IsTokenize: true,
+	}
+
+	if err := params.InputFromFile(inputPath); err != nil {
+		t.Fatal(err)
+	}
+
 	model, err := whisper.New(modelPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer model.Close()
-
-	params := Params{
-		IsTokenize: true,
-		InputPath:  inputPath,
-	}
 
 	// Create processing context
 	context, err := model.NewContext()
@@ -27,7 +30,7 @@ func TestProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	segmentList, err := Process(model, context, params)
+	segmentList, err := Process(context, params)
 	if err != nil {
 		t.Fatal(err)
 	}
