@@ -20,7 +20,7 @@ func NewSubtitleWorkerService() *SubtitleWorkerService {
 	service := &SubtitleWorkerService{}
 	go service.worker.Run()
 
-	service.worker = queue_worker.NewQueueWorker(option, service)
+	service.worker = queue_worker.NewQueueWorker[model.TaskRecord](option, service)
 
 	return service
 }
