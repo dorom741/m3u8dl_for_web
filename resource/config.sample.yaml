@@ -1,21 +1,24 @@
 server:
   listen: ":2045"
   name: "default"
-  save_dir: "./download"
-  work_max: 8
   dsn: "sqlite:./data.db"
   staticPath: "./resource/static"
 
+  downlaodMaxWorker: 1
+  saveDir: ""
+  cacheDir: ""
+  httpClientProxy: http://127.0.0.1:7890
+
+
 log:
-  path: "./log.log"
+  path: "./log/log.log"
   level: "debug"
   maxSize: 10 #  M
-  maxAge: "30" # days
+  maxAge: 30 # days
 
 
 groq:
   apiKey: ""
-  cachePath: ""
 
 translation:
   deeplX:

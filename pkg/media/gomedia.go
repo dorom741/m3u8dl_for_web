@@ -11,7 +11,7 @@ import (
 	"github.com/yapingcat/gomedia/go-mpeg2"
 )
 
-func SplitAudio(input io.ReadSeeker, ouput io.Writer) error {
+func DemuxAudio(input io.ReadSeeker, ouput io.Writer) error {
 	demuxer := mp4.CreateMp4Demuxer(input)
 	if infos, err := demuxer.ReadHead(); err != nil && err != io.EOF {
 		return err

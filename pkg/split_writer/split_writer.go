@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 	"sync"
 )
 
@@ -37,12 +36,13 @@ func (writer *RotateFileWriter) createNewFile() error {
 
 	ext := path.Ext(writer.filename)
 
-	fileName := strings.ReplaceAll(writer.filename, ext, fmt.Sprintf("_%d%s", writer.fileIndex, ext))
+	// fileName := strings.ReplaceAll(writer.filename, ext, fmt.Sprintf("_%d%s", writer.fileIndex, ext))
+	fileName := fmt.Sprintf("%s_%d%s", writer.filename[:len(writer.filename) -  len(ext)], writer.fileIndex, ext)
+
 	file, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("fileName: %v\n", fileName)
 
 	writer.fileHistory = append(writer.fileHistory, fileName)
 
@@ -57,7 +57,6 @@ func (writer *RotateFileWriter) WritedFileList() []string {
 }
 
 func (writer *RotateFileWriter) Write(p []byte) (n int, err error) {
-	fmt.Printf("writer.file.Name(): %v\n", writer.file.Name())
 	writer.mu.Lock()
 	defer writer.mu.Unlock()
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"m3u8dl_for_web/infra"
 
@@ -23,13 +24,18 @@ type GroqService struct {
 func NewGroqService(apiKey string, cachePath string, proxyURLString string) (*GroqService, error) {
 	transport := &http.Transport{}
 
-	proxyURL, err := url.Parse(proxyURLString)
-	if err == nil {
-		transport.Proxy = http.ProxyURL(proxyURL)
+	if len(proxyURLString) > 0 && strings.HasPrefix(proxyURLString, "http") {
+		if proxyURL, err := url.Parse(proxyURLString); err == nil {
+			transport.Proxy = http.ProxyURL(proxyURL)
+		}
 	}
 
 	httpClient := &http.Client{
 		Transport: transport,
+	}
+
+	if err := os.MkdirAll(cachePath, os.ModePerm); err != nil {
+		return nil, err
 	}
 
 	client, err := groq.NewClient(apiKey, groq.WithClient(httpClient))
@@ -43,18 +49,20 @@ func NewGroqService(apiKey string, cachePath string, proxyURLString string) (*Gr
 	}, nil
 }
 
-func (groqService *GroqService) AudioTranslation(ctx context.Context, audioPath string) (*groq.AudioResponse, error) {
+func (groqService *GroqService) AudioTranslation(ctx context.Context, audioPath string, language string) (*groq.AudioResponse, error) {
 	var resp *groq.AudioResponse
 	if err := groqService.readCache(audioPath, &resp); err != nil {
 		return nil, err
 	} else if resp != nil {
+		// fmt.Printf("audio file '%s'  translation  use cache: %+v\n", audioPath, resp)
 		return resp, nil
 	}
 
-	response, err := groqService.client.CreateTranslation(ctx, groq.AudioRequest{
-		Model:    groq.ModerationTextStable,
+	response, err := groqService.client.CreateTranscription(ctx, groq.AudioRequest{
+		Model:    groq.WhisperLargeV3,
 		FilePath: audioPath,
 		Format:   groq.AudioResponseFormatVerboseJSON,
+		Language: language,
 		// Prompt:   "english and mandarin",
 	})
 	if err != nil {

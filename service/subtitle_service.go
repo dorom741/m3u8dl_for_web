@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -25,35 +26,32 @@ func NewSubtitleService(tempAudioPath string) *SubtitleService {
 	}
 }
 
-func (service *SubtitleService) GenerateSubtitle(ctx context.Context, inputPath string, savePath string) error {
+func (service *SubtitleService) GenerateSubtitle(ctx context.Context, inputPath string, savePath string, language string) error {
 	var (
 		filename           = filepath.Base(inputPath)
 		ext                = filepath.Ext(filename)
 		accumulateDuration = 0.0
 	)
 
-	filename = strings.ReplaceAll(filename, ext, "")
-	outputFilename := strings.ReplaceAll(filename, ext, ".mp3")
-	tempPath := path.Join(service.tempAudioPath, filename)
+	tempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ""))
 
 	if err := os.MkdirAll(tempPath, os.ModePerm); err != nil {
 		return err
 	}
 
-	subtitleFile, err := os.OpenFile(savePath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	subtitleFile, err := os.OpenFile(savePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		return err
 	}
 	defer subtitleFile.Close()
 
-	outputFileList, err := service.extractAudioFromVideo(inputPath, tempPath, outputFilename)
+	outputFileList, err := service.getAudioFromMediaWithFFmpeg(inputPath, tempPath, filename)
 	if err != nil {
 		return err
 	}
 
-	for _, fileItem := range outputFileList {
-		audioPath := path.Join(tempPath, fileItem)
-		audioTranslationResult, err := GroqServiceInstance.AudioTranslation(ctx, audioPath)
+	for _, audioPath := range outputFileList {
+		audioTranslationResult, err := GroqServiceInstance.AudioTranslation(ctx, audioPath, language)
 		if err != nil {
 			return err
 		}
@@ -72,22 +70,71 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, inputPath 
 	return nil
 }
 
-func (service *SubtitleService) extractAudioFromVideo(inputFile string, ouputDir string, outputName string) ([]string, error) {
+func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string) ([]string, error) {
+	// ext := path.Ext(outputName)
+	// fileName := fmt.Sprintf("%s_%s%s", outputName[:len(outputName)-len(ext)], "%03d", ".wav")
+	fileName := fmt.Sprintf("%s%s", "%03d", ".wav")
+
+	outputPath := path.Join(ouputDir, fileName)
+
+	if err := media.ConvertToWavWithFFmpeg(inputFile, outputPath, media.ConvertToWavOption{SegmentTime: 800}); err != nil {
+		return nil, err
+	}
+
+	dirEntryList, err := os.ReadDir(ouputDir)
+	if err != nil {
+		return nil, err
+	}
+
+	fileList := make([]string, 0)
+
+	for _, dirEntry := range dirEntryList {
+		if dirEntry.IsDir() {
+			continue
+		}
+		fileList = append(fileList, path.Join(ouputDir, dirEntry.Name()))
+	}
+	fmt.Printf("output file list %+v", fileList)
+
+	return fileList, nil
+}
+
+// Deprecated
+func (service *SubtitleService) getAudioFromMedia(inputFile string, ouputDir string, outputName string) ([]string, error) {
 	file, err := os.Open(inputFile)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	outputPath := path.Join(ouputDir, outputName)
+	firstBlock := make([]byte, 512)
+	if _, err := file.Read(firstBlock); err != nil {
+		return nil, err
+	}
 
+	if _, err := file.Seek(0, 0); err != nil {
+		return nil, err
+	}
+
+	outputPath := path.Join(ouputDir, outputName)
 	rotateFileWriter, err := split_writer.NewRotateFileWriter(outputPath, service.splitSize)
 	if err != nil {
 		return nil, err
 	}
 	defer rotateFileWriter.Close()
-	if err = media.SplitAudio(file, rotateFileWriter); err != nil {
-		return nil, err
+
+	contentType := http.DetectContentType(firstBlock)
+	FirstContentType := strings.Split(contentType, "/")[0]
+	switch FirstContentType {
+	case "video":
+		if err = media.DemuxAudio(file, rotateFileWriter); err != nil {
+			return nil, err
+		}
+	case "audio":
+
+		if err = media.MuxMp3ForSplit(file, rotateFileWriter); err != nil {
+			return nil, err
+		}
 	}
 
 	return rotateFileWriter.WritedFileList(), nil

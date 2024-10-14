@@ -14,10 +14,13 @@ var ConfigInstance = NewConfig()
 type Config struct {
 	Server struct {
 		Listen     string `yaml:"listen"`
-		SavePath   string `yaml:"save_dir"`
-		MaxWorker  int64  `yaml:"maxWorker"`
 		Dsn        string `yaml:"dsn"`
 		StaticPath string `yaml:"staticPath"`
+
+		DownlaodMaxWorker int64  `yaml:"downlaodMaxWorker"`
+		SavePath          string `yaml:"saveDir"`
+		CacheDir          string `yaml:"cacheDir"`
+		HttpClientProxy   string `yaml:"httpClientProxy"`
 	} `yaml:"server"`
 	Log struct {
 		Path    string `yaml:"path"`
@@ -26,14 +29,9 @@ type Config struct {
 		MaxAge  int    `yaml:"maxAge"`
 	} `yaml:"log"`
 
-	HttpClient struct {
-		Proxy string `yaml:"proxy"`
-	}  `yaml:"httpClient"`
-
 	Groq struct {
 		ApiKey    string `yaml:"apiKey"`
-		CachePath string `yaml:"cachePath"`
-	} `yaml:"Groq"`
+	} `yaml:"groq"`
 
 	Translation struct {
 		DeeplX *struct {
@@ -44,17 +42,16 @@ type Config struct {
 }
 
 func (conf *Config) GetAbsSavePath() string {
-	fullSavePath,err := filepath.Abs(conf.Server.SavePath)
+	fullSavePath, err := filepath.Abs(conf.Server.SavePath)
 	if err != nil {
-		fullSavePath,err = os.Getwd()
+		fullSavePath, err = os.Getwd()
 	}
 
 	return fullSavePath
 }
 
-
 func (conf *Config) GetTempPath() string {
-	return path.Join(conf.GetAbsSavePath(),"temp")
+	return path.Join(conf.GetAbsSavePath(), "temp")
 }
 
 func NewConfig() *Config {
@@ -63,7 +60,7 @@ func NewConfig() *Config {
 	c.Server.SavePath = "./download"
 	c.Server.Dsn = "./data.db"
 	c.Server.StaticPath = "./resource/static"
-	c.Server.MaxWorker = 1
+	c.Server.DownlaodMaxWorker = 1
 	c.Log.Level = "debug"
 	c.Log.Path = "./log"
 	c.Log.MaxSize = 10

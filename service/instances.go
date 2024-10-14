@@ -2,6 +2,7 @@ package service
 
 import (
 	"m3u8dl_for_web/conf"
+	"path"
 )
 
 var (
@@ -13,9 +14,12 @@ var (
 )
 
 func InitService(config conf.Config) {
-	var err error
+	var (
+		err           error
+		groqCachePath = path.Join(config.Server.CacheDir, "groq")
+	)
 
-	GroqServiceInstance, err = NewGroqService(config.Groq.ApiKey, config.Groq.CachePath, config.HttpClient.Proxy)
+	GroqServiceInstance, err = NewGroqService(config.Groq.ApiKey, groqCachePath, config.Server.HttpClientProxy)
 	if err != nil {
 		panic(err)
 	}

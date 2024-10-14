@@ -37,7 +37,7 @@ func TestSplitAudio(t *testing.T) {
 
 
 
-	if err := SplitAudio(f, tempFile); err != nil {
+	if err := DemuxAudio(f, tempFile); err != nil {
 		t.Fatal(err)
 
 	}

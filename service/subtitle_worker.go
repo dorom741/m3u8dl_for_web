@@ -30,7 +30,7 @@ func (service *SubtitleWorkerService) AddTask(taskRecord model.TaskRecord) error
 }
 
 func (service *SubtitleWorkerService) OnTaskRun(task model.TaskRecord) error {
-	if err := SubtitleServiceInstance.GenerateSubtitle(context.Background(), task.Name, task.SaveDir); err != nil {
+	if err := SubtitleServiceInstance.GenerateSubtitle(context.Background(), task.Name, task.SaveDir,""); err != nil {
 		return err
 	}
 	return nil
