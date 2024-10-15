@@ -17,11 +17,10 @@ import (
 	"strings"
 )
 
-var _ queue_worker.QueueWorkerConsumer[model.TaskRecord] = &M3u8dlService{}
-
+var _ queue_worker.QueueWorkerConsumer[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]] = &M3u8dlService{}
 
 type M3u8dlService struct {
-	worker queue_worker.QueueWorker[model.TaskRecord]
+	worker queue_worker.QueueWorker[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]]
 }
 
 func NewM3u8dlService() *M3u8dlService {
@@ -32,18 +31,18 @@ func NewM3u8dlService() *M3u8dlService {
 	service := &M3u8dlService{}
 	go service.worker.Run()
 
-	service.worker = queue_worker.NewQueueWorker[model.TaskRecord](option, service)
-
+	service.worker = queue_worker.NewQueueWorker[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]](option, service)
+	fmt.Printf("%+v", service)
 	return service
 
 }
 
-func (service *M3u8dlService) AddTask(taskRecord model.TaskRecord) error {
+func (service *M3u8dlService) AddTask(taskRecord model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) error {
 	return service.worker.AddTask(taskRecord)
 }
 
-func (service *M3u8dlService) OnTaskRun(task model.TaskRecord) error {
-	req := task.ToStartDownloadReq()
+func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) error {
+	req := task.Input.ToStartDownloadReq()
 	req.ProgressBarShow = true
 	downloadEnv := m3u8d.DownloadEnv{}
 	infra.Logger.Infof("m3u8dl req %+v", req)
@@ -80,23 +79,23 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord) error {
 	}
 
 	if resp.IsSkipped {
-		infra.Logger.Warnf("m3u8 url:%s download is skiped,save to %s", task.URL, resp.SaveFileTo)
+		infra.Logger.Warnf("m3u8 url:%s download is skiped,save to %s", task.Input.URL, resp.SaveFileTo)
 	}
 
 	return nil
 
 }
 
-func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord, taskErr error) {
+func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput], taskErr error) {
 	errMsg := ""
 	if taskErr != nil {
-		infra.Logger.Errorf("m3u8 url:%s download error:%s", task.URL, taskErr.Error())
+		infra.Logger.Errorf("m3u8 url:%s download error:%s", task.Input.URL, taskErr.Error())
 		errMsg = taskErr.Error()
 	} else {
-		infra.Logger.Infof("m3u8 url:%s download success,save to %s", task.URL, task.GetSavePath())
-		err := os.Chmod(task.GetSavePath(), 0777) // 注意前面的 0，表示八进制
+		infra.Logger.Infof("m3u8 url:%s download success,save to %s", task.Input.URL, task.Input.GetSavePath())
+		err := os.Chmod(task.Input.GetSavePath(), 0777) // 注意前面的 0，表示八进制
 		if err != nil {
-			infra.Logger.Warnf("set permissive permissions on '%s' error ", task.GetSavePath())
+			infra.Logger.Warnf("set permissive permissions on '%s' error ", task.Input.GetSavePath())
 		}
 	}
 
@@ -113,19 +112,19 @@ func (service *M3u8dlService) getVideoId(url string) string {
 	return hex.EncodeToString(tmp1[:])
 }
 
-func (service *M3u8dlService) getTempDirAndFile(task model.TaskRecord) (tempDir string, mergeTempFile string, err error) {
-	videoId := service.getVideoId(task.URL)
-	tempDir, err = filepath.Abs(path.Join(task.SaveDir, "downloading", videoId))
+func (service *M3u8dlService) getTempDirAndFile(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) (tempDir string, mergeTempFile string, err error) {
+	videoId := service.getVideoId(task.Input.URL)
+	tempDir, err = filepath.Abs(path.Join(task.Input.SaveDir, "downloading", videoId))
 	if err != nil {
 		return
 
 	}
 
-	return tempDir, path.Join(tempDir, task.Name+".mp4.temp"), nil
+	return tempDir, path.Join(tempDir, task.Input.Name+".mp4.temp"), nil
 
 }
 
-func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord) (string, error) {
+func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) (string, error) {
 	var (
 		out bytes.Buffer
 	)
@@ -136,7 +135,7 @@ func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord) (string, er
 
 	fileListPath := path.Join(workingDir, "filelist.txt")
 
-	savePath, err := filepath.Abs(task.GetSavePath())
+	savePath, err := filepath.Abs(task.Input.GetSavePath())
 	if err != nil {
 		return "", err
 

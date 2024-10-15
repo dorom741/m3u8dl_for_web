@@ -38,12 +38,14 @@ func (controller *TaskController) AddM3u8dlTask(c *gin.Context) {
 		fileName := strings.Trim(addTaskReq.Name, " ")
 		fileName = strings.ReplaceAll(fileName, ".mp4", "")
 
-		taskRecord := model.TaskRecord{
-			URL:     url,
-			Name:    fileName,
-			SaveDir: addTaskReq.SaveDir,
-			Type:    "m3u8dl",
-			State:   model.StateReady,
+		taskRecord := model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]{
+			Input: model.M3u8dlInput{
+				URL:     url,
+				Name:    fileName,
+				SaveDir: addTaskReq.SaveDir,
+			},
+			Type:  "m3u8dl",
+			State: model.StateReady,
 		}
 
 		err := taskRecord.Save()
@@ -80,11 +82,13 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 		req.SaveSubtitleFilePath = strings.ReplaceAll(req.Filepath, path.Ext(req.Filepath), "srt")
 	}
 
-	taskRecord := model.TaskRecord{
-		Type:    "generateSubtitle",
-		State:   model.StateReady,
-		Name:    req.Filepath,
-		SaveDir: req.SaveSubtitleFilePath,
+	taskRecord := model.TaskRecord[model.SubtitleInput, model.SubtitleOutput]{
+		Type:  "generateSubtitle",
+		State: model.StateReady,
+		Input: model.SubtitleInput{
+			InputPath: req.Filepath,
+			SavePath:  req.SaveSubtitleFilePath,
+		},
 	}
 
 	if err := taskRecord.Save(); err != nil {

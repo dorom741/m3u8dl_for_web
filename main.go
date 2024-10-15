@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"m3u8dl_for_web/service"
 	"os"
 	"path"
 
@@ -22,7 +23,10 @@ func main() {
 	conf.InitConf(configFilePath)
 	infra.InitLogger(*conf.ConfigInstance)
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, infra.Logger)
-	err = infra.DataDB.AutoMigrate(&model.TaskRecord{})
+	service.InitService(*conf.ConfigInstance)
+	controller.InitController()
+
+	err = infra.DataDB.AutoMigrate(&model.TaskRecord[struct{}, struct{}]{})
 	if err != nil {
 		panic(err)
 	}
