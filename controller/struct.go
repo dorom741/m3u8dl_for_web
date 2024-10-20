@@ -15,10 +15,11 @@ type AddM3u8dlTaskReq struct {
 	RequestHeaders map[string]string `json:"requestHeaders"`
 }
 
-
 type AddGenerateSubtitleTaskReq struct {
-	Filepath string
-	SaveSubtitleFilePath string
+	Filepath             string `json:"filepath"`
+	SaveSubtitleFilePath string `json:"saveSubtitleFilePath"`
+
+	Prompt      string  `json:"prompt"`
+	Temperature float32 `json:"temperature"`
+	Language    string  `json:"language"`
 }
-
-

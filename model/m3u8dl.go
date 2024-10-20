@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/orestonce/m3u8d"
-	"io"
 	"path/filepath"
 )
 
@@ -38,16 +37,4 @@ func (m3u8dlInput *M3u8dlInput) ToStartDownloadReq() m3u8d.StartDownload_Req {
 
 type M3u8dlOutput struct {
 	SaveDir string `json:"saveDir"`
-}
-
-type SubtitleInput struct {
-	InputPath   string    `json:"inputPath"`
-	SavePath    string    `json:"savePath"`
-	Reader      io.Reader `json:"-"`
-	Prompt      string    `json:"prompt"`
-	Temperature float32   `json:"temperature"`
-	Language    string    `json:"language"`
-}
-
-type SubtitleOutput struct {
 }
