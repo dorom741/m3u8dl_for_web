@@ -88,6 +88,10 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 		Input: model.SubtitleInput{
 			InputPath: req.Filepath,
 			SavePath:  req.SaveSubtitleFilePath,
+
+			Prompt:      req.Prompt,
+			Temperature: req.Temperature,
+			Language:    req.Language,
 		},
 	}
 
@@ -97,5 +101,7 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 	}
 
 	if err := controller.subtitleService.AddTask(taskRecord); err != nil {
+		c.JSON(400, gin.H{"err": err.Error()})
+
 	}
 }

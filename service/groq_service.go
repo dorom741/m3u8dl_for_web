@@ -49,7 +49,7 @@ func NewGroqService(apiKey string, cachePath string, proxyURLString string) (*Gr
 	}, nil
 }
 
-func (groqService *GroqService) AudioTranslation(ctx context.Context, audioPath string, language string) (*groq.AudioResponse, error) {
+func (groqService *GroqService) AudioTranslation(ctx context.Context, audioPath string, language string, temperature float32, prompt string) (*groq.AudioResponse, error) {
 	var resp *groq.AudioResponse
 	if err := groqService.readCache(audioPath, &resp); err != nil {
 		return nil, err
@@ -59,11 +59,12 @@ func (groqService *GroqService) AudioTranslation(ctx context.Context, audioPath 
 	}
 
 	response, err := groqService.client.CreateTranscription(ctx, groq.AudioRequest{
-		Model:    groq.WhisperLargeV3,
-		FilePath: audioPath,
-		Format:   groq.AudioResponseFormatVerboseJSON,
-		Language: language,
-		// Prompt:   "english and mandarin",
+		Model:       groq.WhisperLargeV3,
+		FilePath:    audioPath,
+		Format:      groq.AudioResponseFormatVerboseJSON,
+		Language:    language,
+		Temperature: temperature,
+		Prompt:      prompt,
 	})
 	if err != nil {
 		return nil, err

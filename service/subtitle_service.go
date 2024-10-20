@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"m3u8dl_for_web/model"
 	"net/http"
 	"os"
 	"path"
@@ -26,9 +27,9 @@ func NewSubtitleService(tempAudioPath string) *SubtitleService {
 	}
 }
 
-func (service *SubtitleService) GenerateSubtitle(ctx context.Context, inputPath string, savePath string, language string) error {
+func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input model.SubtitleInput) error {
 	var (
-		filename           = filepath.Base(inputPath)
+		filename           = filepath.Base(input.InputPath)
 		ext                = filepath.Ext(filename)
 		accumulateDuration = 0.0
 	)
@@ -39,19 +40,19 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, inputPath 
 		return err
 	}
 
-	subtitleFile, err := os.OpenFile(savePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	subtitleFile, err := os.OpenFile(input.SavePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		return err
 	}
 	defer subtitleFile.Close()
 
-	outputFileList, err := service.getAudioFromMediaWithFFmpeg(inputPath, tempPath, filename)
+	outputFileList, err := service.getAudioFromMediaWithFFmpeg(input.InputPath, tempPath, filename)
 	if err != nil {
 		return err
 	}
 
 	for _, audioPath := range outputFileList {
-		audioTranslationResult, err := GroqServiceInstance.AudioTranslation(ctx, audioPath, language)
+		audioTranslationResult, err := GroqServiceInstance.AudioTranslation(ctx, audioPath, input.Language, input.Temperature, input.Prompt)
 		if err != nil {
 			return err
 		}
