@@ -2,45 +2,62 @@ package whisper
 
 import (
 	"fmt"
-	"github.com/ggerganov/whisper.cpp/bindings/go/pkg/whisper"
-	"github.com/go-audio/wav"
 	"io"
-	"os"
+
 )
 
-type Params struct {
-	IsTokenize bool
+type WhisperInput struct {
+	FilePath string            `json:"filepath"`
+	Reader   io.ReadSeeker `json:"-"`
 
-	data []float32
+	Prompt      string  `json:"prompt"`
+	Temperature float32 `json:"temperature"`
+	Language    string  `json:"language"`
 }
 
-func (params *Params) InputFromFile(inputFilePath string) error {
-	file, err := os.Open(inputFilePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+// func (input *WhisperInput) GetInputReader(inputFilePath string) (io.ReadSeekCloser, error) {
+// 	if input.Reader != nil {
+// 		return input.Reader, nil
+// 	}
 
-	return params.readPCM(file)
+// 	file, err := os.Open(input.FilePath)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	// defer file.Close()
 
+// 	return file, nil
+// }
+
+type Segment struct {
+	Num   int     // Segment Number
+	Start float64 // Start is the start of the segment.
+	End   float64 // End is the end of the segment.
+	Text  string  // Text is the text of the segment.
 }
 
-func (params *Params) InputFromWavStream(reader io.ReadSeeker) error {
-	return params.readPCM(reader)
+type Segments []Segment
 
-}
-
-func (params *Params) readPCM(reader io.ReadSeeker) error {
-	dec := wav.NewDecoder(reader)
-	if buf, err := dec.FullPCMBuffer(); err != nil {
-		return err
-	} else if dec.SampleRate != whisper.SampleRate {
-		return fmt.Errorf("unsupported sample rate: %d", dec.SampleRate)
-	} else if dec.NumChans != 1 {
-		return fmt.Errorf("unsupported number of channels: %d", dec.NumChans)
-	} else {
-		params.data = buf.AsFloat32Buffer().Data
+// Output text as SRT file
+func (segments *Segments) OutputSRT(w io.Writer) error {
+	for n, segment := range *segments {
+		fmt.Fprintln(w, n)
+		fmt.Fprintln(w, formatTimestamp(segment.Start), " --> ", formatTimestamp(segment.End))
+		fmt.Fprintln(w, segment.Text)
+		fmt.Fprintln(w, "")
 	}
 
 	return nil
+}
+
+// Return srtTimestamp
+func formatTimestamp(seconds float64) string {
+	h := int(seconds) / 3600
+	m := (int(seconds) % 3600) / 60
+	s := int(seconds) % 60
+	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
+}
+
+type WhisperOutput interface {
+	GetSegmentList() Segments
 }

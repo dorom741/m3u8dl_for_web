@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"m3u8dl_for_web/infra"
+	"m3u8dl_for_web/pkg/whisper"
 
 	"github.com/conneroisu/groq-go"
 )
@@ -47,6 +48,29 @@ func NewGroqService(apiKey string, cachePath string, proxyURLString string) (*Gr
 		client:    client,
 		cachePath: cachePath,
 	}, nil
+}
+
+type GroqWhisperOutput struct {
+	*groq.AudioResponse
+}
+
+func (output *GroqWhisperOutput) GetSegmentList() whisper.Segments {
+	segmentList := make(whisper.Segments, 0, len(output.Segments))
+
+	for i, segment := range output.Segments {
+		segmentList = append(segmentList, whisper.Segment{
+			Num:   i,
+			Start: segment.Start,
+			End:   segment.End,
+			Text:  segment.Text,
+		})
+	}
+
+	return segmentList
+}
+
+func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (whisper.WhisperOutput, error) {
+	return nil, nil
 }
 
 func (groqService *GroqService) AudioTranslation(ctx context.Context, audioPath string, language string, temperature float32, prompt string) (*groq.AudioResponse, error) {
