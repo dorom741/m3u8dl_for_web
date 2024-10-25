@@ -1,6 +1,8 @@
 package local
 
 import (
+	"time"
+
 	"m3u8dl_for_web/pkg/whisper"
 
 	whispercpp "github.com/ggerganov/whisper.cpp/bindings/go/pkg/whisper"
@@ -10,6 +12,7 @@ var _ whisper.WhisperOutput = &LocalWhisperOutput{}
 
 type LocalWhisperOutput struct {
 	SegmentList []whispercpp.Segment
+	Duration    time.Duration
 }
 
 func (output *LocalWhisperOutput) GetSegmentList() whisper.Segments {
@@ -25,4 +28,8 @@ func (output *LocalWhisperOutput) GetSegmentList() whisper.Segments {
 	}
 
 	return result
+}
+
+func (output *LocalWhisperOutput) GetDuration() float64 {
+	return output.Duration.Seconds()
 }

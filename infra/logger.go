@@ -10,7 +10,7 @@ import (
 
 var Logger = logrus.New()
 
-func InitLogger(conf conf.Config) {
+func InitLogger(conf *conf.Config) {
 	logFile := &lumberjack.Logger{
 		Filename: conf.Log.Path,
 		MaxSize:  conf.Log.MaxSize, // MB

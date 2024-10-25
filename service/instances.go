@@ -2,7 +2,8 @@ package service
 
 import (
 	"m3u8dl_for_web/conf"
-	"path"
+	"m3u8dl_for_web/infra"
+	"m3u8dl_for_web/pkg/whisper"
 )
 
 var (
@@ -13,16 +14,15 @@ var (
 	SubtitleWorkerServiceInstance *SubtitleWorkerService
 )
 
-func InitService(config conf.Config) {
-	var (
-		err           error
-		groqCachePath = path.Join(config.Server.CacheDir, "groq")
-	)
+func InitService(config *conf.Config) {
+	var err error
 
-	GroqServiceInstance, err = NewGroqService(config.Groq.ApiKey, groqCachePath, config.Server.HttpClientProxy)
+	GroqServiceInstance, err = NewGroqService(config.Groq.ApiKey, infra.DefaultCache, config.Server.HttpClientProxy)
 	if err != nil {
 		panic(err)
 	}
+
+	whisper.DefaultWhisperProvider.Register("groq", GroqServiceInstance)
 
 	M3u8dlServiceInstance = NewM3u8dlService()
 	SubtitleServiceInstance = NewSubtitleService(config.GetTempPath())

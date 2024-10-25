@@ -3,11 +3,10 @@ package whisper
 import (
 	"fmt"
 	"io"
-
 )
 
 type WhisperInput struct {
-	FilePath string            `json:"filepath"`
+	FilePath string        `json:"filepath"`
 	Reader   io.ReadSeeker `json:"-"`
 
 	Prompt      string  `json:"prompt"`
@@ -38,18 +37,6 @@ type Segment struct {
 
 type Segments []Segment
 
-// Output text as SRT file
-func (segments *Segments) OutputSRT(w io.Writer) error {
-	for n, segment := range *segments {
-		fmt.Fprintln(w, n)
-		fmt.Fprintln(w, formatTimestamp(segment.Start), " --> ", formatTimestamp(segment.End))
-		fmt.Fprintln(w, segment.Text)
-		fmt.Fprintln(w, "")
-	}
-
-	return nil
-}
-
 // Return srtTimestamp
 func formatTimestamp(seconds float64) string {
 	h := int(seconds) / 3600
@@ -60,4 +47,6 @@ func formatTimestamp(seconds float64) string {
 
 type WhisperOutput interface {
 	GetSegmentList() Segments
+	// return second 
+	GetDuration() float64
 }

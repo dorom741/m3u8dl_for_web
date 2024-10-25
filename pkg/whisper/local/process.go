@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"m3u8dl_for_web/pkg/whisper"
 
@@ -46,7 +47,7 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 		reader = file
 	}
 
-	data, err := localWhisper.readPCM(reader)
+	data, duration, err := localWhisper.readPCMInfo(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -65,21 +66,27 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 
 	context.PrintTimings()
 
-	return &LocalWhisperOutput{SegmentList: segments}, nil
+	return &LocalWhisperOutput{SegmentList: segments, Duration: duration}, nil
 }
 
-func (localWhisper *LocalWhisper) readPCM(reader io.ReadSeeker) ([]float32, error) {
+func (localWhisper *LocalWhisper) readPCMInfo(reader io.ReadSeeker) ([]float32, time.Duration, error) {
 	dec := wav.NewDecoder(reader)
+
 	buf, err := dec.FullPCMBuffer()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if dec.SampleRate != whispercpp.SampleRate {
-		return nil, fmt.Errorf("unsupported sample rate: %d", dec.SampleRate)
+		return nil, 0, fmt.Errorf("unsupported sample rate: %d", dec.SampleRate)
 	}
 	if dec.NumChans != 1 {
-		return nil, fmt.Errorf("unsupported number of channels: %d", dec.NumChans)
+		return nil, 0, fmt.Errorf("unsupported number of channels: %d", dec.NumChans)
 	}
 
-	return buf.AsFloat32Buffer().Data, nil
+	duration, err := dec.Duration()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return buf.AsFloat32Buffer().Data, duration, nil
 }

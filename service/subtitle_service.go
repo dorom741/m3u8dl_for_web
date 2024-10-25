@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"m3u8dl_for_web/model"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
+	"m3u8dl_for_web/model"
+
 	"m3u8dl_for_web/pkg/media"
 	"m3u8dl_for_web/pkg/split_writer"
+	"m3u8dl_for_web/pkg/whisper"
 )
 
 type SubtitleService struct {
@@ -34,6 +36,11 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 		accumulateDuration = 0.0
 	)
 
+	processFunc, exist := whisper.DefaultWhisperProvider.Get(input.Provider)
+	if !exist {
+		return fmt.Errorf("whisper provider '%s' not exist", input.Provider)
+	}
+
 	tempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ""))
 
 	if err := os.MkdirAll(tempPath, os.ModePerm); err != nil {
@@ -52,12 +59,17 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	}
 
 	for _, audioPath := range outputFileList {
-		audioTranslationResult, err := GroqServiceInstance.AudioTranslation(ctx, audioPath, input.Language, input.Temperature, input.Prompt)
+		result, err := processFunc.HandleWhisper(ctx, whisper.WhisperInput{
+			FilePath:    audioPath,
+			Prompt:      input.Prompt,
+			Temperature: input.Temperature,
+			Language:    input.Language,
+		})
 		if err != nil {
 			return err
 		}
 
-		for _, segment := range audioTranslationResult.Segments {
+		for _, segment := range result.GetSegmentList() {
 			startTime := segment.Start + accumulateDuration
 			endTime := segment.End + accumulateDuration
 			if _, err := service.writeSubtitlesLine(subtitleFile, startTime, endTime, segment.Text); err != nil {
@@ -65,16 +77,16 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 			}
 		}
 
-		accumulateDuration += audioTranslationResult.Duration
+		accumulateDuration += result.GetDuration()
 	}
 
 	return nil
 }
 
 func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string) ([]string, error) {
-	// ext := path.Ext(outputName)
-	// fileName := fmt.Sprintf("%s_%s%s", outputName[:len(outputName)-len(ext)], "%03d", ".wav")
-	fileName := fmt.Sprintf("%s%s", "%03d", ".wav")
+	ext := path.Ext(outputName)
+	fileName := fmt.Sprintf("%s_%s%s", outputName[:len(ext)], "%03d", ".wav")
+	// fileName := fmt.Sprintf("%s%s", "%03d", ".wav")
 
 	outputPath := path.Join(ouputDir, fileName)
 

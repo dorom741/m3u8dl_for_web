@@ -5,6 +5,7 @@ import (
 )
 
 type SubtitleInput struct {
+	Provider    string    `json:"provider"`
 	InputPath   string    `json:"inputPath"`
 	SavePath    string    `json:"savePath"`
 	Reader      io.Reader `json:"-"`
@@ -13,5 +14,4 @@ type SubtitleInput struct {
 	Language    string    `json:"language"`
 }
 
-type SubtitleOutput struct {
-}
+type SubtitleOutput struct{}

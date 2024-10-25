@@ -2,28 +2,31 @@ package main
 
 import (
 	"errors"
-	"m3u8dl_for_web/service"
 	"os"
 	"path"
 
-	"github.com/gin-gonic/gin"
+	"m3u8dl_for_web/service"
+
 	"m3u8dl_for_web/conf"
 	"m3u8dl_for_web/controller"
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-
 	configFilePath, err := searchPath("./config.yaml")
 	if err != nil {
 		panic("配置文件不存在")
 	}
 
 	conf.InitConf(configFilePath)
-	infra.InitLogger(*conf.ConfigInstance)
+	RegisterWhisperProvider()
+	infra.MustInitCache(conf.ConfigInstance.Server.CacheDir)
+	infra.InitLogger(conf.ConfigInstance)
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, infra.Logger)
-	service.InitService(*conf.ConfigInstance)
+	service.InitService(conf.ConfigInstance)
 	controller.InitController()
 
 	err = infra.DataDB.AutoMigrate(&model.TaskRecord[struct{}, struct{}]{})
@@ -31,7 +34,6 @@ func main() {
 		panic(err)
 	}
 	run(conf.ConfigInstance.Server.StaticPath)
-
 }
 
 func searchPath(filePath string) (string, error) {
@@ -47,14 +49,13 @@ func searchPath(filePath string) (string, error) {
 	_, err = os.Stat(filePathOnParent)
 
 	return filePathOnParent, err
-
 }
 
 func run(staticPath string) {
 	r := gin.Default()
 	_ = r.SetTrustedProxies([]string{"*"})
 
-	//r.Use(middleware.LoggerMiddleware())
+	// r.Use(middleware.LoggerMiddleware())
 
 	apiGroup := r.Group("/api")
 	apiGroup.POST("/addM3u8dlTask", controller.TaskControllerInstance.AddM3u8dlTask)
@@ -75,7 +76,7 @@ func run(staticPath string) {
 		c.File(path.Join(staticPath, fullPath)) // 请确保该文件存在
 	})
 
-	//log.Infof("open http://127.0.0.1:2045/")
+	// log.Infof("open http://127.0.0.1:2045/")
 	err := r.Run(conf.ConfigInstance.Server.Listen)
 	if err != nil {
 		panic(err)

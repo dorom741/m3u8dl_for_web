@@ -11,6 +11,16 @@ type FileCache struct {
 	cacheDir string
 }
 
+var DefaultCache *FileCache
+
+func MustInitCache(dir string) {
+	var err error
+	DefaultCache, err = NewFileCache(dir)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // NewFileCache 创建新的文件缓存
 func NewFileCache(dir string) (*FileCache, error) {
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
@@ -45,6 +55,9 @@ func (fc *FileCache) Get(key string, value interface{}) error {
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 

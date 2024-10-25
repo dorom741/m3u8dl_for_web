@@ -30,7 +30,7 @@ type Config struct {
 	} `yaml:"log"`
 
 	Groq struct {
-		ApiKey    string `yaml:"apiKey"`
+		ApiKey string `yaml:"apiKey"`
 	} `yaml:"groq"`
 
 	Translation struct {
@@ -39,6 +39,8 @@ type Config struct {
 			ApiKey string `yaml:"apiKey"`
 		} `yaml:"deeplX"`
 	} `yaml:"translation"`
+
+	LocalWhisperModels map[string]string `yaml:"localWhisperModels"`
 }
 
 func (conf *Config) GetAbsSavePath() string {
@@ -87,9 +89,6 @@ func InitConf(configFilePath string) {
 	if !CheckWritePermission(ConfigInstance.Server.SavePath) {
 		panic("save_dir: " + ConfigInstance.Server.SavePath + " can not write")
 	}
-	// 打印配置项的值
-	// confjson, _ := json.Marshal(ConfMap)
-	// fmt.Println("conf:", string(confjson))
 }
 
 // 检查文件夹是否可写
