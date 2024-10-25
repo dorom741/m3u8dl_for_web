@@ -3,7 +3,6 @@ package conf
 import (
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
@@ -46,14 +45,19 @@ type Config struct {
 func (conf *Config) GetAbsSavePath() string {
 	fullSavePath, err := filepath.Abs(conf.Server.SavePath)
 	if err != nil {
-		fullSavePath, err = os.Getwd()
+		return os.TempDir()
 	}
 
 	return fullSavePath
 }
 
-func (conf *Config) GetTempPath() string {
-	return path.Join(conf.GetAbsSavePath(), "temp")
+func (conf *Config) GetAbsCachePath() string {
+	fullCachePath, err := filepath.Abs(conf.Server.CacheDir)
+	if err != nil {
+		return os.TempDir()
+	}
+
+	return fullCachePath
 }
 
 func NewConfig() *Config {

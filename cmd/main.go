@@ -22,7 +22,6 @@ func main() {
 	}
 
 	conf.InitConf(configFilePath)
-	RegisterWhisperProvider()
 	infra.MustInitCache(conf.ConfigInstance.Server.CacheDir)
 	infra.InitLogger(conf.ConfigInstance)
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, infra.Logger)

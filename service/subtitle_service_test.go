@@ -16,21 +16,20 @@ func init() {
 
 func TestGenerateSubtitle(t *testing.T) {
 	ctx := context.Background()
-	cachePath := "../resource/download"
-	inputPath := "../m3u8dl_for_web/resource/samples/jfk.wav"
+	inputPath := "../resource/samples/jfk.wav"
 	outputPath := strings.ReplaceAll(inputPath, ".wav", ".srt")
-	subtitleService := NewSubtitleService(cachePath)
+
 	input := model.SubtitleInput{
-		Provider:    "",
+		Provider:    "ggml-base",
 		InputPath:   inputPath,
 		SavePath:    outputPath,
 		Prompt:      "",
 		Temperature: 0,
-		Language:    "zh",
+		Language:    "",
 	}
 
-	err := subtitleService.GenerateSubtitle(ctx, input)
+	err := SubtitleServiceInstance.GenerateSubtitle(ctx, input)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 }

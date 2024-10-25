@@ -1,7 +1,7 @@
 //go:build !localWhisper
 // +build !localWhisper
 
-package main
+package subtitle
 
 func RegisterWhisperProvider() {
 }

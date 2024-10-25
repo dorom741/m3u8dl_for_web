@@ -5,16 +5,18 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/orestonce/m3u8d"
 	"io"
-	"m3u8dl_for_web/infra"
-	"m3u8dl_for_web/model"
-	"m3u8dl_for_web/pkg/queue_worker"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"m3u8dl_for_web/infra"
+	"m3u8dl_for_web/model"
+	"m3u8dl_for_web/pkg/queue_worker"
+
+	"github.com/orestonce/m3u8d"
 )
 
 var _ queue_worker.QueueWorkerConsumer[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]] = &M3u8dlService{}
@@ -32,9 +34,8 @@ func NewM3u8dlService() *M3u8dlService {
 	go service.worker.Run()
 
 	service.worker = queue_worker.NewQueueWorker[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]](option, service)
-	fmt.Printf("%+v", service)
-	return service
 
+	return service
 }
 
 func (service *M3u8dlService) AddTask(taskRecord model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) error {
@@ -75,7 +76,6 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput,
 
 	} else if resp.ErrMsg != "" {
 		return fmt.Errorf("%s", resp.ErrMsg)
-
 	}
 
 	if resp.IsSkipped {
@@ -83,7 +83,6 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput,
 	}
 
 	return nil
-
 }
 
 func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput], taskErr error) {
@@ -93,7 +92,7 @@ func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord[model.M3u8dlInp
 		errMsg = taskErr.Error()
 	} else {
 		infra.Logger.Infof("m3u8 url:%s download success,save to %s", task.Input.URL, task.Input.GetSavePath())
-		err := os.Chmod(task.Input.GetSavePath(), 0777) // 注意前面的 0，表示八进制
+		err := os.Chmod(task.Input.GetSavePath(), 0o777) // 注意前面的 0，表示八进制
 		if err != nil {
 			infra.Logger.Warnf("set permissive permissions on '%s' error ", task.Input.GetSavePath())
 		}
@@ -102,9 +101,7 @@ func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord[model.M3u8dlInp
 	err := task.Finish(errMsg)
 	if err != nil {
 		infra.Logger.Warnf("save download task record error:%s", err.Error())
-
 	}
-
 }
 
 func (service *M3u8dlService) getVideoId(url string) string {
@@ -117,17 +114,13 @@ func (service *M3u8dlService) getTempDirAndFile(task model.TaskRecord[model.M3u8
 	tempDir, err = filepath.Abs(path.Join(task.Input.SaveDir, "downloading", videoId))
 	if err != nil {
 		return
-
 	}
 
 	return tempDir, path.Join(tempDir, task.Input.Name+".mp4.temp"), nil
-
 }
 
 func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) (string, error) {
-	var (
-		out bytes.Buffer
-	)
+	var out bytes.Buffer
 	workingDir, _, err := service.getTempDirAndFile(task)
 	if err != nil {
 		return "", err
@@ -138,7 +131,6 @@ func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord[model.M3u8dl
 	savePath, err := filepath.Abs(task.Input.GetSavePath())
 	if err != nil {
 		return "", err
-
 	}
 
 	ffmpegArgs := []string{"-f", "concat", "-i", fileListPath, "-c", "copy", "-y", savePath}
@@ -157,5 +149,4 @@ func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord[model.M3u8dl
 	err = cmd.Run()
 
 	return out.String(), err
-
 }

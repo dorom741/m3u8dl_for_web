@@ -1,4 +1,4 @@
-package service
+package subtitle
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
 
 	"m3u8dl_for_web/pkg/media"
@@ -23,6 +24,8 @@ type SubtitleService struct {
 }
 
 func NewSubtitleService(tempAudioPath string) *SubtitleService {
+	RegisterWhisperProvider()
+
 	return &SubtitleService{
 		tempAudioPath: tempAudioPath,
 		splitSize:     1024 * 1024 * 15, // 15MB
@@ -42,6 +45,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	}
 
 	tempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ""))
+	print(tempPath)
 
 	if err := os.MkdirAll(tempPath, os.ModePerm); err != nil {
 		return err
@@ -85,7 +89,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 
 func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string) ([]string, error) {
 	ext := path.Ext(outputName)
-	fileName := fmt.Sprintf("%s_%s%s", outputName[:len(ext)], "%03d", ".wav")
+	fileName := fmt.Sprintf("%s_%s%s", outputName[:len(ext)-1], "%03d", ".wav")
 	// fileName := fmt.Sprintf("%s%s", "%03d", ".wav")
 
 	outputPath := path.Join(ouputDir, fileName)
@@ -107,7 +111,7 @@ func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ou
 		}
 		fileList = append(fileList, path.Join(ouputDir, dirEntry.Name()))
 	}
-	fmt.Printf("output file list %+v", fileList)
+	infra.Logger.Infof("output file list %+v", fileList)
 
 	return fileList, nil
 }

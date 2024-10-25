@@ -1,7 +1,7 @@
 //go:build localWhisper
 // +build localWhisper
 
-package main
+package subtitle
 
 import (
 	"m3u8dl_for_web/conf"

@@ -71,7 +71,7 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 	if err := service.cache.Get(cacheKey, &resp); err != nil {
 		return nil, err
 	} else if resp != nil {
-		// fmt.Printf("audio file '%s'  translation  use cache: %+v\n", audioPath, resp)
+		infra.Logger.Infof("handle whisper using cache: %s", cacheKey)
 		return &GroqWhisperOutput{AudioResponse: resp}, nil
 	}
 
