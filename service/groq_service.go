@@ -94,31 +94,6 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 	return &GroqWhisperOutput{AudioResponse: &response}, nil
 }
 
-// func (service *GroqService) writeCache(data interface{}, originalFilepath string) error {
-// 	filename := filepath.Base(originalFilepath) + "_groqcache.json"
-// 	cacheFilePath := path.Join(service.cachePath, filename)
-// 	cacheFile, err := os.OpenFile(cacheFilePath, os.O_CREATE|os.O_RDWR, os.ModePerm)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer cacheFile.Close()
-// 	return json.NewEncoder(cacheFile).Encode(data)
-// }
-
-// func (groqService *GroqService) readCache(originalFilepath string, v any) error {
-// 	filename := filepath.Base(originalFilepath) + "_groqcache.json"
-// 	cacheFilePath := path.Join(groqService.cachePath, filename)
-// 	cacheFile, err := os.Open(cacheFilePath)
-// 	if err != nil {
-// 		if os.IsNotExist(err) {
-// 			return nil
-// 		}
-// 		return err
-// 	}
-// 	defer cacheFile.Close()
-
-// 	return json.NewDecoder(cacheFile).Decode(v)
-// }
 
 type GroqWhisperOutput struct {
 	*groq.AudioResponse
