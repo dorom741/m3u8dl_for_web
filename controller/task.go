@@ -86,6 +86,7 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 		Type:  "generateSubtitle",
 		State: model.StateReady,
 		Input: model.SubtitleInput{
+			Provider:  req.Provider,
 			InputPath: req.Filepath,
 			SavePath:  req.SaveSubtitleFilePath,
 

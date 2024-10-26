@@ -32,13 +32,13 @@ func NewFileCache(dir string) (*FileCache, error) {
 // escapeFileName 转义文件名中的非法字符
 func escapeFileName(name string) string {
 	re := regexp.MustCompile(`[\/:*?"<>|]`)
-	return re.ReplaceAllString(name, "_")
+	return re.ReplaceAllString(name, "_") + ".json"
 }
 
 // Set 存储键值对到文件
-func (fc *FileCache) Set(key string, value interface{}) error {
+func (cache *FileCache) Set(key string, value interface{}) error {
 	escapedKey := escapeFileName(key)
-	filePath := filepath.Join(fc.cacheDir, escapedKey)
+	filePath := filepath.Join(cache.cacheDir, escapedKey)
 
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -49,9 +49,9 @@ func (fc *FileCache) Set(key string, value interface{}) error {
 }
 
 // Get 从文件中获取值
-func (fc *FileCache) Get(key string, value interface{}) error {
+func (cache *FileCache) Get(key string, value interface{}) error {
 	escapedKey := escapeFileName(key)
-	filePath := filepath.Join(fc.cacheDir, escapedKey)
+	filePath := filepath.Join(cache.cacheDir, escapedKey)
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -65,9 +65,9 @@ func (fc *FileCache) Get(key string, value interface{}) error {
 }
 
 // ClearByPrefix 清除以特定前缀开头的文件
-func (fc *FileCache) ClearByPrefix(prefix string) error {
+func (cache *FileCache) ClearByPrefix(prefix string) error {
 	escapedPrefix := escapeFileName(prefix)
-	files, err := os.ReadDir(fc.cacheDir)
+	files, err := os.ReadDir(cache.cacheDir)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (fc *FileCache) ClearByPrefix(prefix string) error {
 			continue
 		}
 		if len(file.Name()) >= len(escapedPrefix) && file.Name()[:len(escapedPrefix)] == escapedPrefix {
-			os.Remove(filepath.Join(fc.cacheDir, file.Name()))
+			os.Remove(filepath.Join(cache.cacheDir, file.Name()))
 		}
 	}
 	return nil

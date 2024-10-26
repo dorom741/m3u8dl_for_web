@@ -25,6 +25,9 @@ func main() {
 	infra.MustInitCache(conf.ConfigInstance.Server.CacheDir)
 	infra.InitLogger(conf.ConfigInstance)
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, infra.Logger)
+	if err := infra.InitHttpClientWithProxy(conf.ConfigInstance.Server.HttpClientProxy); err != nil {
+		panic(err)
+	}
 	service.InitService(conf.ConfigInstance)
 	controller.InitController()
 

@@ -59,7 +59,10 @@ func (service *GroqService) cacheKey(input whisper.WhisperInput) string {
 		return fmt.Sprintf("%s_%x", prefix, h.Sum(nil))
 	}
 
-	return prefix + "_" + input.FilePath[:len(input.FilePath)-len(filepath.Ext(input.FilePath))]
+	filename := filepath.Base(input.FilePath)
+	ext := filepath.Ext(input.FilePath)
+
+	return prefix + "_" + filename[:len(filename)-len(ext)]
 }
 
 func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (whisper.WhisperOutput, error) {
@@ -83,17 +86,17 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 		Temperature: input.Temperature,
 		Prompt:      input.Prompt,
 	})
+	infra.Logger.Infof("response %+v", response)
+
 	if err != nil {
 		return nil, err
 	}
-	infra.Logger.Infof("response %+v", response)
 	if err := service.cache.Set(cacheKey, response); err != nil {
 		return nil, err
 	}
 
 	return &GroqWhisperOutput{AudioResponse: &response}, nil
 }
-
 
 type GroqWhisperOutput struct {
 	*groq.AudioResponse

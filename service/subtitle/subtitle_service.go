@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"m3u8dl_for_web/pkg/translation"
 	"net/http"
 	"os"
 	"path"
@@ -21,14 +22,16 @@ import (
 type SubtitleService struct {
 	tempAudioPath string
 	splitSize     int64
+	translation   *translation.DeepLXTranslation
 }
 
-func NewSubtitleService(tempAudioPath string) *SubtitleService {
+func NewSubtitleService(tempAudioPath string, translation *translation.DeepLXTranslation) *SubtitleService {
 	RegisterWhisperProvider()
 
 	return &SubtitleService{
 		tempAudioPath: tempAudioPath,
 		splitSize:     1024 * 1024 * 15, // 15MB
+		translation:   translation,
 	}
 }
 
@@ -76,9 +79,21 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 		for _, segment := range result.GetSegmentList() {
 			startTime := segment.Start + accumulateDuration
 			endTime := segment.End + accumulateDuration
-			if _, err := service.writeSubtitlesLine(subtitleFile, startTime, endTime, segment.Text); err != nil {
+
+			segmentText := segment.Text
+			segmentText = ReplaceRepeatedWords(segmentText)
+			translationText, err := service.translation.Translation(ctx, segmentText, "", "zh")
+			if err != nil {
 				return err
 			}
+
+			if _, err := service.writeSubtitlesLine(subtitleFile, startTime, endTime, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {
+				return err
+			}
+
+			//if _, err := service.writeSubtitlesLine(subtitleFile, startTime, endTime, segment.Text); err != nil {
+			//	return err
+			//}
 		}
 
 		accumulateDuration += result.GetDuration()
@@ -89,7 +104,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 
 func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string) ([]string, error) {
 	ext := path.Ext(outputName)
-	fileName := fmt.Sprintf("%s_%s%s", outputName[:len(ext)-1], "%03d", ".wav")
+	fileName := fmt.Sprintf("%s_%s%s", outputName[:len(outputName)-len(ext)], "%03d", ".wav")
 	// fileName := fmt.Sprintf("%s%s", "%03d", ".wav")
 
 	outputPath := path.Join(ouputDir, fileName)

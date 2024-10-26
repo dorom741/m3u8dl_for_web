@@ -16,6 +16,7 @@ type AddM3u8dlTaskReq struct {
 }
 
 type AddGenerateSubtitleTaskReq struct {
+	Provider             string `json:"provider"`
 	Filepath             string `json:"filepath"`
 	SaveSubtitleFilePath string `json:"saveSubtitleFilePath"`
 

@@ -14,11 +14,18 @@ type DeepLXTranslation struct {
 	client *http.Client
 }
 
-func NewDeepLTranslation(url string) *DeepLXTranslation {
-	return &DeepLXTranslation{
-		Url:    url,
-		client: &http.Client{},
+func NewDeepLTranslation(deeplXUrl string, httpClient *http.Client) *DeepLXTranslation {
+	translation := &DeepLXTranslation{
+		Url:    deeplXUrl,
+		client: httpClient,
 	}
+
+	if translation.client == nil {
+		translation.client = http.DefaultClient
+
+	}
+
+	return translation
 }
 
 type Result struct {
