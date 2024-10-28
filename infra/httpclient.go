@@ -9,7 +9,9 @@ import (
 var DefaultHttpClient = http.DefaultClient
 
 func InitHttpClientWithProxy(proxyURLString string) error {
-	transport := &http.Transport{}
+	transport := &http.Transport{
+		ForceAttemptHTTP2: false,
+	}
 	if len(proxyURLString) > 0 && strings.HasPrefix(proxyURLString, "http") {
 		if proxyURL, err := url.Parse(proxyURLString); err == nil {
 			transport.Proxy = http.ProxyURL(proxyURL)
