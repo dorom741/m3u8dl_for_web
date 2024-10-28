@@ -7,8 +7,7 @@ server:
   downlaodMaxWorker: 1
   saveDir: ""
   cacheDir: ""
-  httpClientProxy: http://127.0.0.1:7890
-
+  httpClientProxy: ""
 
 log:
   path: "./log/log.log"
