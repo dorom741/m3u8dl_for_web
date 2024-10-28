@@ -5,8 +5,8 @@ server:
   staticPath: "./resource/static"
 
   downlaodMaxWorker: 1
-  saveDir: ""
-  cacheDir: ""
+  saveDir: "./download"
+  cacheDir: "./download/cache"
   httpClientProxy: ""
 
 log:
