@@ -1,22 +1,36 @@
 FROM golang:1.23 AS build
 
+RUN apt-get update && \
+    apt-get install -y --no-install-suggests build-essential git cmake  libsdl2-dev clang \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+
+WORKDIR /whisper.cpp
+
+RUN git clone https://github.com/ggerganov/whisper.cpp.git .
+
+RUN  make libwhisper.a
+
+ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/src
+ENV C_INCLUDE_PATH=/whisper.cpp/include:/whisper.cpp/ggml/include
+
 # ENV GOPROXY=https://goproxy.cn,direct
-# 设置工作目录
 WORKDIR /app
 
-# 将项目文件复制到容器中
 COPY . .
 
 RUN go mod download
-RUN CGO_ENABLED=0 go build -o app
+RUN go build -tags localWhisper  -o app ./cmd/
 
-FROM alpine:latest
+
+FROM debian:12
 
 ENV GIN_MODE=release
-RUN set -ex  && apk add --no-cache ca-certificates bash ffmpeg
+
+RUN  apt-get update  \
+    && apt-get install -y  --no-install-suggests ca-certificates  ffmpeg  \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 WORKDIR /app
-
 
 COPY --from=build /app/app .
 
