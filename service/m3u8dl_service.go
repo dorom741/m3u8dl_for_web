@@ -33,7 +33,7 @@ func NewM3u8dlService() *M3u8dlService {
 	service := &M3u8dlService{}
 	go service.worker.Run()
 
-	service.worker = queue_worker.NewQueueWorker[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]](option, service)
+	service.worker = queue_worker.NewQueueWorker(option, service)
 
 	return service
 }
