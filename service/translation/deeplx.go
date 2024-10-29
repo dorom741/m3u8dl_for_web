@@ -9,12 +9,14 @@ import (
 	"net/http"
 )
 
+var _ ITranslation = &DeepLXTranslation{}
+
 type DeepLXTranslation struct {
 	Url    string
 	client *http.Client
 }
 
-func NewDeepLTranslation(deeplXUrl string, httpClient *http.Client) *DeepLXTranslation {
+func NewDeepLXTranslation(deeplXUrl string, httpClient *http.Client) *DeepLXTranslation {
 	translation := &DeepLXTranslation{
 		Url:    deeplXUrl,
 		client: httpClient,
@@ -22,7 +24,6 @@ func NewDeepLTranslation(deeplXUrl string, httpClient *http.Client) *DeepLXTrans
 
 	if translation.client == nil {
 		translation.client = http.DefaultClient
-
 	}
 
 	return translation
@@ -32,7 +33,7 @@ type Result struct {
 	Data string
 }
 
-func (translation *DeepLXTranslation) Translation(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
+func (translation *DeepLXTranslation) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
 	var (
 		postDataReader = new(bytes.Buffer)
 		postData       = map[string]string{

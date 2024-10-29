@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"m3u8dl_for_web/pkg/translation"
 	"net/http"
 	"os"
 	"path"
@@ -17,15 +16,16 @@ import (
 	"m3u8dl_for_web/pkg/media"
 	"m3u8dl_for_web/pkg/split_writer"
 	"m3u8dl_for_web/pkg/whisper"
+	"m3u8dl_for_web/service/translation"
 )
 
 type SubtitleService struct {
 	tempAudioPath string
 	splitSize     int64
-	translation   *translation.DeepLXTranslation
+	translation   translation.ITranslation
 }
 
-func NewSubtitleService(tempAudioPath string, translation *translation.DeepLXTranslation) *SubtitleService {
+func NewSubtitleService(tempAudioPath string, translation translation.ITranslation) *SubtitleService {
 	RegisterWhisperProvider()
 
 	return &SubtitleService{
@@ -82,9 +82,13 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 
 			segmentText := segment.Text
 			segmentText = ReplaceRepeatedWords(segmentText)
-			translationText, err := service.translation.Translation(ctx, segmentText, "", "zh")
-			if err != nil {
-				return err
+
+			translationText := ""
+			if input.TranslateTo != "" {
+				translationText, err = service.translation.Translate(ctx, segmentText,"", input.TranslateTo)
+				if err != nil {
+					return err
+				}
 			}
 
 			if _, err := service.writeSubtitlesLine(subtitleFile, startTime, endTime, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {

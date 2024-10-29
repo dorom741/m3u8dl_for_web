@@ -3,7 +3,7 @@ package service
 import (
 	"m3u8dl_for_web/conf"
 	"m3u8dl_for_web/infra"
-	"m3u8dl_for_web/pkg/translation"
+	"m3u8dl_for_web/service/translation"
 	"m3u8dl_for_web/pkg/whisper"
 	"m3u8dl_for_web/service/subtitle"
 )
@@ -26,7 +26,9 @@ func InitService(config *conf.Config) {
 	whisper.DefaultWhisperProvider.Register("groq", GroqServiceInstance)
 	M3u8dlServiceInstance = NewM3u8dlService()
 
-	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(), translation.NewDeepLTranslation(config.Translation.DeeplX.Url, infra.DefaultHttpClient))
+	translation := translation.NewDeepLXTranslation(config.Translation.DeeplX.Url, infra.DefaultHttpClient)
+
+	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(),translation)
 
 	SubtitleWorkerServiceInstance = NewSubtitleWorkerService()
 }
