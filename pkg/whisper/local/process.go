@@ -11,6 +11,7 @@ import (
 
 	whispercpp "github.com/ggerganov/whisper.cpp/bindings/go/pkg/whisper"
 	wav "github.com/go-audio/wav"
+	"github.com/sirupsen/logrus"
 )
 
 var _ whisper.WhisperHandler = &LocalWhisper{}
@@ -36,6 +37,8 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 	if err != nil {
 		return nil, err
 	}
+
+	logrus.Debugln(context.SystemInfo())
 
 	reader := input.Reader
 	if reader == nil {
