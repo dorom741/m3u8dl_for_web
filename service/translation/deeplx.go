@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 var _ ITranslation = &DeepLXTranslation{}
@@ -35,14 +36,19 @@ type Result struct {
 
 func (translation *DeepLXTranslation) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
 	var (
+		err            error
 		postDataReader = new(bytes.Buffer)
 		postData       = map[string]string{
 			"text":        text,
 			"source_lang": sourceLang,
 			"target_lang": targetLang,
 		}
+		result = new(Result)
 	)
-	_ = json.NewEncoder(postDataReader).Encode(postData)
+
+	if err = json.NewEncoder(postDataReader).Encode(postData); err != nil {
+		return "", err
+	}
 
 	request, err := http.NewRequest("POST", translation.Url, postDataReader)
 	if err != nil {
@@ -50,25 +56,32 @@ func (translation *DeepLXTranslation) Translate(ctx context.Context, text string
 	}
 	request.WithContext(ctx)
 
-	response, err := translation.client.Do(request)
-	if err != nil {
-		return "", err
-	}
-	defer response.Body.Close()
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		response, err := translation.client.Do(request)
+		if err != nil {
+			return "", err
+		}
+		defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return "", err
-	}
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			return "", err
+		}
 
-	if response.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("request error status:%d err:%s", response.StatusCode, body)
-	}
+		if response.StatusCode == http.StatusServiceUnavailable {
+			time.Sleep(1 * time.Second)
+			continue
+		}
 
-	result := new(Result)
+		if response.StatusCode != http.StatusOK {
+			return "", fmt.Errorf("request error status:%d err:%s", response.StatusCode, body)
+		}
 
-	if err := json.Unmarshal(body, result); err != nil {
-		return "", err
+		if err := json.Unmarshal(body, result); err != nil {
+			return "", err
+		}
+
 	}
 
 	return result.Data, nil
