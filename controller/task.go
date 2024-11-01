@@ -93,6 +93,7 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 			Prompt:      req.Prompt,
 			Temperature: req.Temperature,
 			Language:    req.Language,
+			TranslateTo: req.TranslateTo,
 		},
 	}
 

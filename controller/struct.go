@@ -23,4 +23,5 @@ type AddGenerateSubtitleTaskReq struct {
 	Prompt      string  `json:"prompt"`
 	Temperature float32 `json:"temperature"`
 	Language    string  `json:"language"`
+	TranslateTo string  `json:"translateTo"`
 }
