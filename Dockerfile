@@ -22,7 +22,7 @@ RUN go mod download
 RUN go build -tags localWhisper  -o app ./cmd/
 
 
-FROM debian:12
+FROM ubuntu:22.04
 
 ENV GIN_MODE=release
 
