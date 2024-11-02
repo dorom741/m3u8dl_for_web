@@ -33,12 +33,12 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 	}
 	defer model.Close()
 
-	context, err := model.NewContext()
+	modelContext, err := model.NewContext()
 	if err != nil {
 		return nil, err
 	}
 
-	logrus.Debugln(context.SystemInfo())
+	logrus.Debugln(modelContext.SystemInfo())
 
 	reader := input.Reader
 	if reader == nil {
@@ -62,12 +62,12 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 		}
 	)
 
-	context.ResetTimings()
-	if err := context.Process(data, cb, nil); err != nil {
+	modelContext.ResetTimings()
+	if err := modelContext.Process(data, cb, nil); err != nil {
 		return nil, err
 	}
 
-	context.PrintTimings()
+	modelContext.PrintTimings()
 
 	return &LocalWhisperOutput{SegmentList: segments, Duration: duration}, nil
 }
