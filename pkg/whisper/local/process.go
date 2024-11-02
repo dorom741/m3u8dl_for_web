@@ -38,6 +38,10 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 		return nil, err
 	}
 
+	if err = modelContext.SetLanguage(input.Language); err != nil {
+		return nil, err
+	}
+
 	logrus.Debugln(modelContext.SystemInfo())
 
 	reader := input.Reader
