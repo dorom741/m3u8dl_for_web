@@ -18,6 +18,9 @@ require (
 )
 
 require (
+	github.com/asticode/go-astikit v0.20.0 // indirect
+	github.com/asticode/go-astisub v0.29.0 // indirect
+	github.com/asticode/go-astits v1.8.0 // indirect
 	github.com/go-audio/audio v1.0.0 // indirect
 	github.com/go-audio/riff v1.0.0 // indirect
 )
