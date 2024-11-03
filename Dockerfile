@@ -8,7 +8,7 @@ WORKDIR /whisper.cpp
 
 RUN git clone https://github.com/ggerganov/whisper.cpp.git .
 
-RUN  make libwhisper.a
+RUN WHISPER_SDL2=ON  make libwhisper.a
 
 ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/src
 ENV C_INCLUDE_PATH=/whisper.cpp/include:/whisper.cpp/ggml/include
