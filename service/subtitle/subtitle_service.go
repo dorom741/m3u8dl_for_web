@@ -79,6 +79,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	var (
 		whisperOutput      *whisper.WhisperOutput
 		accumulateDuration = 0.0
+		sequence           = int64(0)
 		totalFile          = len(outputFileList)
 		startTime          = time.Now() // 记录开始时间
 
@@ -110,6 +111,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 		for _, segment := range whisperOutput.Segments {
 			startTimestamp := segment.Start + accumulateDuration
 			endTimestamp := segment.End + accumulateDuration
+			sequence++
 
 			segmentText := segment.Text
 			segmentText = ReplaceRepeatedWords(segmentText)
@@ -122,7 +124,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 				}
 			}
 
-			if _, err := service.writeSubtitlesLine(subtitleTempFile, startTimestamp, endTimestamp, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {
+			if _, err := service.writeSubtitlesLine(subtitleTempFile, sequence, startTimestamp, endTimestamp, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {
 				return err
 			}
 
@@ -225,10 +227,10 @@ func (service *SubtitleService) formatTimestamp(seconds float64) string {
 	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
 }
 
-func (service *SubtitleService) writeSubtitlesLine(writer io.Writer, startTimestamp float64, endTimestamp float64, text string) (int, error) {
+func (service *SubtitleService) writeSubtitlesLine(writer io.Writer, sequence int64, startTimestamp float64, endTimestamp float64, text string) (int, error) {
 	startTime := service.formatTimestamp(startTimestamp)
 	endTime := service.formatTimestamp(endTimestamp)
 	// 生成字幕行
-	subtitleLine := fmt.Sprintf("%s --> %s\n%s\n\n", startTime, endTime, text)
+	subtitleLine := fmt.Sprintf("%d\n%s --> %s\n%s\n\n", sequence, startTime, endTime, text)
 	return writer.Write([]byte(subtitleLine))
 }
