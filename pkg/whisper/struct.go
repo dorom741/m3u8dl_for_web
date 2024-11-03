@@ -1,13 +1,8 @@
 package whisper
 
-import (
-	"fmt"
-	"io"
-)
-
 type WhisperInput struct {
-	FilePath string        `json:"filepath"`
-	Reader   io.ReadSeeker `json:"-"`
+	FilePath string `json:"filepath"`
+	//Reader   io.ReadSeeker `json:"-"`
 
 	Prompt      string  `json:"prompt"`
 	Temperature float32 `json:"temperature"`
@@ -29,24 +24,15 @@ type WhisperInput struct {
 // }
 
 type Segment struct {
-	Num   int     // Segment Number
-	Start float64 // Start is the start of the segment.
-	End   float64 // End is the end of the segment.
-	Text  string  // Text is the text of the segment.
+	Num   int     `json:"num"`   // Segment Number
+	Start float64 `json:"start"` // Start is the start of the segment.
+	End   float64 `json:"end"`   // End is the end of the segment.
+	Text  string  `json:"text"`  // Text is the text of the segment.
 }
 
-type Segments []Segment
+type WhisperOutput struct {
+	Segments []Segment
 
-// Return srtTimestamp
-func formatTimestamp(seconds float64) string {
-	h := int(seconds) / 3600
-	m := (int(seconds) % 3600) / 60
-	s := int(seconds) % 60
-	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
-}
-
-type WhisperOutput interface {
-	GetSegmentList() Segments
-	// return second 
-	GetDuration() float64
+	// seconds
+	Duration float64
 }

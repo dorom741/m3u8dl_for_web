@@ -6,7 +6,7 @@ import (
 )
 
 type WhisperHandler interface {
-	HandleWhisper(ctx context.Context, input WhisperInput) (WhisperOutput, error)
+	HandleWhisper(ctx context.Context, input WhisperInput) (*WhisperOutput, error)
 }
 
 var DefaultWhisperProvider = &WhisperProvider{}

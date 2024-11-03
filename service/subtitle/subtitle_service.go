@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
@@ -23,23 +24,33 @@ type SubtitleService struct {
 	tempAudioPath string
 	splitSize     int64
 	translation   translation.ITranslation
+	cache         *infra.FileCache
 }
 
-func NewSubtitleService(tempAudioPath string, translation translation.ITranslation) *SubtitleService {
+func NewSubtitleService(tempAudioPath string, cache *infra.FileCache, translation translation.ITranslation) *SubtitleService {
 	RegisterWhisperProvider()
 
 	return &SubtitleService{
 		tempAudioPath: tempAudioPath,
 		splitSize:     1024 * 1024 * 15, // 15MB
 		translation:   translation,
+		cache:         cache,
 	}
+}
+
+func (service *SubtitleService) cacheKey(provider string, input whisper.WhisperInput) string {
+	prefix := "subtitle_service"
+
+	filename := filepath.Base(input.FilePath)
+	ext := filepath.Ext(input.FilePath)
+
+	return fmt.Sprintf("%s_%s_%s_%f", prefix, filename[:len(filename)-len(ext)], provider, input.Temperature)
 }
 
 func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input model.SubtitleInput) error {
 	var (
-		filename           = filepath.Base(input.InputPath)
-		ext                = filepath.Ext(filename)
-		accumulateDuration = 0.0
+		filename = filepath.Base(input.InputPath)
+		ext      = filepath.Ext(filename)
 	)
 
 	processFunc, exist := whisper.DefaultWhisperProvider.Get(input.Provider)
@@ -48,50 +59,70 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	}
 
 	tempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ""))
-	print(tempPath)
+	subtitleTempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ".srt"))
 
 	if err := os.MkdirAll(tempPath, os.ModePerm); err != nil {
 		return err
 	}
 
-	subtitleFile, err := os.OpenFile(input.SavePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	subtitleTempFile, err := os.OpenFile(subtitleTempPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		return err
 	}
-	defer subtitleFile.Close()
+	defer subtitleTempFile.Close()
 
 	outputFileList, err := service.getAudioFromMediaWithFFmpeg(input.InputPath, tempPath, filename)
 	if err != nil {
 		return err
 	}
 
-	for _, audioPath := range outputFileList {
-		result, err := processFunc.HandleWhisper(ctx, whisper.WhisperInput{
+	var (
+		whisperOutput      *whisper.WhisperOutput
+		accumulateDuration = 0.0
+		totalFile          = len(outputFileList)
+		startTime          = time.Now() // 记录开始时间
+
+	)
+
+	for i, audioPath := range outputFileList {
+		whisperInput := whisper.WhisperInput{
 			FilePath:    audioPath,
 			Prompt:      input.Prompt,
 			Temperature: input.Temperature,
 			Language:    input.Language,
-		})
-		if err != nil {
-			return err
 		}
 
-		for _, segment := range result.GetSegmentList() {
-			startTime := segment.Start + accumulateDuration
-			endTime := segment.End + accumulateDuration
+		cacheKey := service.cacheKey(input.Provider, whisperInput)
+		if err := service.cache.Get(cacheKey, &whisperOutput); err != nil {
+			return err
+		} else if whisperOutput == nil {
+			infra.Logger.Infof("process segment file '%s' in whisper,progress:%d/%d", audioPath, i+1, totalFile)
+			whisperOutput, err = processFunc.HandleWhisper(ctx, whisperInput)
+			if err != nil {
+				return err
+			}
+			if err := service.cache.Set(cacheKey, whisperOutput); err != nil {
+				return err
+			}
+
+		}
+
+		for _, segment := range whisperOutput.Segments {
+			startTimestamp := segment.Start + accumulateDuration
+			endTimestamp := segment.End + accumulateDuration
 
 			segmentText := segment.Text
 			segmentText = ReplaceRepeatedWords(segmentText)
 
 			translationText := ""
 			if input.TranslateTo != "" {
-				translationText, err = service.translation.Translate(ctx, segmentText,"", input.TranslateTo)
+				translationText, err = service.translation.Translate(ctx, segmentText, "", input.TranslateTo)
 				if err != nil {
 					return err
 				}
 			}
 
-			if _, err := service.writeSubtitlesLine(subtitleFile, startTime, endTime, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {
+			if _, err := service.writeSubtitlesLine(subtitleTempFile, startTimestamp, endTimestamp, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {
 				return err
 			}
 
@@ -100,7 +131,18 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 			//}
 		}
 
-		accumulateDuration += result.GetDuration()
+		accumulateDuration += whisperOutput.Duration
+	}
+
+	infra.Logger.Infof("success process file '%s' in whisper,duration %s", input.InputPath, time.Since(startTime).String())
+
+	if err = os.RemoveAll(tempPath); err != nil {
+		return err
+	}
+
+	_ = subtitleTempFile.Close()
+	if err = os.Rename(subtitleTempPath, input.SavePath); err != nil {
+
 	}
 
 	return nil

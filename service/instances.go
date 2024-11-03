@@ -28,7 +28,7 @@ func InitService(config *conf.Config) {
 
 	translationService := translation.NewDeepLXTranslation(config.Translation.DeeplX.Url, infra.DefaultHttpClient)
 
-	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(), translationService)
+	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(), infra.DefaultCache, translationService)
 
 	SubtitleWorkerServiceInstance = NewSubtitleWorkerService()
 }

@@ -2,9 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -15,6 +12,8 @@ import (
 
 	"github.com/conneroisu/groq-go"
 )
+
+var _ whisper.WhisperHandler = &GroqService{}
 
 type GroqService struct {
 	apiKey string
@@ -49,23 +48,13 @@ func NewGroqService(apiKey string, cache *infra.FileCache, proxyURLString string
 func (service *GroqService) cacheKey(input whisper.WhisperInput) string {
 	prefix := "groqcache"
 
-	if input.Reader != nil {
-		h := sha256.New()
-
-		// 读取数据并写入哈希对象
-		if _, err := io.Copy(h, input.Reader); err != nil {
-			return ""
-		}
-		return fmt.Sprintf("%s_%x", prefix, h.Sum(nil))
-	}
-
 	filename := filepath.Base(input.FilePath)
 	ext := filepath.Ext(input.FilePath)
 
 	return prefix + "_" + filename[:len(filename)-len(ext)]
 }
 
-func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (whisper.WhisperOutput, error) {
+func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
 	var (
 		resp     *groq.AudioResponse
 		cacheKey = service.cacheKey(input)
@@ -75,7 +64,7 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 		return nil, err
 	} else if resp != nil {
 		infra.Logger.Infof("handle whisper using cache: %s", cacheKey)
-		return &GroqWhisperOutput{AudioResponse: resp}, nil
+		return service.GetWhisperOutput(*resp), nil
 	}
 
 	response, err := service.client.CreateTranscription(ctx, groq.AudioRequest{
@@ -95,17 +84,13 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 		return nil, err
 	}
 
-	return &GroqWhisperOutput{AudioResponse: &response}, nil
+	return service.GetWhisperOutput(response), nil
 }
 
-type GroqWhisperOutput struct {
-	*groq.AudioResponse
-}
+func (service *GroqService) GetWhisperOutput(response groq.AudioResponse) *whisper.WhisperOutput {
+	segmentList := make([]whisper.Segment, 0, len(response.Segments))
 
-func (output *GroqWhisperOutput) GetSegmentList() whisper.Segments {
-	segmentList := make(whisper.Segments, 0, len(output.Segments))
-
-	for i, segment := range output.Segments {
+	for i, segment := range response.Segments {
 		segmentList = append(segmentList, whisper.Segment{
 			Num:   i,
 			Start: segment.Start,
@@ -114,9 +99,5 @@ func (output *GroqWhisperOutput) GetSegmentList() whisper.Segments {
 		})
 	}
 
-	return segmentList
-}
-
-func (output *GroqWhisperOutput) GetDuration() float64 {
-	return output.Duration
+	return &whisper.WhisperOutput{Segments: segmentList, Duration: response.Duration}
 }
