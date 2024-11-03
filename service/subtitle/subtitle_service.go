@@ -77,23 +77,24 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	}
 
 	var (
-		whisperOutput      *whisper.WhisperOutput
 		accumulateDuration = 0.0
 		sequence           = int64(0)
 		totalFile          = len(outputFileList)
 		startTime          = time.Now() // 记录开始时间
-
 	)
 
 	for i, audioPath := range outputFileList {
-		whisperInput := whisper.WhisperInput{
-			FilePath:    audioPath,
-			Prompt:      input.Prompt,
-			Temperature: input.Temperature,
-			Language:    input.Language,
-		}
+		var (
+			whisperOutput *whisper.WhisperOutput
+			whisperInput  = whisper.WhisperInput{
+				FilePath:    audioPath,
+				Prompt:      input.Prompt,
+				Temperature: input.Temperature,
+				Language:    input.Language,
+			}
+			cacheKey = service.cacheKey(input.Provider, whisperInput)
+		)
 
-		cacheKey := service.cacheKey(input.Provider, whisperInput)
 		if err := service.cache.Get(cacheKey, &whisperOutput); err != nil {
 			return err
 		} else if whisperOutput == nil {
@@ -138,14 +139,15 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 
 	infra.Logger.Infof("success process file '%s' in whisper,duration %s", input.InputPath, time.Since(startTime).String())
 
-	if err = os.RemoveAll(tempPath); err != nil {
-		return err
-	}
-
 	_ = subtitleTempFile.Close()
 	if err = os.Rename(subtitleTempPath, input.SavePath); err != nil {
+		return err
 
 	}
+
+	defer func(path string) {
+		_ = os.RemoveAll(path)
+	}(tempPath)
 
 	return nil
 }
