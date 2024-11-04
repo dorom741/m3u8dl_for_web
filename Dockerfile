@@ -8,9 +8,10 @@ WORKDIR /whisper.cpp
 
 RUN git clone https://github.com/ggerganov/whisper.cpp.git .
 
-RUN WHISPER_SDL2=ON  make libwhisper.a
+# RUN WHISPER_SDL2=ON  make libwhisper.a
+RUN  cmake -B build -DWHISPER_SDL2=on && cmake --build build --target whisper 
 
-ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/src
+ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/src:/whisper.cpp/build/src
 ENV C_INCLUDE_PATH=/whisper.cpp/include:/whisper.cpp/ggml/include
 
 # ENV GOPROXY=https://goproxy.cn,direct
