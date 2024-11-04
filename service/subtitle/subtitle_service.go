@@ -1,6 +1,7 @@
 package subtitle
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -65,11 +66,13 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 		return err
 	}
 
-	subtitleTempFile, err := os.OpenFile(subtitleTempPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	defer subtitleTempFile.Close()
+	subtitleBuffer := new(bytes.Buffer)
+	defer func ()  {
+		if err := os.WriteFile(input.InputPath, subtitleBuffer.Bytes(),os.ModePerm);err != nil {
+			infra.Logger.Warnf("write target file error,fallback write to tempfile:%s",subtitleTempPath)
+			_ = os.WriteFile(subtitleTempPath, subtitleBuffer.Bytes(),os.ModePerm)
+		}
+	}()
 
 	outputFileList, err := service.getAudioFromMediaWithFFmpeg(input.InputPath, tempPath, filename)
 	if err != nil {
@@ -125,7 +128,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 				}
 			}
 
-			if _, err := service.writeSubtitlesLine(subtitleTempFile, sequence, startTimestamp, endTimestamp, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {
+			if _, err := service.writeSubtitlesLine(subtitleBuffer, sequence, startTimestamp, endTimestamp, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {
 				return err
 			}
 
@@ -139,18 +142,15 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 
 	infra.Logger.Infof("success process file '%s' in whisper,duration %s", input.InputPath, time.Since(startTime).String())
 
-	_ = subtitleTempFile.Close()
-	if err = os.Rename(subtitleTempPath, input.SavePath); err != nil {
-		return err
 
-	}
-
-	defer func(path string) {
-		_ = os.RemoveAll(path)
-	}(tempPath)
+	defer func() {
+		_ = os.RemoveAll(tempPath)
+	}()
 
 	return nil
 }
+
+
 
 func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string) ([]string, error) {
 	ext := path.Ext(outputName)
