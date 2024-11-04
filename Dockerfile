@@ -15,7 +15,6 @@ RUN  cmake -B build -DWHISPER_SDL2=on && cmake --build build --target whisper
 ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/build/src:/whisper.cpp/build/ggml/src
 ENV C_INCLUDE_PATH=/whisper.cpp/include:/whisper.cpp/ggml/include
 
-ENV GOPROXY=http://10.8.22.212:8081/repository/go-group/,direct
 ENV GOSUMDB=off
 WORKDIR /app
 
