@@ -9,6 +9,9 @@ WORKDIR /whisper.cpp
 RUN git clone https://github.com/ggerganov/whisper.cpp.git .
 
 # RUN WHISPER_SDL2=ON  make libwhisper.a
+
+RUN sed -i 's/add_library(whisper/add_library(whisper STATIC/' src/CMakeLists.txt  && \
+    sed -i 's/add_library(ggml/add_library(ggml STATIC/' ggml/src/CMakeLists.txt 
 RUN  cmake -B build -DWHISPER_SDL2=on && cmake --build build --target whisper 
 
 ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/src:/whisper.cpp/build/src
