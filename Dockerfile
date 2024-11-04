@@ -37,6 +37,7 @@ WORKDIR /app
 COPY --from=build /app/app .
 COPY --from=build /whisper.cpp/build/ggml/src/libggml.so ./libggml.so
 COPY --from=build /whisper.cpp/build/src/libwhisper.so.1.7.1 ./libwhisper.so
+RUN ln -s /app/libwhisper.so /app/libwhisper.so.1
 
 ENV PATH="/app:${PATH}"
 
