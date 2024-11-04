@@ -10,14 +10,13 @@ RUN git clone https://github.com/ggerganov/whisper.cpp.git .
 
 # RUN WHISPER_SDL2=ON  make libwhisper.a
 
-RUN sed -i 's/add_library(whisper/add_library(whisper STATIC/' src/CMakeLists.txt  && \
-    sed -i 's/add_library(ggml/add_library(ggml STATIC/' ggml/src/CMakeLists.txt 
 RUN  cmake -B build -DWHISPER_SDL2=on && cmake --build build --target whisper 
 
-ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/src:/whisper.cpp/build/src
+ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/build/src:/whisper.cpp/build/ggml/src
 ENV C_INCLUDE_PATH=/whisper.cpp/include:/whisper.cpp/ggml/include
 
-# ENV GOPROXY=https://goproxy.cn,direct
+ENV GOPROXY=http://10.8.22.212:8081/repository/go-group/,direct
+ENV GOSUMDB=off
 WORKDIR /app
 
 COPY . .
@@ -37,6 +36,10 @@ RUN  apt-get update  \
 WORKDIR /app
 
 COPY --from=build /app/app .
+COPY --from=build /whisper.cpp/build/ggml/src/libggml.so ./libggml.so
+COPY --from=build /whisper.cpp/build/src/libwhisper.so.1.7.1 ./libwhisper.so
+
+ENV PATH="/app:${PATH}"
 
 ADD resource  resource
 
