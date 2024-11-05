@@ -3,11 +3,12 @@ package local
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/pkg/whisper"
 
@@ -29,6 +30,10 @@ func NewLocalWhisper(modelPath string) *LocalWhisper {
 	return &LocalWhisper{
 		modelPath: modelPath,
 	}
+}
+
+func (localWhisper *LocalWhisper) MaximumFileSize() int64 {
+	return 0
 }
 
 func (localWhisper *LocalWhisper) newContext() (whispercpp.Context, error) {
@@ -54,7 +59,6 @@ func (localWhisper *LocalWhisper) newContext() (whispercpp.Context, error) {
 	}
 
 	return modelContext, nil
-
 }
 
 func (localWhisper *LocalWhisper) closeModel() {
@@ -76,9 +80,7 @@ func (localWhisper *LocalWhisper) closeModel() {
 		}
 		localWhisper.whisperModel = nil
 		logrus.Infoln("close local whisper model")
-
 	})
-
 }
 
 func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
@@ -88,8 +90,10 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 	}
 	defer localWhisper.closeModel()
 
-	if err = modelContext.SetLanguage(input.Language); err != nil {
-		return nil, err
+	if len(input.Language) != 0 {
+		if err = modelContext.SetLanguage(input.Language); err != nil {
+			return nil, err
+		}
 	}
 
 	file, err := os.Open(input.FilePath)

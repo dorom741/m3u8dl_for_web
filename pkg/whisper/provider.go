@@ -7,6 +7,8 @@ import (
 
 type WhisperHandler interface {
 	HandleWhisper(ctx context.Context, input WhisperInput) (*WhisperOutput, error)
+	// 返回最大单次处理文件大小 (Bytes)
+	MaximumFileSize() int64
 }
 
 var DefaultWhisperProvider = &WhisperProvider{}

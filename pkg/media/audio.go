@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ConvertToWavOption struct {
@@ -14,18 +16,17 @@ type ConvertToWavOption struct {
 	// Default 1
 	Channel int64
 
-	//Set zero to no segment,unit seconds
+	// Set zero to no segment,unit seconds
 	SegmentTime int64
 
 	OverrideOnExist bool
 }
 
+// ffmpeg -i example.mp4 -vn -acodec pcm_s16le -ar 16000  -ac 1   -f segment -segment_time 600    example%03d.wav
+// 文件大小（字节） = 采样率 × 采样位深 × 声道数 × 时长 / 8
 func ConvertToWavWithFFmpeg(inputFile string, outputPath string, option ConvertToWavOption) error {
-	// ffmpeg -i example.mp4 -vn -acodec pcm_s16le -ar 16000  -ac 1   -f segment -segment_time 600    example%03d.wav
-	// 文件大小（字节） = 采样率 × 采样位深 × 声道数 × 时长 / 8
-	// 900秒 ->27M
 	var (
-		out bytes.Buffer
+		out                 bytes.Buffer
 		overrideOnExistFlag = "-n"
 	)
 
@@ -37,12 +38,12 @@ func ConvertToWavWithFFmpeg(inputFile string, outputPath string, option ConvertT
 		option.SampleRate = 16000
 	}
 
-	if option.OverrideOnExist {
+	if option.OverrideOnExist || option.SegmentTime == 0 {
 		overrideOnExistFlag = "-y"
 	}
 
 	ffmpegArgs := []string{
-		"-hide_banner", "-i", inputFile,overrideOnExistFlag,
+		"-hide_banner", "-i", inputFile, overrideOnExistFlag,
 		"-vn", "-acodec", "pcm_s16le", "-ar", strconv.FormatInt(option.SampleRate, 10), "-ac", strconv.FormatInt(option.Channel, 10),
 	}
 
@@ -61,7 +62,7 @@ func ConvertToWavWithFFmpeg(inputFile string, outputPath string, option ConvertT
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 
-	fmt.Printf("exec ffmpeg command line:%s\n", cmd.String())
+	logrus.Infof("exec ffmpeg command line:%s\n", cmd.String())
 
 	err = cmd.Run()
 	if err != nil {
@@ -69,5 +70,4 @@ func ConvertToWavWithFFmpeg(inputFile string, outputPath string, option ConvertT
 	}
 
 	return nil
-
 }

@@ -54,6 +54,12 @@ func (service *GroqService) cacheKey(input whisper.WhisperInput) string {
 	return prefix + "_" + filename[:len(filename)-len(ext)]
 }
 
+// 最大 25MB
+func (service *GroqService) MaximumFileSize() int64 {
+	// 1024 * 1024 * 25
+	return 26214400
+}
+
 func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
 	var (
 		resp     *groq.AudioResponse

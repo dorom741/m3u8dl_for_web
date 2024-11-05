@@ -55,10 +55,8 @@ func (controller *TaskController) AddM3u8dlTask(c *gin.Context) {
 		}
 		err = controller.m3u8dlService.AddTask(taskRecord)
 		if err != nil {
-			if err != nil {
-				c.JSON(400, gin.H{"err": err.Error()})
-				return
-			}
+			c.JSON(400, gin.H{"err": err.Error()})
+			return
 		}
 	}
 
@@ -79,7 +77,7 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 	}
 
 	if req.SaveSubtitleFilePath == "" {
-		req.SaveSubtitleFilePath = strings.ReplaceAll(req.Filepath, path.Ext(req.Filepath), "srt")
+		req.SaveSubtitleFilePath = strings.ReplaceAll(req.Filepath, path.Ext(req.Filepath), ".ass")
 	}
 
 	taskRecord := model.TaskRecord[model.SubtitleInput, model.SubtitleOutput]{
@@ -104,6 +102,5 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 
 	if err := controller.subtitleService.AddTask(taskRecord); err != nil {
 		c.JSON(400, gin.H{"err": err.Error()})
-
 	}
 }

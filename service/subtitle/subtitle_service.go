@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -16,14 +14,12 @@ import (
 	"m3u8dl_for_web/model"
 
 	"m3u8dl_for_web/pkg/media"
-	"m3u8dl_for_web/pkg/split_writer"
 	"m3u8dl_for_web/pkg/whisper"
 	"m3u8dl_for_web/service/translation"
 )
 
 type SubtitleService struct {
 	tempAudioPath string
-	splitSize     int64
 	translation   translation.ITranslation
 	cache         *infra.FileCache
 }
@@ -33,7 +29,6 @@ func NewSubtitleService(tempAudioPath string, cache *infra.FileCache, translatio
 
 	return &SubtitleService{
 		tempAudioPath: tempAudioPath,
-		splitSize:     1024 * 1024 * 15, // 15MB
 		translation:   translation,
 		cache:         cache,
 	}
@@ -45,36 +40,42 @@ func (service *SubtitleService) cacheKey(provider string, input whisper.WhisperI
 	filename := filepath.Base(input.FilePath)
 	ext := filepath.Ext(input.FilePath)
 
-	return fmt.Sprintf("%s_%s_%s_%f", prefix, filename[:len(filename)-len(ext)], provider, input.Temperature)
+	return fmt.Sprintf("%s_%s_%s_%.2f", prefix, filename[:len(filename)-len(ext)], provider, input.Temperature)
 }
 
 func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input model.SubtitleInput) error {
 	var (
-		filename = filepath.Base(input.InputPath)
-		ext      = filepath.Ext(filename)
+		filename     = filepath.Base(input.InputPath)
+		ext          = filepath.Ext(filename)
+		pureFilename = strings.ReplaceAll(filename, ext, "")
 	)
 
-	processFunc, exist := whisper.DefaultWhisperProvider.Get(input.Provider)
+	handler, exist := whisper.DefaultWhisperProvider.Get(input.Provider)
 	if !exist {
 		return fmt.Errorf("whisper provider '%s' not exist", input.Provider)
 	}
 
-	tempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ""))
-	subtitleTempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ".srt"))
+	tempPath := path.Join(service.tempAudioPath, pureFilename)
+	subtitleTempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ".ass"))
 
 	if err := os.MkdirAll(tempPath, os.ModePerm); err != nil {
 		return err
 	}
 
 	subtitleBuffer := new(bytes.Buffer)
-	defer func ()  {
-		if err := os.WriteFile(input.InputPath, subtitleBuffer.Bytes(),os.ModePerm);err != nil {
-			infra.Logger.Warnf("write target file error,fallback write to tempfile:%s",subtitleTempPath)
-			_ = os.WriteFile(subtitleTempPath, subtitleBuffer.Bytes(),os.ModePerm)
+	defer func() {
+		if err := os.WriteFile(input.SavePath, subtitleBuffer.Bytes(), os.ModePerm); err != nil {
+			infra.Logger.Warnf("write target file error,fallback write to tempfile:%s", subtitleTempPath)
+			_ = os.WriteFile(subtitleTempPath, subtitleBuffer.Bytes(), os.ModePerm)
 		}
 	}()
 
-	outputFileList, err := service.getAudioFromMediaWithFFmpeg(input.InputPath, tempPath, filename)
+	subtitleSub := NewSubtitleSub()
+	comment := fmt.Sprintf("generate input info: Provider:%s,Temperature:%.2f", input.Provider, input.Temperature)
+	subtitleSub.subtitles.Metadata.Comments = []string{comment}
+	subtitleSub.subtitles.Metadata.Title = pureFilename
+
+	outputFileList, err := service.getAudioFromMediaWithFFmpeg(input.InputPath, tempPath, filename, handler.MaximumFileSize())
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 			return err
 		} else if whisperOutput == nil {
 			infra.Logger.Infof("process segment file '%s' in whisper,progress:%d/%d", audioPath, i+1, totalFile)
-			whisperOutput, err = processFunc.HandleWhisper(ctx, whisperInput)
+			whisperOutput, err = handler.HandleWhisper(ctx, whisperInput)
 			if err != nil {
 				return err
 			}
@@ -128,13 +129,12 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 				}
 			}
 
-			if _, err := service.writeSubtitlesLine(subtitleBuffer, sequence, startTimestamp, endTimestamp, fmt.Sprintf("%s\n%s", segmentText, translationText)); err != nil {
-				return err
+			if translationText == "" {
+				subtitleSub.AddLine(int(sequence), startTimestamp, endTimestamp, segmentText, "")
+			} else {
+				subtitleSub.AddLine(int(sequence), startTimestamp, endTimestamp, translationText, segmentText)
 			}
 
-			//if _, err := service.writeSubtitlesLine(subtitleFile, startTime, endTime, segment.Text); err != nil {
-			//	return err
-			//}
 		}
 
 		accumulateDuration += whisperOutput.Duration
@@ -142,6 +142,9 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 
 	infra.Logger.Infof("success process file '%s' in whisper,duration %s", input.InputPath, time.Since(startTime).String())
 
+	if err := subtitleSub.WriteToFile(subtitleBuffer); err != nil {
+		return nil
+	}
 
 	defer func() {
 		_ = os.RemoveAll(tempPath)
@@ -150,22 +153,34 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	return nil
 }
 
+func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string, segmentSize int64) ([]string, error) {
+	var (
+		suffix            = ""
+		segmentTime int64 = 0
+		ext               = path.Ext(outputName)
+	)
 
-
-func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string) ([]string, error) {
-	ext := path.Ext(outputName)
-	fileName := fmt.Sprintf("%s_%s%s", outputName[:len(outputName)-len(ext)], "%03d", ".wav")
-	// fileName := fmt.Sprintf("%s%s", "%03d", ".wav")
-
-	outputPath := path.Join(ouputDir, fileName)
-
-	if err := media.ConvertToWavWithFFmpeg(inputFile, outputPath, media.ConvertToWavOption{SegmentTime: 800}); err != nil {
-		return nil, err
+	if segmentSize > 0 {
+		// 采样率 × 采样位深 × 声道数 × 时长 / 8
+		segmentTime = segmentSize * 8 / 16 / 16000
+		suffix = "%03d"
 	}
-
 	dirEntryList, err := os.ReadDir(ouputDir)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(dirEntryList) == 0 {
+		fileName := fmt.Sprintf("%s_%s%s", outputName[:len(outputName)-len(ext)], suffix, ".wav")
+		outputPath := path.Join(ouputDir, fileName)
+		if err := media.ConvertToWavWithFFmpeg(inputFile, outputPath, media.ConvertToWavOption{SegmentTime: segmentTime}); err != nil {
+			return nil, err
+		}
+
+		dirEntryList, err = os.ReadDir(ouputDir)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	fileList := make([]string, 0)
@@ -181,58 +196,17 @@ func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ou
 	return fileList, nil
 }
 
-// Deprecated
-func (service *SubtitleService) getAudioFromMedia(inputFile string, ouputDir string, outputName string) ([]string, error) {
-	file, err := os.Open(inputFile)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+// func (service *SubtitleService) formatTimestamp(seconds float64) string {
+// 	h := int(seconds) / 3600
+// 	m := (int(seconds) % 3600) / 60
+// 	s := int(seconds) % 60
+// 	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
+// }
 
-	firstBlock := make([]byte, 512)
-	if _, err := file.Read(firstBlock); err != nil {
-		return nil, err
-	}
-
-	if _, err := file.Seek(0, 0); err != nil {
-		return nil, err
-	}
-
-	outputPath := path.Join(ouputDir, outputName)
-	rotateFileWriter, err := split_writer.NewRotateFileWriter(outputPath, service.splitSize)
-	if err != nil {
-		return nil, err
-	}
-	defer rotateFileWriter.Close()
-
-	contentType := http.DetectContentType(firstBlock)
-	FirstContentType := strings.Split(contentType, "/")[0]
-	switch FirstContentType {
-	case "video":
-		if err = media.DemuxAudio(file, rotateFileWriter); err != nil {
-			return nil, err
-		}
-	case "audio":
-
-		if err = media.MuxMp3ForSplit(file, rotateFileWriter); err != nil {
-			return nil, err
-		}
-	}
-
-	return rotateFileWriter.WritedFileList(), nil
-}
-
-func (service *SubtitleService) formatTimestamp(seconds float64) string {
-	h := int(seconds) / 3600
-	m := (int(seconds) % 3600) / 60
-	s := int(seconds) % 60
-	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
-}
-
-func (service *SubtitleService) writeSubtitlesLine(writer io.Writer, sequence int64, startTimestamp float64, endTimestamp float64, text string) (int, error) {
-	startTime := service.formatTimestamp(startTimestamp)
-	endTime := service.formatTimestamp(endTimestamp)
-	// 生成字幕行
-	subtitleLine := fmt.Sprintf("%d\n%s --> %s\n%s\n\n", sequence, startTime, endTime, text)
-	return writer.Write([]byte(subtitleLine))
-}
+// func (service *SubtitleService) writeSubtitlesLine(writer io.Writer, sequence int64, startTimestamp float64, endTimestamp float64, text string) (int, error) {
+// 	startTime := service.formatTimestamp(startTimestamp)
+// 	endTime := service.formatTimestamp(endTimestamp)
+// 	// 生成字幕行
+// 	subtitleLine := fmt.Sprintf("%d\n%s --> %s\n%s\n\n", sequence, startTime, endTime, text)
+// 	return writer.Write([]byte(subtitleLine))
+// }
