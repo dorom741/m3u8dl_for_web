@@ -12,24 +12,22 @@ type subtitleSub struct {
 }
 
 func NewSubtitleSub() *subtitleSub {
-	s := astisub.NewSubtitles()
+	var (
+		sub = &subtitleSub{}
+		s   = astisub.NewSubtitles()
+	)
+
 	s.Metadata = &astisub.Metadata{}
 
-	var (
-		mainFontSize   float64 = 20.0
-		secondFontSize float64 = 10.0
-		secondMarginV  int     = 10.0
-	)
-	s.Styles["main"] = &astisub.Style{ID: "main", InlineStyle: &astisub.StyleAttributes{SSAFontSize: &mainFontSize, SSAPrimaryColour: astisub.ColorWhite}}
+	s.Styles["main"] = &astisub.Style{ID: "main", InlineStyle: sub.newStyleAttributes()}
 	secondInlineStyle := *s.Styles["main"].InlineStyle
-	secondInlineStyle.SSAFontSize = &secondFontSize
-	secondInlineStyle.SSAMarginVertical = &secondMarginV
+	secondInlineStyle.SSAFontSize = floatPointer(10)
+	secondInlineStyle.SSAMarginVertical = intPointer(5)
 
 	s.Styles["second"] = &astisub.Style{ID: "second", InlineStyle: &secondInlineStyle}
 
-	return &subtitleSub{
-		subtitles: s,
-	}
+	sub.subtitles = s
+	return sub
 }
 
 func (sub *subtitleSub) Metadata() *astisub.Metadata {
@@ -61,4 +59,48 @@ func (sub *subtitleSub) AddLine(index int, startTimeStamp, endTimeStamp float64,
 
 func (sub *subtitleSub) WriteToFile(o io.Writer) error {
 	return sub.subtitles.WriteToSSA(o)
+}
+
+func (sub *subtitleSub) newStyleAttributes() *astisub.StyleAttributes {
+
+	return &astisub.StyleAttributes{
+		SSAAlignment:       intPointer(2),
+		SSAAlphaLevel:      floatPointer(1.0),
+		SSAAngle:           floatPointer(0.0),
+		SSABackColour:      &astisub.Color{Alpha: 100, Red: 0, Green: 0, Blue: 0}, // #64000000,
+		SSABold:            boolPointer(true),
+		SSABorderStyle:     intPointer(1),
+		SSAEffect:          "",
+		SSAEncoding:        intPointer(1),
+		SSAFontName:        "Noto Sans",
+		SSAFontSize:        floatPointer(15.0),
+		SSAItalic:          boolPointer(false),
+		SSALayer:           intPointer(0),
+		SSAMarginLeft:      intPointer(10),
+		SSAMarginRight:     intPointer(10),
+		SSAMarginVertical:  intPointer(20),
+		SSAMarked:          boolPointer(false),
+		SSAOutline:         floatPointer(2.0),
+		SSAOutlineColour:   &astisub.Color{Alpha: 0, Red: 0, Green: 0, Blue: 0},         // #00000000,
+		SSAPrimaryColour:   &astisub.Color{Alpha: 255, Red: 255, Green: 255, Blue: 255}, // #00FFFFFF,
+		SSAScaleX:          floatPointer(100.0),
+		SSAScaleY:          floatPointer(100.0),
+		SSASecondaryColour: &astisub.Color{Alpha: 255, Red: 0, Green: 0, Blue: 0}, // #000000FF,
+		SSAShadow:          floatPointer(0.0),
+		SSASpacing:         floatPointer(0.0),
+		SSAStrikeout:       boolPointer(false),
+		SSAUnderline:       boolPointer(false),
+	}
+}
+
+func intPointer(i int) *int {
+	return &i
+}
+
+func floatPointer(f float64) *float64 {
+	return &f
+}
+
+func boolPointer(b bool) *bool {
+	return &b
 }

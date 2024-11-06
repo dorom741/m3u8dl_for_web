@@ -127,6 +127,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 				if err != nil {
 					return err
 				}
+				translationText = SegmentationByPunctuation(translationText, " ")
 			}
 
 			if translationText == "" {
