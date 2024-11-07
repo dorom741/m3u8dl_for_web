@@ -2,7 +2,6 @@ package queue_worker
 
 import (
 	"errors"
-	"sync/atomic"
 )
 
 type QueueWorkerOption struct {
@@ -12,9 +11,10 @@ type QueueWorkerOption struct {
 }
 
 type QueueWorker[T any] struct {
-	option      QueueWorkerOption
-	queue       chan T
-	workerCount atomic.Int64
+	option QueueWorkerOption
+	queue  chan T
+	//workerCount atomic.Int64
+	workingWorkerChan chan struct{}
 
 	onTaskRun    func(task T) error
 	onTaskFinish func(task T, err error)
@@ -27,15 +27,16 @@ func NewQueueWorker[T any](option QueueWorkerOption, consumer QueueWorkerConsume
 	}
 
 	return QueueWorker[T]{
-		queue:        make(chan T, option.MaxQueueLen),
-		option:       option,
-		onTaskRun:    consumer.OnTaskRun,
-		onTaskFinish: consumer.OnTaskFinish,
+		workingWorkerChan: make(chan struct{}, option.MaxWorker),
+		queue:             make(chan T, option.MaxQueueLen),
+		option:            option,
+		onTaskRun:         consumer.OnTaskRun,
+		onTaskFinish:      consumer.OnTaskFinish,
 	}
 }
 
 func (worker *QueueWorker[T]) CurrentWorkingWorker() int64 {
-	return worker.workerCount.Load()
+	return int64(len(worker.workingWorkerChan))
 }
 
 func (worker *QueueWorker[T]) QueueLen() int64 {
@@ -45,12 +46,18 @@ func (worker *QueueWorker[T]) QueueLen() int64 {
 func (worker *QueueWorker[T]) Run() {
 
 	for {
-		if worker.workerCount.Load() < worker.option.MaxWorker {
-			task := <-worker.queue
-			go worker.doTask(task)
-		}
+		worker.workingWorkerChan <- struct{}{}
+		task := <-worker.queue
+		go func() {
+			defer func() {
+				<-worker.workingWorkerChan
+			}()
+			worker.doTask(task)
+
+		}()
 
 	}
+
 }
 
 func (worker *QueueWorker[T]) AddTask(task T) error {
@@ -63,7 +70,6 @@ func (worker *QueueWorker[T]) AddTask(task T) error {
 }
 
 func (worker *QueueWorker[T]) doTask(task T) {
-	worker.workerCount.Add(1)
 	var err error
 
 	for i := 0; i < worker.option.RetryOnFail; i++ {
@@ -73,7 +79,5 @@ func (worker *QueueWorker[T]) doTask(task T) {
 		}
 	}
 	worker.onTaskFinish(task, err)
-
-	worker.workerCount.Add(-1)
 
 }
