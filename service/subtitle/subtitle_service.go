@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"path/filepath"
@@ -65,7 +66,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	subtitleBuffer := new(bytes.Buffer)
 	defer func() {
 		if err := os.WriteFile(input.SavePath, subtitleBuffer.Bytes(), os.ModePerm); err != nil {
-			infra.Logger.Warnf("write target file error,fallback write to tempfile:%s", subtitleTempPath)
+			logrus.Warnf("write target file error,fallback write to tempfile:%s", subtitleTempPath)
 			_ = os.WriteFile(subtitleTempPath, subtitleBuffer.Bytes(), os.ModePerm)
 		}
 	}()
@@ -102,7 +103,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 		if err := service.cache.Get(cacheKey, &whisperOutput); err != nil {
 			return err
 		} else if whisperOutput == nil {
-			infra.Logger.Infof("process segment file '%s' in whisper,progress:%d/%d", audioPath, i+1, totalFile)
+			logrus.Infof("process segment file '%s' in whisper,progress:%d/%d", audioPath, i+1, totalFile)
 			whisperOutput, err = handler.HandleWhisper(ctx, whisperInput)
 			if err != nil {
 				return err
@@ -142,7 +143,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 		accumulateDuration += whisperOutput.Duration
 	}
 
-	infra.Logger.Infof("success process file '%s' in whisper,duration %s", input.InputPath, time.Since(startTime).String())
+	logrus.Infof("success process file '%s' in whisper,duration %s", input.InputPath, time.Since(startTime).String())
 
 	if err := subtitleSub.WriteToFile(subtitleBuffer); err != nil {
 		return nil
@@ -193,7 +194,7 @@ func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ou
 		}
 		fileList = append(fileList, path.Join(ouputDir, dirEntry.Name()))
 	}
-	infra.Logger.Infof("output file list %+v", fileList)
+	logrus.Infof("output file list %+v", fileList)
 
 	return fileList, nil
 }

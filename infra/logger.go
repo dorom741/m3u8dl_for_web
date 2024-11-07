@@ -8,8 +8,6 @@ import (
 	"os"
 )
 
-var Logger = logrus.New()
-
 func InitLogger(conf *conf.Config) {
 	logFile := &lumberjack.Logger{
 		Filename: conf.Log.Path,
@@ -22,12 +20,12 @@ func InitLogger(conf *conf.Config) {
 
 	multiWriter := io.MultiWriter(logFile, os.Stdout)
 
-	Logger.SetFormatter(&logrus.TextFormatter{
+	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors:   true,
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 
-	Logger.SetReportCaller(true)
+	logrus.SetReportCaller(true)
 	//Logger.SetOutput(os.Stdout)
-	Logger.SetOutput(multiWriter)
+	logrus.SetOutput(multiWriter)
 }

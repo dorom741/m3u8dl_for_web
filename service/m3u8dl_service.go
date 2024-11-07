@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"os/exec"
@@ -12,7 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
 	"m3u8dl_for_web/pkg/queue_worker"
 
@@ -46,7 +46,7 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput,
 	req := task.Input.ToStartDownloadReq()
 	req.ProgressBarShow = true
 	downloadEnv := m3u8d.DownloadEnv{}
-	infra.Logger.Infof("m3u8dl req %+v", req)
+	logrus.Infof("m3u8dl req %+v", req)
 	errMsg := downloadEnv.StartDownload(req)
 	if errMsg != "" {
 		return fmt.Errorf("%s", errMsg)
@@ -54,7 +54,7 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput,
 
 	resp := downloadEnv.WaitDownloadFinish()
 	if strings.Contains(resp.ErrMsg, io.ErrUnexpectedEOF.Error()) {
-		infra.Logger.Warnf("m3u8 '%s' merge error:%s,retry with ffmpeg", req.M3u8Url, resp.ErrMsg)
+		logrus.Warnf("m3u8 '%s' merge error:%s,retry with ffmpeg", req.M3u8Url, resp.ErrMsg)
 		if output, err := service.MergeWithFFMPEG(task); err != nil {
 			return fmt.Errorf("merge with ffmpeg error:%s,output: %s", err, output)
 		}
@@ -79,7 +79,7 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput,
 	}
 
 	if resp.IsSkipped {
-		infra.Logger.Warnf("m3u8 url:%s download is skiped,save to %s", task.Input.URL, resp.SaveFileTo)
+		logrus.Warnf("m3u8 url:%s download is skiped,save to %s", task.Input.URL, resp.SaveFileTo)
 	}
 
 	return nil
@@ -88,19 +88,19 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput,
 func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput], taskErr error) {
 	errMsg := ""
 	if taskErr != nil {
-		infra.Logger.Errorf("m3u8 url:%s download error:%s", task.Input.URL, taskErr.Error())
+		logrus.Errorf("m3u8 url:%s download error:%s", task.Input.URL, taskErr.Error())
 		errMsg = taskErr.Error()
 	} else {
-		infra.Logger.Infof("m3u8 url:%s download success,save to %s", task.Input.URL, task.Input.GetSavePath())
+		logrus.Infof("m3u8 url:%s download success,save to %s", task.Input.URL, task.Input.GetSavePath())
 		err := os.Chmod(task.Input.GetSavePath(), 0o777) // 注意前面的 0，表示八进制
 		if err != nil {
-			infra.Logger.Warnf("set permissive permissions on '%s' error ", task.Input.GetSavePath())
+			logrus.Warnf("set permissive permissions on '%s' error ", task.Input.GetSavePath())
 		}
 	}
 
 	err := task.Finish(errMsg)
 	if err != nil {
-		infra.Logger.Warnf("save download task record error:%s", err.Error())
+		logrus.Warnf("save download task record error:%s", err.Error())
 	}
 }
 
@@ -144,7 +144,7 @@ func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord[model.M3u8dl
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 
-	infra.Logger.Infof("exec ffmpeg command line:%s", cmd.String())
+	logrus.Infof("exec ffmpeg command line:%s", cmd.String())
 
 	err = cmd.Run()
 

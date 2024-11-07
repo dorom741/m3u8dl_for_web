@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 
-	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
 	"m3u8dl_for_web/pkg/queue_worker"
 )
@@ -39,14 +39,14 @@ func (service *SubtitleWorkerService) OnTaskRun(task model.TaskRecord[model.Subt
 func (service *SubtitleWorkerService) OnTaskFinish(task model.TaskRecord[model.SubtitleInput, model.SubtitleOutput], taskErr error) {
 	errMsg := ""
 	if taskErr != nil {
-		infra.Logger.Errorf("%s generate subtitle error:%s", task.Input.InputPath, taskErr.Error())
+		logrus.Errorf("%s generate subtitle error:%s", task.Input.InputPath, taskErr.Error())
 		errMsg = taskErr.Error()
 	} else {
-		infra.Logger.Infof("%s generate subtitle success,save to %s", task.Input.InputPath, task.Input.SavePath)
+		logrus.Infof("%s generate subtitle success,save to %s", task.Input.InputPath, task.Input.SavePath)
 	}
 
 	err := task.Finish(errMsg)
 	if err != nil {
-		infra.Logger.Warnf("save generate subtitle task record error:%s", err.Error())
+		logrus.Warnf("save generate subtitle task record error:%s", err.Error())
 	}
 }

@@ -2,9 +2,8 @@ package media
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
-
-	"m3u8dl_for_web/infra"
 
 	"github.com/yapingcat/gomedia/go-codec"
 	"github.com/yapingcat/gomedia/go-mp4"
@@ -16,10 +15,10 @@ func DemuxAudio(input io.ReadSeeker, ouput io.Writer) error {
 	if infos, err := demuxer.ReadHead(); err != nil && err != io.EOF {
 		return err
 	} else {
-		infra.Logger.Debugf("media infos %+v", infos)
+		logrus.Debugf("media infos %+v", infos)
 	}
 	mp4info := demuxer.GetMp4Info()
-	infra.Logger.Debugf("media info %+v\n", mp4info)
+	logrus.Debugf("media info %+v\n", mp4info)
 	for {
 		pkg, err := demuxer.ReadPacket()
 		if err != nil {
@@ -28,7 +27,7 @@ func DemuxAudio(input io.ReadSeeker, ouput io.Writer) error {
 			}
 			return err
 		}
-		infra.Logger.Debugf("track:%d,cid:%+v,pts:%d dts:%d\n", pkg.TrackId, pkg.Cid, pkg.Pts, pkg.Dts)
+		logrus.Debugf("track:%d,cid:%+v,pts:%d dts:%d\n", pkg.TrackId, pkg.Cid, pkg.Pts, pkg.Dts)
 		if pkg.Cid == mp4.MP4_CODEC_AAC || pkg.Cid == mp4.MP4_CODEC_MP3 {
 			if _, err := ouput.Write(pkg.Data); err != nil {
 				return err
@@ -38,7 +37,6 @@ func DemuxAudio(input io.ReadSeeker, ouput io.Writer) error {
 
 	return nil
 }
-
 
 func MuxMp3ForSplit(input io.Reader, ouput io.Writer) error {
 	muxer := mpeg2.NewTSMuxer()

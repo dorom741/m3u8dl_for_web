@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"m3u8dl_for_web/infra"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,13 +26,13 @@ func LoggerMiddleware() gin.HandlerFunc {
 		}
 		method := c.Request.Method
 		url := c.Request.RequestURI
-		Log := infra.Logger.WithFields(logrus.Fields{
+		Log := logrus.WithFields(logrus.Fields{
 			//"HostName": hostName,
 			"elapsed": spendTime,
-			"path":      url,
-			"Method":    method,
-			"status":    statusCode,
-			"ip": c.ClientIP(),
+			"path":    url,
+			"Method":  method,
+			"status":  statusCode,
+			"ip":      c.ClientIP(),
 			//"DataSize": dataSize,
 			//"UserAgent": userAgent,
 		})

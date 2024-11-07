@@ -65,7 +65,7 @@ func (controller *TaskController) AddM3u8dlTask(c *gin.Context) {
 
 // func (controller *TaskController) AddTaskByAria2(c *gin.Context) {
 // 	data, err := io.ReadAll(c.Request.Body)
-// 	infra.Logger.Infof("req %s %+v %+v", data, c.Request.Header, err)
+// 	logrus.Infof("req %s %+v %+v", data, c.Request.Header, err)
 
 //		c.JSON(200, gin.H{"msg": "ok"})
 //	}

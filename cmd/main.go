@@ -5,14 +5,14 @@ import (
 	"os"
 	"path"
 
-	"m3u8dl_for_web/service"
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/conf"
 	"m3u8dl_for_web/controller"
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
-
-	"github.com/gin-gonic/gin"
+	"m3u8dl_for_web/service"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 	conf.InitConf(configFilePath)
 	infra.MustInitCache(conf.ConfigInstance.Server.CacheDir)
 	infra.InitLogger(conf.ConfigInstance)
-	infra.InitGORM(conf.ConfigInstance.Server.Dsn, infra.Logger)
+	infra.InitGORM(conf.ConfigInstance.Server.Dsn, logrus.StandardLogger())
 	if err := infra.InitHttpClientWithProxy(conf.ConfigInstance.Server.HttpClientProxy); err != nil {
 		panic(err)
 	}

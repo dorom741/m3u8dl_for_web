@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -69,7 +70,7 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 	if err := service.cache.Get(cacheKey, &resp); err != nil {
 		return nil, err
 	} else if resp != nil {
-		infra.Logger.Infof("handle whisper using cache: %s", cacheKey)
+		logrus.Infof("handle whisper using cache: %s", cacheKey)
 		return service.GetWhisperOutput(*resp), nil
 	}
 
@@ -81,7 +82,7 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 		Temperature: input.Temperature,
 		Prompt:      input.Prompt,
 	})
-	infra.Logger.Infof("response %+v", response)
+	logrus.Infof("response %+v", response)
 
 	if err != nil {
 		return nil, err
