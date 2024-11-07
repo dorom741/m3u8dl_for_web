@@ -58,7 +58,6 @@ func SegmentationByPunctuation(text string, segmentFlag string) string {
 
 	// 使用 ReplaceAllStringFunc 替换标点符号
 	output := re.ReplaceAllStringFunc(text, func(match string) string {
-		fmt.Println("match", match)
 		return match + segmentFlag
 	})
 
