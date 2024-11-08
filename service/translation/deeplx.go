@@ -34,6 +34,10 @@ type Result struct {
 	Data string
 }
 
+func (translation *DeepLXTranslation) SupportMultipleTextByPunctuation() (bool, string) {
+	return true, "\n"
+}
+
 func (translation *DeepLXTranslation) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
 	var (
 		err            error
