@@ -17,12 +17,15 @@ func NewSubtitleSub() *subtitleSub {
 		s   = astisub.NewSubtitles()
 	)
 
-	s.Metadata = &astisub.Metadata{}
+	s.Metadata = &astisub.Metadata{
+		SSACollisions: "Reverse",
+		SSAWrapStyle:  "3",
+	}
 
 	s.Styles["main"] = &astisub.Style{ID: "main", InlineStyle: sub.newStyleAttributes()}
 	secondInlineStyle := *s.Styles["main"].InlineStyle
 	secondInlineStyle.SSAFontSize = floatPointer(10)
-	secondInlineStyle.SSAMarginVertical = intPointer(5)
+	secondInlineStyle.SSAMarginVertical = intPointer(20)
 
 	s.Styles["second"] = &astisub.Style{ID: "second", InlineStyle: &secondInlineStyle}
 
@@ -71,17 +74,17 @@ func (sub *subtitleSub) newStyleAttributes() *astisub.StyleAttributes {
 		SSABorderStyle:     intPointer(1),
 		SSAEffect:          "",
 		SSAEncoding:        intPointer(1),
-		SSAFontName:        "黑体",
+		SSAFontName:        "Noto Sans",
 		SSAFontSize:        floatPointer(15.0),
 		SSAItalic:          boolPointer(false),
 		SSALayer:           intPointer(0),
 		SSAMarginLeft:      intPointer(10),
 		SSAMarginRight:     intPointer(10),
-		SSAMarginVertical:  intPointer(20),
+		SSAMarginVertical:  intPointer(55),
 		SSAMarked:          boolPointer(false),
 		SSAOutline:         floatPointer(2.0),
-		SSAOutlineColour:   &astisub.Color{Alpha: 0, Red: 0, Green: 0, Blue: 0},         // #00000000,
-		SSAPrimaryColour:   &astisub.Color{Alpha: 255, Red: 255, Green: 255, Blue: 255}, // #00FFFFFF,
+		SSAOutlineColour:   &astisub.Color{Alpha: 0, Red: 0, Green: 0, Blue: 0}, // #00000000,
+		SSAPrimaryColour:   astisub.ColorWhite,
 		SSAScaleX:          floatPointer(100.0),
 		SSAScaleY:          floatPointer(100.0),
 		SSASecondaryColour: &astisub.Color{Alpha: 255, Red: 0, Green: 0, Blue: 0}, // #000000FF,
