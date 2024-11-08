@@ -23,6 +23,9 @@ require (
 	github.com/asticode/go-astits v1.8.0 // indirect
 	github.com/go-audio/audio v1.0.0 // indirect
 	github.com/go-audio/riff v1.0.0 // indirect
+	github.com/k2-fsa/sherpa-onnx-go v1.8.14 // indirect
+	github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30 // indirect
+	github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30 // indirect
 )
 
 require (
