@@ -38,7 +38,11 @@ func NewBaiduTranslation(apikey string, secretKey string) *BaiduTranslation {
 	return translation
 }
 
-func (translation BaiduTranslation) generateSign(query, salt string) string {
+func (translation *BaiduTranslation) SupportMultipleTextByPunctuation() (bool, string) {
+	return false, ""
+}
+
+func (translation *BaiduTranslation) generateSign(query, salt string) string {
 	// 拼接字符串
 	data := translation.apikey + query + salt + translation.secretKey
 	// 计算 MD5

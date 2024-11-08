@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
@@ -100,10 +101,10 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 			cacheKey = service.cacheKey(input.Provider, whisperInput)
 		)
 
+		logrus.Infof("process segment file '%s' in whisper,progress:%d/%d", audioPath, i+1, totalFile)
 		if err := service.cache.Get(cacheKey, &whisperOutput); err != nil {
 			return err
 		} else if whisperOutput == nil {
-			logrus.Infof("process segment file '%s' in whisper,progress:%d/%d", audioPath, i+1, totalFile)
 			whisperOutput, err = handler.HandleWhisper(ctx, whisperInput)
 			if err != nil {
 				return err
@@ -143,15 +144,17 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 		accumulateDuration += whisperOutput.Duration
 	}
 
-	logrus.Infof("success process file '%s' in whisper,duration %s", input.InputPath, time.Since(startTime).String())
+	fileDuration := time.Duration(float64(time.Second) * accumulateDuration).String()
+	processDuration := time.Since(startTime).String()
+	logrus.Infof("success process file '%s' in whisper,file duration:%s,process duration:%s", input.InputPath, fileDuration, processDuration)
 
 	if err := subtitleSub.WriteToFile(subtitleBuffer); err != nil {
 		return nil
 	}
 
-	defer func() {
-		_ = os.RemoveAll(tempPath)
-	}()
+
+	_ = os.RemoveAll(tempPath)
+	
 
 	return nil
 }

@@ -69,6 +69,12 @@ github.com/jinzhu/now v1.1.5/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
+github.com/k2-fsa/sherpa-onnx-go v1.8.14 h1:5x/xuX+8/1VGnX5SFoX2/6OXXEoC0VnhcCBh/dfqfk4=
+github.com/k2-fsa/sherpa-onnx-go v1.8.14/go.mod h1:JEBDXFl5savR6cWxE/+wSodjG37XUAwQzewb9Qlcv5w=
+github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30 h1:KKOnbWXiqzHH0dHN71961UkpYO3UviAXRIcCVn8ER2U=
+github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30/go.mod h1:lHZRU/WtBUJetJVPyXHg092diEWYyIEoaob+LMJKWvo=
+github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30 h1:JRLYL239ZHXAgsVAEO/tvSgAmJKSH5qzmW+UVaqrMSk=
+github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30/go.mod h1:R7JSrFkZGkfM/F/gVSR+yTJ+sPaHhJgdqsB5N7dTU6E=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
 github.com/klauspost/cpuid/v2 v2.2.7 h1:ZWSB3igEs+d0qvnxR/ZBzXVmxkgt8DdzP6m9pfuVLDM=
 github.com/klauspost/cpuid/v2 v2.2.7/go.mod h1:Lcz8mBdAVJIBVzewtcLocK12l3Y+JytZYpaMropDUws=
