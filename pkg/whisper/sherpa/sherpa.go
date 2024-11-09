@@ -22,19 +22,18 @@ type SherpaWhisper struct {
 	whisperDecoderModelPath string
 	whisperEncoderModelPath string
 	whisperModelTokensPath  string
-	embeddingModelPath string
-	pyannoteModelPath string
+	embeddingModelPath      string
+	pyannoteModelPath       string
 }
 
-func NewSherpaWhisper(vadModelPath string, whisperDecoderModelPath string, whisperEncoderModelPath string, whisperModelTokensPath string,	embeddingModelPath string,pyannoteModelPath string) *SherpaWhisper {
+func NewSherpaWhisper(vadModelPath string, whisperDecoderModelPath string, whisperEncoderModelPath string, whisperModelTokensPath string, embeddingModelPath string, pyannoteModelPath string) *SherpaWhisper {
 	return &SherpaWhisper{
 		vadModelPath:            vadModelPath,
 		whisperDecoderModelPath: whisperDecoderModelPath,
 		whisperEncoderModelPath: whisperEncoderModelPath,
 		whisperModelTokensPath:  whisperModelTokensPath,
-		embeddingModelPath: embeddingModelPath,
-		pyannoteModelPath: pyannoteModelPath,
-		
+		embeddingModelPath:      embeddingModelPath,
+		pyannoteModelPath:       pyannoteModelPath,
 	}
 }
 
@@ -145,8 +144,8 @@ func (sherpaWhisper *SherpaWhisper) WithVad() {
 
 func (sherpaWhisper *SherpaWhisper) SpeakerDiarization(inputdata []float32) ([]sherpa.OfflineSpeakerDiarizationSegment, error) {
 	c := sherpa.OfflineSpeakerDiarizationConfig{}
-	c.Segmentation.Pyannote.Model = "/workplace/project/demo/m3u8dl_for_web/resource/download/sherpa/sherpa-onnx-pyannote-segmentation-3-0/model.onnx"
-	c.Embedding.Model = "/workplace/project/demo/m3u8dl_for_web/resource/download/sherpa/3dspeaker_speech_eres2net_base_sv_zh-cn_3dspeaker_16k.onnx"
+	c.Segmentation.Pyannote.Model = sherpaWhisper.pyannoteModelPath
+	c.Embedding.Model = sherpaWhisper.embeddingModelPath
 
 	c.Clustering.NumClusters = runtime.NumCPU()
 	// if you don't know the actual numbers in the wave file,
@@ -173,7 +172,7 @@ func (sherpaWhisper *SherpaWhisper) newRecognizerConfig() *sherpa.OfflineRecogni
 	recognizerConfig.ModelConfig.Tokens = sherpaWhisper.whisperModelTokensPath
 	recognizerConfig.ModelConfig.NumThreads = 4
 	recognizerConfig.ModelConfig.Debug = 1
-	recognizerConfig.ModelConfig.Provider = "cpu"
+	recognizerConfig.ModelConfig.Provider = "cuda"
 
 	return recognizerConfig
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"m3u8dl_for_web/pkg/whisper"
@@ -14,7 +15,8 @@ func TestSherpaWhisper(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	basePath := path.Join(dir, "../../../resource/download/sherpa")
+	basePath := path.Join(dir, "../../../../download/sherpa")
+	basePath, _ = filepath.Abs(basePath)
 	vadModelPath := path.Join(basePath, "silero_vad.onnx")
 	whisperDecoderModelPath := path.Join(basePath, "sherpa-onnx-whisper-tiny.en", "tiny.en-decoder.onnx")
 	whisperEncoderModelPath := path.Join(basePath, "sherpa-onnx-whisper-tiny.en", "tiny.en-encoder.onnx")
@@ -24,7 +26,7 @@ func TestSherpaWhisper(t *testing.T) {
 
 	sherpaWhisper := NewSherpaWhisper(vadModelPath, whisperDecoderModelPath, whisperEncoderModelPath, whisperModelTokensPath, embeddingModelPath, pyannoteModelPath)
 	result, err := sherpaWhisper.HandleWhisper(context.Background(), whisper.WhisperInput{
-		FilePath: "/workplace/project/demo/m3u8dl_for_web/resource/samples/jfk.wav",
+		FilePath: "../../../../resource/samples/jfk.wav",
 		// FilePath: path.Join(basePath, "sherpa-onnx-whisper-tiny.en/test_wavs/1.wav"),
 	})
 	if err != nil {
