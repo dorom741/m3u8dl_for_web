@@ -115,7 +115,21 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 
 		}
 
-		for _, segment := range whisperOutput.Segments {
+		var translatedTextList []string
+		if input.TranslateTo != "" {
+			allTextList := make([]string, len(whisperOutput.Segments))
+			for i, segment := range whisperOutput.Segments {
+				allTextList[i] = segment.Text
+			}
+
+			translatedTextList, err = service.BatchTranslate(ctx, allTextList, "", input.TranslateTo)
+			if err != nil {
+				return err
+
+			}
+
+		}
+		for i, segment := range whisperOutput.Segments {
 			startTimestamp := segment.Start + accumulateDuration
 			endTimestamp := segment.End + accumulateDuration
 			sequence++
@@ -125,10 +139,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 
 			translationText := ""
 			if input.TranslateTo != "" {
-				translationText, err = service.translation.Translate(ctx, segmentText, "", input.TranslateTo)
-				if err != nil {
-					return err
-				}
+				translationText = translatedTextList[i]
 				translationText = ReplaceRepeatedWords(translationText)
 				translationText = SegmentationByPunctuation(translationText, " ")
 			}
@@ -152,9 +163,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 		return nil
 	}
 
-
 	_ = os.RemoveAll(tempPath)
-	
 
 	return nil
 }

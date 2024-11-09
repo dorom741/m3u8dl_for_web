@@ -38,7 +38,7 @@ func NewBaiduTranslation(apikey string, secretKey string) *BaiduTranslation {
 	return translation
 }
 
-func (translation *BaiduTranslation) SupportMultipleTextByPunctuation() (bool, string) {
+func (translation *BaiduTranslation) SupportMultipleTextBySeparator() (bool, string) {
 	return false, ""
 }
 
@@ -51,7 +51,7 @@ func (translation *BaiduTranslation) generateSign(query, salt string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func (translation BaiduTranslation) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
+func (translation *BaiduTranslation) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
 	// 随机数
 	randValue := rand.New(rand.NewSource(time.Now().UnixNano()))
 	salt := fmt.Sprintf("%d", randValue.Intn(32768)+32768)

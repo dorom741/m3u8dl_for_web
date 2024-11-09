@@ -34,7 +34,7 @@ type Result struct {
 	Data string
 }
 
-func (translation *DeepLXTranslation) SupportMultipleTextByPunctuation() (bool, string) {
+func (translation *DeepLXTranslation) SupportMultipleTextBySeparator() (bool, string) {
 	return true, "\n"
 }
 
