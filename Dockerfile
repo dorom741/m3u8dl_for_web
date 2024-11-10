@@ -10,7 +10,7 @@ RUN git clone https://github.com/ggerganov/whisper.cpp.git .
 
 # RUN WHISPER_SDL2=ON  make libwhisper.a
 
-RUN  cmake -B build -DWHISPER_SDL2=on && cmake --build build --target whisper 
+RUN  cmake -B build -DWHISPER_SDL2=on  -DGGML_NATIVE_DEFAULT=OFF -DGGML_NATIVE=OFF && cmake --build build --target whisper
 
 ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/build/src:/whisper.cpp/build/ggml/src
 ENV C_INCLUDE_PATH=/whisper.cpp/include:/whisper.cpp/ggml/include
