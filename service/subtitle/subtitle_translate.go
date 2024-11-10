@@ -28,8 +28,8 @@ func (service *SubtitleService) BatchTranslate(ctx context.Context, textList []s
 	step := 20
 	for i := 0; i < textListLen; i += step {
 		endIndex := i + step
-		if endIndex > textListLen {
-			endIndex = textListLen
+		if endIndex >= textListLen {
+			endIndex = textListLen - 1
 		}
 		fullText := strings.Join(textList[i:endIndex], separator)
 		translatedText, err := service.translation.Translate(ctx, fullText, sourceLang, targetLang)
