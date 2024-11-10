@@ -25,6 +25,8 @@ func InitLogger(conf *conf.Config) {
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 
+	logrus.SetLevel(logrus.DebugLevel)
+
 	logrus.SetReportCaller(true)
 	//Logger.SetOutput(os.Stdout)
 	logrus.SetOutput(multiWriter)
