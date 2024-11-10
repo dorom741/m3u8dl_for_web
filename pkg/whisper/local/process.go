@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 
@@ -84,6 +85,8 @@ func (localWhisper *LocalWhisper) closeModel() {
 }
 
 func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	modelContext, err := localWhisper.newContext()
 	if err != nil {
 		return nil, err
