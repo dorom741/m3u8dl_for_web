@@ -28,7 +28,12 @@ func NewSubtitleWorkerService(subtitleConfig *conf.SubtitleConfig) *SubtitleWork
 
 	go service.worker.Run()
 	if subtitleConfig != nil {
-		go service.ScanDirToAddTask(subtitleConfig.DirPath, subtitleConfig.Pattern, subtitleConfig.Watch, subtitleConfig.SubtitleInput)
+		go func() {
+			err := service.ScanDirToAddTask(subtitleConfig.DirPath, subtitleConfig.Pattern, subtitleConfig.Watch, subtitleConfig.SubtitleInput)
+			if err != nil {
+				logrus.Errorf("scanDir error:%+v", err)
+			}
+		}()
 	}
 
 	return service
@@ -63,7 +68,6 @@ func (service *SubtitleWorkerService) OnTaskFinish(task model.TaskRecord[aggrega
 func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPattern string, watch bool, input aggregate.SubtitleInput) error {
 	allFileList, err := service.scanDir(dirPath, matchPattern)
 	if err != nil {
-		logrus.Errorf("scanDir error:%+v", err)
 		return err
 	}
 
