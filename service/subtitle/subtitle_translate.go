@@ -8,7 +8,7 @@ import (
 func (service *SubtitleService) BatchTranslate(ctx context.Context, textList []string, sourceLang string, targetLang string) ([]string, error) {
 	batchTranslateForSingle := func(textListForTranslate []string) ([]string, error) {
 		translatedTextListTemp := make([]string, 0)
-		for _, text := range textList {
+		for _, text := range textListForTranslate {
 			translatedText, err := service.translation.Translate(ctx, text, sourceLang, targetLang)
 			if err != nil {
 				return nil, err
