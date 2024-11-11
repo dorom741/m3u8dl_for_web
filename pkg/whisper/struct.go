@@ -2,11 +2,13 @@ package whisper
 
 type WhisperInput struct {
 	FilePath string `json:"filepath"`
-	//Reader   io.ReadSeeker `json:"-"`
+	// Reader   io.ReadSeeker `json:"-"`
 
 	Prompt      string  `json:"prompt"`
 	Temperature float32 `json:"temperature"`
 	Language    string  `json:"language"`
+
+	ProgressCallback func(int)
 }
 
 // func (input *WhisperInput) GetInputReader(inputFilePath string) (io.ReadSeekCloser, error) {

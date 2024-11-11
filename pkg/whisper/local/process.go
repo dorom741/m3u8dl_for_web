@@ -95,6 +95,7 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 			return nil, err
 		}
 	}
+	modelContext.SetSplitOnWord(true)
 
 	file, err := os.Open(input.FilePath)
 	if err != nil {
@@ -120,7 +121,7 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 	)
 
 	modelContext.ResetTimings()
-	if err := modelContext.Process(data, cb, nil); err != nil {
+	if err := modelContext.Process(data, cb, input.ProgressCallback); err != nil {
 		return nil, err
 	}
 	modelContext.PrintTimings()
