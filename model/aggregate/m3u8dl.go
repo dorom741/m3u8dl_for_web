@@ -1,4 +1,4 @@
-package model
+package aggregate
 
 import (
 	"github.com/orestonce/m3u8d"

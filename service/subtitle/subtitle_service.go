@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/infra"
-	"m3u8dl_for_web/model"
+	"m3u8dl_for_web/model/aggregate"
 
 	"m3u8dl_for_web/pkg/media"
 	"m3u8dl_for_web/pkg/whisper"
@@ -45,7 +45,7 @@ func (service *SubtitleService) cacheKey(provider string, input whisper.WhisperI
 	return fmt.Sprintf("%s_%s_%s_%.2f", prefix, filename[:len(filename)-len(ext)], provider, input.Temperature)
 }
 
-func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input model.SubtitleInput) error {
+func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggregate.SubtitleInput) error {
 	var (
 		filename     = filepath.Base(input.InputPath)
 		ext          = filepath.Ext(filename)
@@ -56,10 +56,14 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	if !exist {
 		return fmt.Errorf("whisper provider '%s' not exist", input.Provider)
 	}
-	
-	_,err := os.Stat(input.SavePath)
+
+	if input.SavePath == "" {
+		input.SavePath = strings.ReplaceAll(input.InputPath, path.Ext(input.InputPath), ".ass")
+	}
+
+	_, err := os.Stat(input.SavePath)
 	if err == os.ErrNotExist && !input.ReplaceOnExist {
-		logrus.Warnf("target file '%s' exist,skiped", input.SavePath,)
+		logrus.Warnf("target file '%s' exist,skiped", input.SavePath)
 		return nil
 	}
 
@@ -131,7 +135,6 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 			translatedTextList, err = service.BatchTranslate(ctx, allTextList, "", input.TranslateTo)
 			if err != nil {
 				return err
-
 			}
 
 		}

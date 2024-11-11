@@ -11,35 +11,15 @@ import (
 var ConfigInstance = NewConfig()
 
 type Config struct {
-	Server struct {
-		Listen     string `yaml:"listen"`
-		Dsn        string `yaml:"dsn"`
-		StaticPath string `yaml:"staticPath"`
+	Server ServerConfig `yaml:"server"`
+	Log    LogConfig    `yaml:"log"`
 
-		DownlaodMaxWorker int64  `yaml:"downlaodMaxWorker"`
-		SavePath          string `yaml:"saveDir"`
-		CacheDir          string `yaml:"cacheDir"`
-		HttpClientProxy   string `yaml:"httpClientProxy"`
-	} `yaml:"server"`
-	Log struct {
-		Path    string `yaml:"path"`
-		Level   string `yaml:"level"`
-		MaxSize int    `yaml:"maxSize"`
-		MaxAge  int    `yaml:"maxAge"`
-	} `yaml:"log"`
+	Groq GroqConfig `yaml:"groq"`
 
-	Groq struct {
-		ApiKey string `yaml:"apiKey"`
-	} `yaml:"groq"`
-
-	Translation struct {
-		DeeplX *struct {
-			Url    string `yaml:"url"`
-			ApiKey string `yaml:"apiKey"`
-		} `yaml:"deeplX"`
-	} `yaml:"translation"`
+	Translation TranslationConfig `yaml:"translation"`
 
 	LocalWhisperModels map[string]string `yaml:"localWhisperModels"`
+	Subtitle           *SubtitleConfig   `yaml:"subtitle"`
 }
 
 func (conf *Config) GetAbsSavePath() string {

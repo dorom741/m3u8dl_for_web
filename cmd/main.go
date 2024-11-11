@@ -28,13 +28,15 @@ func main() {
 	if err := infra.InitHttpClientWithProxy(conf.ConfigInstance.Server.HttpClientProxy); err != nil {
 		panic(err)
 	}
-	service.InitService(conf.ConfigInstance)
-	controller.InitController()
 
 	err = infra.DataDB.AutoMigrate(&model.TaskRecord[struct{}, struct{}]{})
 	if err != nil {
 		panic(err)
 	}
+
+	service.InitService(conf.ConfigInstance)
+	controller.InitController()
+
 	run(conf.ConfigInstance.Server.StaticPath)
 }
 

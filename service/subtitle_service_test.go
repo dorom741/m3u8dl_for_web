@@ -7,13 +7,22 @@ import (
 	"testing"
 
 	"m3u8dl_for_web/conf"
+	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
+	"m3u8dl_for_web/model/aggregate"
 	"m3u8dl_for_web/service/subtitle"
+
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
 	conf.InitConf("../config.yaml")
+	infra.InitGORM(conf.ConfigInstance.Server.Dsn, logrus.StandardLogger())
 	InitService(conf.ConfigInstance)
+	err := infra.DataDB.AutoMigrate(&model.TaskRecord[struct{}, struct{}]{})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestGenerateSubtitle(t *testing.T) {
@@ -21,7 +30,7 @@ func TestGenerateSubtitle(t *testing.T) {
 	inputPath := "../resource/samples/jfk.wav"
 	outputPath := strings.ReplaceAll(inputPath, ".wav", ".srt")
 
-	input := model.SubtitleInput{
+	input := aggregate.SubtitleInput{
 		Provider:    "ggml-base",
 		InputPath:   inputPath,
 		SavePath:    outputPath,
@@ -54,5 +63,18 @@ func TestAstisub(t *testing.T) {
 	err = s.WriteToFile(subtitleTempFile)
 	if err != nil {
 		t.Logf("write file error %s", err)
+	}
+}
+
+func TestScanDirToAddTask(t *testing.T) {
+	err := SubtitleWorkerServiceInstance.ScanDirToAddTask("./", `\.go$`, false, aggregate.SubtitleInput{
+		Prompt:         "",
+		Temperature:    0.0,
+		Language:       "",
+		TranslateTo:    "",
+		ReplaceOnExist: false,
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }

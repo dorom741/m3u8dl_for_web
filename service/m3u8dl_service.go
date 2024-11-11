@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"os/exec"
@@ -13,16 +12,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"m3u8dl_for_web/model"
+	"m3u8dl_for_web/model/aggregate"
 	"m3u8dl_for_web/pkg/queue_worker"
 
 	"github.com/orestonce/m3u8d"
 )
 
-var _ queue_worker.QueueWorkerConsumer[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]] = &M3u8dlService{}
+var _ queue_worker.QueueWorkerConsumer[model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]] = &M3u8dlService{}
 
 type M3u8dlService struct {
-	worker queue_worker.QueueWorker[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]]
+	worker queue_worker.QueueWorker[model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]]
 }
 
 func NewM3u8dlService() *M3u8dlService {
@@ -33,16 +35,16 @@ func NewM3u8dlService() *M3u8dlService {
 	service := &M3u8dlService{}
 	go service.worker.Run()
 
-	service.worker = queue_worker.NewQueueWorker[model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]](option, service)
+	service.worker = queue_worker.NewQueueWorker[model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]](option, service)
 
 	return service
 }
 
-func (service *M3u8dlService) AddTask(taskRecord model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) error {
+func (service *M3u8dlService) AddTask(taskRecord model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) error {
 	return service.worker.AddTask(taskRecord)
 }
 
-func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) error {
+func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) error {
 	req := task.Input.ToStartDownloadReq()
 	req.ProgressBarShow = true
 	downloadEnv := m3u8d.DownloadEnv{}
@@ -85,7 +87,7 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[model.M3u8dlInput,
 	return nil
 }
 
-func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput], taskErr error) {
+func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput], taskErr error) {
 	errMsg := ""
 	if taskErr != nil {
 		logrus.Errorf("m3u8 url:%s download error:%s", task.Input.URL, taskErr.Error())
@@ -109,7 +111,7 @@ func (service *M3u8dlService) getVideoId(url string) string {
 	return hex.EncodeToString(tmp1[:])
 }
 
-func (service *M3u8dlService) getTempDirAndFile(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) (tempDir string, mergeTempFile string, err error) {
+func (service *M3u8dlService) getTempDirAndFile(task model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) (tempDir string, mergeTempFile string, err error) {
 	videoId := service.getVideoId(task.Input.URL)
 	tempDir, err = filepath.Abs(path.Join(task.Input.SaveDir, "downloading", videoId))
 	if err != nil {
@@ -119,7 +121,7 @@ func (service *M3u8dlService) getTempDirAndFile(task model.TaskRecord[model.M3u8
 	return tempDir, path.Join(tempDir, task.Input.Name+".mp4.temp"), nil
 }
 
-func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]) (string, error) {
+func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) (string, error) {
 	var out bytes.Buffer
 	workingDir, _, err := service.getTempDirAndFile(task)
 	if err != nil {

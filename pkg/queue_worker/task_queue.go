@@ -69,6 +69,11 @@ func (worker *QueueWorker[T]) AddTask(task T) error {
 	return nil
 }
 
+func (worker *QueueWorker[T]) AddTaskBlocking(task T)  {
+	worker.queue <- task
+}
+
+
 func (worker *QueueWorker[T]) doTask(task T) {
 	var err error
 

@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"path"
 	"strings"
 
 	"m3u8dl_for_web/conf"
+	"m3u8dl_for_web/model/aggregate"
 	"m3u8dl_for_web/model"
 	"m3u8dl_for_web/service"
 
@@ -38,8 +38,8 @@ func (controller *TaskController) AddM3u8dlTask(c *gin.Context) {
 		fileName := strings.Trim(addTaskReq.Name, " ")
 		fileName = strings.ReplaceAll(fileName, ".mp4", "")
 
-		taskRecord := model.TaskRecord[model.M3u8dlInput, model.M3u8dlOutput]{
-			Input: model.M3u8dlInput{
+		taskRecord := model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]{
+			Input: aggregate.M3u8dlInput{
 				URL:     url,
 				Name:    fileName,
 				SaveDir: addTaskReq.SaveDir,
@@ -76,22 +76,18 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 		c.JSON(400, gin.H{"msg": err.Error()})
 	}
 
-	if req.SaveSubtitleFilePath == "" {
-		req.SaveSubtitleFilePath = strings.ReplaceAll(req.Filepath, path.Ext(req.Filepath), ".ass")
-	}
-
-	taskRecord := model.TaskRecord[model.SubtitleInput, model.SubtitleOutput]{
+	taskRecord := model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]{
 		Type:  "generateSubtitle",
 		State: model.StateReady,
-		Input: model.SubtitleInput{
+		Input: aggregate.SubtitleInput{
 			Provider:  req.Provider,
 			InputPath: req.Filepath,
 			SavePath:  req.SaveSubtitleFilePath,
 
-			Prompt:      req.Prompt,
-			Temperature: req.Temperature,
-			Language:    req.Language,
-			TranslateTo: req.TranslateTo,
+			Prompt:         req.Prompt,
+			Temperature:    req.Temperature,
+			Language:       req.Language,
+			TranslateTo:    req.TranslateTo,
 			ReplaceOnExist: req.ReplaceOnExist,
 		},
 	}

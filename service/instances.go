@@ -30,5 +30,5 @@ func InitService(config *conf.Config) {
 
 	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(), infra.DefaultCache, translationService)
 
-	SubtitleWorkerServiceInstance = NewSubtitleWorkerService()
+	SubtitleWorkerServiceInstance = NewSubtitleWorkerService(config.Subtitle)
 }
