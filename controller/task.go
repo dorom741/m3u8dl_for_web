@@ -92,6 +92,7 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 			Temperature: req.Temperature,
 			Language:    req.Language,
 			TranslateTo: req.TranslateTo,
+			ReplaceOnExist: req.ReplaceOnExist,
 		},
 	}
 

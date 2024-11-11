@@ -56,6 +56,12 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input mode
 	if !exist {
 		return fmt.Errorf("whisper provider '%s' not exist", input.Provider)
 	}
+	
+	_,err := os.Stat(input.SavePath)
+	if err == os.ErrNotExist && !input.ReplaceOnExist {
+		logrus.Warnf("target file '%s' exist,skiped", input.SavePath,)
+		return nil
+	}
 
 	tempPath := path.Join(service.tempAudioPath, pureFilename)
 	subtitleTempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ".ass"))

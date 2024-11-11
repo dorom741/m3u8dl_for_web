@@ -20,8 +20,9 @@ type AddGenerateSubtitleTaskReq struct {
 	Filepath             string `json:"filepath"`
 	SaveSubtitleFilePath string `json:"saveSubtitleFilePath"`
 
-	Prompt      string  `json:"prompt"`
-	Temperature float32 `json:"temperature"`
-	Language    string  `json:"language"`
-	TranslateTo string  `json:"translateTo"`
+	Prompt         string  `json:"prompt"`
+	Temperature    float32 `json:"temperature"`
+	Language       string  `json:"language"`
+	TranslateTo    string  `json:"translateTo"`
+	ReplaceOnExist bool    `json:"replaceOnExist"`
 }
