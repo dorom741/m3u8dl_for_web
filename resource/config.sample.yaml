@@ -23,3 +23,15 @@ translation:
   deeplX:
     url: ""
     apiKey: ""
+
+
+#subtitle:
+#  watch: false
+#  pattern: "(?i)\\.(mp4|avi|mkv|mov|wmv|flv|webm|rmvb|asf)$"
+#  dirPath: ""
+#  subtitleInput:
+#    provider: "ggml-medium"
+#    prompt: ""
+#    temperature:
+#    language: ""
+#    translateTo: ""
