@@ -61,8 +61,8 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 		input.SavePath = strings.ReplaceAll(input.InputPath, path.Ext(input.InputPath), ".ass")
 	}
 
-	_, err := os.Stat(input.SavePath)
-	if err == os.ErrNotExist && !input.ReplaceOnExist {
+	stat, _ := os.Stat(input.SavePath)
+	if stat != nil && !input.ReplaceOnExist {
 		logrus.Warnf("target file '%s' exist,skiped", input.SavePath)
 		return nil
 	}
