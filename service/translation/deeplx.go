@@ -35,7 +35,7 @@ type Result struct {
 }
 
 func (translation *DeepLXTranslation) SupportMultipleTextBySeparator() (bool, string) {
-	return true, "\n"
+	return false, "\n"
 }
 
 func (translation *DeepLXTranslation) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
