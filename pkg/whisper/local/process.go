@@ -19,11 +19,13 @@ import (
 var _ whisper.WhisperHandler = &LocalWhisper{}
 
 type LocalWhisper struct {
-	modelPath string
+	mu   sync.Mutex
+	once sync.Once
 
+	modelPath    string
 	whisperModel whispercpp.Model
-	mu           sync.Mutex
-	cancelTimer  *time.Timer
+
+	cancelTimer *time.Timer
 }
 
 func NewLocalWhisper(modelPath string) *LocalWhisper {
@@ -57,6 +59,10 @@ func (localWhisper *LocalWhisper) newContext() (whispercpp.Context, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	localWhisper.once.Do(func() {
+		logrus.Infof("localWhisper system info: %s", modelContext.SystemInfo())
+	})
 
 	return modelContext, nil
 }
