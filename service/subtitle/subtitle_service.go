@@ -108,8 +108,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 				Temperature: input.Temperature,
 				Language:    input.Language,
 				ProgressCallback: func(progress int) {
-					currentProgress := progress * i / totalFile
-					logrus.Debugf("generate subtitle whisper progress:%d,running duration %s", currentProgress, time.Since(startTime).String())
+					logrus.Debugf("generate subtitle whisper progress:%d on %d/%d,running duration %s", progress, i+1, totalFile, time.Since(startTime).String())
 				},
 			}
 			cacheKey = service.cacheKey(input.Provider, whisperInput)
