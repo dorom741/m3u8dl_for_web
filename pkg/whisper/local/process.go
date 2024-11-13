@@ -101,6 +101,7 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 			return nil, err
 		}
 	}
+	modelContext.SetMaxSegmentLength(25)
 	modelContext.SetSplitOnWord(true)
 
 	file, err := os.Open(input.FilePath)
