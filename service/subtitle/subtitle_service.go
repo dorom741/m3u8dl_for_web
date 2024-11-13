@@ -62,7 +62,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 	}
 
 	stat, _ := os.Stat(input.SavePath)
-	if stat != nil && !input.ReplaceOnExist {
+	if stat != nil && stat.Size() > 0 && !input.ReplaceOnExist {
 		logrus.Warnf("target file '%s' exist,skiped", input.SavePath)
 		return nil
 	}
@@ -76,6 +76,9 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 
 	subtitleBuffer := new(bytes.Buffer)
 	defer func() {
+		if subtitleBuffer.Len() == 0 {
+			return
+		}
 		if err := os.WriteFile(input.SavePath, subtitleBuffer.Bytes(), os.ModePerm); err != nil {
 			logrus.Warnf("write target file error,fallback write to tempfile:%s", subtitleTempPath)
 			_ = os.WriteFile(subtitleTempPath, subtitleBuffer.Bytes(), os.ModePerm)
