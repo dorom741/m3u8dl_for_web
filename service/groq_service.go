@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/pkg/whisper"
@@ -63,35 +66,50 @@ func (service *GroqService) MaximumFileSize() int64 {
 
 func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
 	var (
-		resp     *groq.AudioResponse
+		response *groq.AudioResponse
 		cacheKey = service.cacheKey(input)
 	)
 
-	if err := service.cache.Get(cacheKey, &resp); err != nil {
+	if err := service.cache.Get(cacheKey, &response); err != nil {
 		return nil, err
-	} else if resp != nil {
+	} else if response != nil {
 		logrus.Infof("handle whisper using cache: %s", cacheKey)
-		return service.GetWhisperOutput(*resp), nil
+		return service.GetWhisperOutput(*response), nil
 	}
 
-	response, err := service.client.CreateTranscription(ctx, groq.AudioRequest{
-		Model:       groq.WhisperLargeV3,
-		Format:      groq.AudioResponseFormatVerboseJSON,
-		FilePath:    input.FilePath,
-		Language:    input.Language,
-		Temperature: input.Temperature,
-		Prompt:      input.Prompt,
-	})
-	logrus.Infof("response %+v", response)
+	for i := 0; i < 3; i++ {
+		tempResponse, err := service.client.CreateTranscription(ctx, groq.AudioRequest{
+			Model:       groq.WhisperLargeV3,
+			Format:      groq.AudioResponseFormatVerboseJSON,
+			FilePath:    input.FilePath,
+			Language:    input.Language,
+			Temperature: input.Temperature,
+			Prompt:      input.Prompt,
+		})
+		if err == nil {
+			response = &tempResponse
+			break
+		}
 
-	if err != nil {
-		return nil, err
+		//error example:
+		//status code: 429, message: Rate limit reached for model `whisper-large-v3` in
+		//organization `org_01j9znf32dft8bty4veb2z96pr` on seconds of audio per day (ASPD):
+		//Limit 28800, Used 28598, Requested 818. Please try again in 30m46.361999999s.
+		//Visit https://console.groq.com/docs/rate-limits for more information.
+		if !strings.Contains(err.Error(), "429") {
+			return nil, err
+		}
+
+		waitDuration := service.parseDuration(err.Error())
+		logrus.Warnf("groq service rate limit reached,wait for %s retry", waitDuration)
+		time.Sleep(waitDuration)
 	}
+
 	if err := service.cache.Set(cacheKey, response); err != nil {
 		return nil, err
 	}
 
-	return service.GetWhisperOutput(response), nil
+	return service.GetWhisperOutput(*response), nil
 }
 
 func (service *GroqService) GetWhisperOutput(response groq.AudioResponse) *whisper.WhisperOutput {
@@ -107,4 +125,48 @@ func (service *GroqService) GetWhisperOutput(response groq.AudioResponse) *whisp
 	}
 
 	return &whisper.WhisperOutput{Segments: segmentList, Duration: response.Duration}
+}
+
+func (service *GroqService) parseDuration(errString string) time.Duration {
+	toFloat := func(s string) float64 {
+		float, _ := strconv.ParseFloat(s, 10)
+		return float
+	}
+
+	// 正则表达式，用于匹配时间格式
+	re := regexp.MustCompile(`(\d+)([smh])`)
+
+	// 匹配结果
+	matches := re.FindAllStringSubmatch(errString, -1)
+
+	// 初始化时长
+	var totalDuration time.Duration
+
+	// 解析匹配结果
+	for _, match := range matches {
+		if len(match) != 3 {
+			continue
+		}
+
+		// 获取数值和单位
+		value := match[1]
+		unit := match[2]
+
+		// 将值转换为整数
+		var duration time.Duration
+		switch unit {
+		case "s":
+			duration = time.Duration(toFloat(value)) * time.Second
+		case "m":
+			duration = time.Duration(toFloat(value)) * time.Minute
+		case "h":
+			duration = time.Duration(toFloat(value)) * time.Hour
+		}
+
+		// 累加总时长
+		totalDuration += duration
+	}
+
+	return totalDuration
+
 }
