@@ -1,0 +1,11 @@
+name: 'm3u8dl'
+
+services:
+  backend:
+    image: m3u8dl:latest
+    # restart: always
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./resource:/resource
+    ports:
+      - "2045:2045"

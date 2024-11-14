@@ -27,8 +27,6 @@ type SubtitleService struct {
 }
 
 func NewSubtitleService(tempAudioPath string, cache *infra.FileCache, translation translation.ITranslation) *SubtitleService {
-	RegisterWhisperProvider()
-
 	return &SubtitleService{
 		tempAudioPath: tempAudioPath,
 		translation:   translation,
@@ -54,7 +52,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 
 	handler, exist := whisper.DefaultWhisperProvider.Get(input.Provider)
 	if !exist {
-		return fmt.Errorf("whisper provider '%s' not exist", input.Provider)
+		return fmt.Errorf("whisper provider '%s' not exist,available provider:%+v", strings.Join(whisper.DefaultWhisperProvider.AllProviderNames(), ","))
 	}
 
 	if input.SavePath == "" {
@@ -224,6 +222,10 @@ func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ou
 	logrus.Infof("output file list %+v", fileList)
 
 	return fileList, nil
+}
+
+func (service *SubtitleService) GetAvailableProvider() []string {
+	return whisper.DefaultWhisperProvider.AllProviderNames()
 }
 
 // func (service *SubtitleService) formatTimestamp(seconds float64) string {
