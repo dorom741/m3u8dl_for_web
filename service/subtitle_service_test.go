@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"os"
-	"strings"
 	"testing"
 
 	"m3u8dl_for_web/conf"
@@ -18,6 +17,7 @@ import (
 func init() {
 	conf.InitConf("../config.yaml")
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, logrus.StandardLogger())
+	infra.MustInitCache(conf.ConfigInstance.GetAbsCachePath())
 	InitService(conf.ConfigInstance)
 	err := infra.DataDB.AutoMigrate(&model.TaskRecord[struct{}, struct{}]{})
 	if err != nil {
@@ -28,12 +28,11 @@ func init() {
 func TestGenerateSubtitle(t *testing.T) {
 	ctx := context.Background()
 	inputPath := "../resource/samples/jfk.wav"
-	outputPath := strings.ReplaceAll(inputPath, ".wav", ".srt")
 
 	input := aggregate.SubtitleInput{
-		Provider:    "ggml-base",
+		Provider:    "sherpa",
 		InputPath:   inputPath,
-		SavePath:    outputPath,
+		SavePath:    "",
 		Prompt:      "",
 		Temperature: 0,
 		Language:    "",

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime"
 
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
@@ -18,22 +17,19 @@ import (
 var _ whisper.WhisperHandler = &SherpaWhisper{}
 
 type SherpaWhisper struct {
-	vadModelPath            string
-	whisperDecoderModelPath string
-	whisperEncoderModelPath string
-	whisperModelTokensPath  string
-	embeddingModelPath      string
-	pyannoteModelPath       string
+	// vadModelPath       string
+	embeddingModelPath string
+	pyannoteModelPath  string
+
+	modelConfig sherpa.OfflineModelConfig
 }
 
-func NewSherpaWhisper(vadModelPath string, whisperDecoderModelPath string, whisperEncoderModelPath string, whisperModelTokensPath string, embeddingModelPath string, pyannoteModelPath string) *SherpaWhisper {
+func NewSherpaWhisper(sherpaConfig SherpaConfig) *SherpaWhisper {
 	return &SherpaWhisper{
-		vadModelPath:            vadModelPath,
-		whisperDecoderModelPath: whisperDecoderModelPath,
-		whisperEncoderModelPath: whisperEncoderModelPath,
-		whisperModelTokensPath:  whisperModelTokensPath,
-		embeddingModelPath:      embeddingModelPath,
-		pyannoteModelPath:       pyannoteModelPath,
+		// vadModelPath:       vadModelPath,
+		embeddingModelPath: sherpaConfig.EmbeddingModelPath,
+		pyannoteModelPath:  sherpaConfig.PyannoteModelPath,
+		modelConfig:        sherpaConfig.OfflineModelConfig,
 	}
 }
 
@@ -58,29 +54,27 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 		return nil, err
 	}
 
-	segmentList, err := sherpaWhisper.SpeakerDiarization(pcmBuffer.AsFloat32Buffer().Data)
+	speakerDiarizationSegmentList, err := sherpaWhisper.SpeakerDiarization(pcmBuffer.AsFloat32Buffer().Data)
 	if err != nil {
 		return nil, err
 	}
-
-	whisperSegments := make([]whisper.Segment, len(segmentList))
-	logrus.Println(segmentList)
+	whisperSegments := make([]whisper.Segment, len(speakerDiarizationSegmentList))
+	logrus.Debugf("speaker diarization segment list:%+v", speakerDiarizationSegmentList)
 
 	recognizerConfig := sherpaWhisper.newRecognizerConfig()
 	recognizer := sherpa.NewOfflineRecognizer(recognizerConfig)
 	defer sherpa.DeleteOfflineRecognizer(recognizer)
-	stream := sherpa.NewOfflineStream(recognizer)
 
-	for i, segment := range segmentList {
+	for i, segment := range speakerDiarizationSegmentList {
 		pcmData, err := sherpaWhisper.selectPCMData(dec.SampleRate, pcmBuffer, float64(segment.Start), float64(segment.End))
 		if err != nil {
 			return nil, err
 		}
-		stream.AcceptWaveform(recognizerConfig.FeatConfig.SampleRate, pcmData)
-		recognizer.Decode(stream)
-		result := stream.GetResult()
 
-		logrus.Infof("result:  %+v", result)
+		result := sherpaWhisper.OfflineRecognizer(recognizer, int(dec.SampleRate), pcmData)
+		if result == nil {
+			continue
+		}
 
 		whisperSegments[i] = whisper.Segment{
 			Num:   i,
@@ -88,58 +82,10 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 			End:   float64(segment.End),
 			Text:  result.Text,
 		}
+
 	}
 
-	// logrus.Println("Emotion: " + result.Emotion)
-	// logrus.Println("Lang: " + result.Lang)
-	// logrus.Println("Event: " + result.Event)
-	// logrus.Printf("Timestamp: %v", result.Timestamps)
-	// logrus.Printf("Tokens: %v", result.Tokens)
-	// logrus.Printf("Wave duration: %v seconds", duration)
-
-	// vad.AcceptWaveform(data)
-	// for !vad.IsEmpty() {
-	// 	speechSegment := vad.Front()
-	// 	vad.Pop()
-
-	// 	fmt.Printf("speechSegment.Start: %v\n", speechSegment.Start)
-
-	// 	audio := &sherpa.Wave{}
-	// 	audio.Samples = speechSegment.Samples
-	// 	audio.SampleRate = config.SampleRate
-
-	// 	// Now decode it
-	// 	stream := sherpa.NewOfflineStream(recognizer)
-	// 	defer sherpa.DeleteOfflineStream(stream)
-	// 	stream.AcceptWaveform(audio.SampleRate, audio.Samples)
-	// 	recognizer.Decode(stream)
-	// 	result := stream.GetResult()
-	// 	text := strings.ToLower(result.Text)
-	// 	text = strings.Trim(text, " ")
-
-	// }
-
-	return &whisper.WhisperOutput{Segments: whisperSegments, Duration: duration.Seconds()}, nil
-}
-
-// Please download silero_vad.onnx from
-// https://github.com/snakers4/silero-vad/raw/master/src/silero_vad/data/silero_vad.onnx
-func (sherpaWhisper *SherpaWhisper) WithVad() {
-	config := sherpa.VadModelConfig{}
-
-	config.SileroVad.Model = sherpaWhisper.vadModelPath
-	config.SileroVad.Threshold = 0.5
-	config.SileroVad.MinSilenceDuration = 0.5
-	config.SileroVad.MinSpeechDuration = 0.25
-	config.SileroVad.WindowSize = 512
-	config.SileroVad.MaxSpeechDuration = 5
-	// config.SampleRate = 16000
-	// config.NumThreads = 1
-	// config.Provider = "cpu"
-	// config.Debug = 1
-	var bufferSizeInSeconds float32 = 20
-	vad := sherpa.NewVoiceActivityDetector(&config, bufferSizeInSeconds)
-	defer sherpa.DeleteVoiceActivityDetector(vad)
+	return &whisper.WhisperOutput{Duration: duration.Seconds(), Segments: whisperSegments}, nil
 }
 
 func (sherpaWhisper *SherpaWhisper) SpeakerDiarization(inputdata []float32) ([]sherpa.OfflineSpeakerDiarizationSegment, error) {
@@ -147,11 +93,14 @@ func (sherpaWhisper *SherpaWhisper) SpeakerDiarization(inputdata []float32) ([]s
 	c.Segmentation.Pyannote.Model = sherpaWhisper.pyannoteModelPath
 	c.Embedding.Model = sherpaWhisper.embeddingModelPath
 
-	c.Clustering.NumClusters = runtime.NumCPU()
+	// The test wave file contains 4 speakers, so we use 4 here
+	// c.Clustering.NumClusters = 4
+
 	// if you don't know the actual numbers in the wave file,
 	// then please don't set NumClusters; you need to use
 	//
-	c.Clustering.Threshold = 0.5
+	// config.Clustering.Threshold = 0.5
+	//
 
 	// A larger Threshold leads to fewer clusters
 	// A smaller Threshold leads to more clusters
@@ -163,16 +112,28 @@ func (sherpaWhisper *SherpaWhisper) SpeakerDiarization(inputdata []float32) ([]s
 	return segments, nil
 }
 
+func (sherpaWhisper *SherpaWhisper) OfflineRecognizer(recognizer *sherpa.OfflineRecognizer, sampleRate int, inputdata []float32) *sherpa.OfflineRecognizerResult {
+	stream := sherpa.NewOfflineStream(recognizer)
+	defer sherpa.DeleteOfflineStream(stream)
+	stream.AcceptWaveform(sampleRate, inputdata)
+	recognizer.Decode(stream)
+	result := stream.GetResult()
+
+	logrus.Debugf("offline recognizer result:  %+v", result)
+
+	return result
+}
+
 func (sherpaWhisper *SherpaWhisper) newRecognizerConfig() *sherpa.OfflineRecognizerConfig {
 	recognizerConfig := &sherpa.OfflineRecognizerConfig{}
 	recognizerConfig.FeatConfig.SampleRate = 16000
 	recognizerConfig.FeatConfig.FeatureDim = 80
-	recognizerConfig.ModelConfig.Whisper.Encoder = sherpaWhisper.whisperEncoderModelPath
-	recognizerConfig.ModelConfig.Whisper.Decoder = sherpaWhisper.whisperDecoderModelPath
-	recognizerConfig.ModelConfig.Tokens = sherpaWhisper.whisperModelTokensPath
-	recognizerConfig.ModelConfig.NumThreads = 4
-	recognizerConfig.ModelConfig.Debug = 1
-	recognizerConfig.ModelConfig.Provider = "cuda"
+
+	recognizerConfig.ModelConfig = sherpaWhisper.modelConfig
+
+	// recognizerConfig.ModelConfig.NumThreads = 4
+	// recognizerConfig.ModelConfig.Debug = 1
+	// recognizerConfig.ModelConfig.Provider = "cpu"
 
 	return recognizerConfig
 }

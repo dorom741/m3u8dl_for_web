@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
+
+	"m3u8dl_for_web/pkg/whisper/sherpa"
 )
 
 var ConfigInstance = NewConfig()
@@ -18,8 +20,9 @@ type Config struct {
 
 	Translation TranslationConfig `yaml:"translation"`
 
-	LocalWhisperModels map[string]string `yaml:"localWhisperModels"`
-	Subtitle           *SubtitleConfig   `yaml:"subtitle"`
+	LocalWhisperModels map[string]string   `yaml:"localWhisperModels"`
+	Subtitle           *SubtitleConfig     `yaml:"subtitle"`
+	SherpaConfig       *sherpa.SherpaConfig `yaml:"sherpa"`
 }
 
 func (conf *Config) GetAbsSavePath() string {

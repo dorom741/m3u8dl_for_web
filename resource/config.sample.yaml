@@ -35,3 +35,55 @@ translation:
 #    temperature:
 #    language: ""
 #    translateTo: ""
+
+
+# sherpa:
+#   embeddingModelPath: "path/to/3dspeaker_speech_eres2net_base_sv_zh-cn_3dspeaker_16k.onnx"
+#   pyannoteModelPath: "path/to/sherpa-onnx-pyannote-segmentation-3-0/model.onnx"
+#   offlineModelConfig:
+#     # Configuration for offline/non-streaming transducer.
+#     # Please refer to
+#     # https://k2-fsa.github.io/sherpa/onnx/pretrained_models/offline-transducer/index.html
+#     # to download pre-trained models
+#     transducer:
+#       encoder: "eee"
+#       decoder: ""
+#       joiner: ""
+#     paraformer:
+#       # Configuration for offline/non-streaming paraformer.
+#       # please refer to
+#       # https://k2-fsa.github.io/sherpa/onnx/pretrained_models/offline-paraformer/index.html
+#       # to download pre-trained models
+#       model: ""
+#     nemoctc:
+#       #  Configuration for offline/non-streaming NeMo CTC models.
+#       #
+#       #  Please refer to
+#       #  https://k2-fsa.github.io/sherpa/onnx/pretrained_models/offline-ctc/index.html
+#       #  to download pre-trained models
+#       model: ""
+#     whisper:
+#       decoder: "path/to/sherpa-onnx-paraformer-zh-2023-09-14/model.int8.onnx"
+#       encoder: "path/to/sherpa-onnx-whisper-tiny.en/tiny.en-encoder.onnx"
+#       language: ""
+#       task: ""
+#       tailpaddings: 0
+#     tdnn:
+#       model: ""
+#     sensevoice:
+#       model: "path/to/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
+#       language: ""
+#       useinversetextnormalization: 0
+#     moonshine:
+#       preprocessor: ""
+#       encoder: ""
+#       uncacheddecoder: ""
+#       cacheddecoder: ""
+#     tokens: "path/to/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
+#     numthreads: 4
+#     debug: 1
+#     provider: "cpu" # 可选值: cpu, cuda, coreml
+#     modeltype: "senseVoice" # 可选
+#     modelingunit: "cjkchar" # 可选: cjkchar, bpe, cjkchar+bpe
+#     bpevocab: "" # 可选
+#     telespeechctc: "" # 可选
