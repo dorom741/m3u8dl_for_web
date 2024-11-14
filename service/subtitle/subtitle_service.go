@@ -52,7 +52,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 
 	handler, exist := whisper.DefaultWhisperProvider.Get(input.Provider)
 	if !exist {
-		return fmt.Errorf("whisper provider '%s' not exist,available provider:%+v", strings.Join(whisper.DefaultWhisperProvider.AllProviderNames(), ","))
+		return fmt.Errorf("whisper provider '%s' not exist,available provider:%+v", input.Provider, strings.Join(whisper.DefaultWhisperProvider.AllProviderNames(), ","))
 	}
 
 	if input.SavePath == "" {
