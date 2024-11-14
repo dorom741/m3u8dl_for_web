@@ -91,7 +91,12 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 func (sherpaWhisper *SherpaWhisper) SpeakerDiarization(inputdata []float32) ([]sherpa.OfflineSpeakerDiarizationSegment, error) {
 	c := sherpa.OfflineSpeakerDiarizationConfig{}
 	c.Segmentation.Pyannote.Model = sherpaWhisper.pyannoteModelPath
+	c.Segmentation.NumThreads = sherpaWhisper.modelConfig.NumThreads
+	c.Segmentation.Debug = sherpaWhisper.modelConfig.Debug
+
 	c.Embedding.Model = sherpaWhisper.embeddingModelPath
+	c.Embedding.NumThreads = sherpaWhisper.modelConfig.NumThreads
+	c.Embedding.Debug = sherpaWhisper.modelConfig.Debug
 
 	// The test wave file contains 4 speakers, so we use 4 here
 	// c.Clustering.NumClusters = 4
