@@ -27,6 +27,8 @@ type SubtitleService struct {
 }
 
 func NewSubtitleService(tempAudioPath string, cache *infra.FileCache, translation translation.ITranslation) *SubtitleService {
+	RegisterWhisperProvider()
+
 	return &SubtitleService{
 		tempAudioPath: tempAudioPath,
 		translation:   translation,

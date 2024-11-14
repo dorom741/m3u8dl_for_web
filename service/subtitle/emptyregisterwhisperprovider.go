@@ -3,5 +3,5 @@
 
 package subtitle
 
-func init() {
+func RegisterWhisperProvider() {
 }

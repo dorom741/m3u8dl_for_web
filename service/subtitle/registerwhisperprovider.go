@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func init() {
+func RegisterWhisperProvider() {
 	for name, modelPath := range conf.ConfigInstance.LocalWhisperModels {
 		whisper.DefaultWhisperProvider.Register(name, local.NewLocalWhisper(modelPath))
 		logrus.Infof("register local whisper provider of %s with modelPath:%s", name, modelPath)
