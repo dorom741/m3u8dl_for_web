@@ -8,9 +8,9 @@ WORKDIR /whisper.cpp
 
 RUN git clone https://github.com/ggerganov/whisper.cpp.git .
 
-RUN make WHISPER_SDL2=ON libwhisper.a
+# RUN make WHISPER_SDL2=ON libwhisper.a
 
-RUN #cmake -B build -DWHISPER_SDL2=on && cmake --build build --target whisper
+# RUN #cmake -B build -DWHISPER_SDL2=on && cmake --build build --target whisper
 
 ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/build/src:/whisper.cpp/build/ggml/src
 ENV C_INCLUDE_PATH=/whisper.cpp/include:/whisper.cpp/ggml/include
@@ -36,15 +36,14 @@ RUN  apt-get update  \
 
 WORKDIR /app
 
-#COPY --from=build /root/go/pkg/mod/github.com/k2-fsa/sherpa-onnx-go-linux@v1.10.30/lib/x86_64-unknown-linux-gnu/ ./
 COPY --from=build  /app/sherpa_lib/ /app/
 COPY --from=build /app/app .
-#COPY --from=build /whisper.cpp/build/ggml/src/libggml.so ./libggml.so
-#COPY --from=build /whisper.cpp/build/src/libwhisper.so.1.7.1 ./libwhisper.so
-#RUN ln -s /app/libwhisper.so /app/libwhisper.so.1
+COPY --from=build /whisper.cpp/build/ggml/src/libggml.so ./libggml.so
+COPY --from=build /whisper.cpp/build/src/libwhisper.so.1.7.1 ./libwhisper.so
+RUN ln -s /app/libwhisper.so /app/libwhisper.so.1
 
-#ENV LD_LIBRARY_PATH=/app:$LD_LIBRARY_PATH
-#ENV PATH="/app:${PATH}"
+ENV LD_LIBRARY_PATH=/app:$LD_LIBRARY_PATH
+ENV PATH="/app:${PATH}"
 
 ADD resource  resource
 
