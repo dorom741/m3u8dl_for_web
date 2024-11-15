@@ -9,7 +9,6 @@ import (
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 	sherpa "github.com/k2-fsa/sherpa-onnx-go/sherpa_onnx"
-	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/pkg/whisper"
 )
@@ -40,7 +39,7 @@ func (sherpaWhisper *SherpaWhisper) MaximumFileSize() int64 {
 }
 
 func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
-	var progressCallback  = func (int)  {}
+	progressCallback := func(int) {}
 	if input.ProgressCallback != nil {
 		progressCallback = input.ProgressCallback
 	}
@@ -65,9 +64,9 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 	if err != nil {
 		return nil, err
 	}
-	whisperSegmentLen :=  len(speakerDiarizationSegmentList)
-	whisperSegments := make([]whisper.Segment,whisperSegmentLen)
-	logrus.Debugf("speaker diarization segment list:%+v", speakerDiarizationSegmentList)
+	whisperSegmentLen := len(speakerDiarizationSegmentList)
+	whisperSegments := make([]whisper.Segment, whisperSegmentLen)
+	// logrus.Debugf("speaker diarization segment list:%+v", speakerDiarizationSegmentList)
 	progressCallback(10)
 
 	recognizerConfig := sherpaWhisper.newRecognizerConfig()
@@ -85,7 +84,7 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 			continue
 		}
 
-		progressCallback((i+1)*90/whisperSegmentLen+10)
+		progressCallback((i+1)*90/whisperSegmentLen + 10)
 
 		whisperSegments[i] = whisper.Segment{
 			Num:   i,
@@ -135,7 +134,7 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizer(recognizer *sherpa.Offline
 	recognizer.Decode(stream)
 	result := stream.GetResult()
 
-	logrus.Debugf("offline recognizer result:  %+v", result)
+	// logrus.Debugf("offline recognizer result:  %+v", result)
 
 	return result
 }
