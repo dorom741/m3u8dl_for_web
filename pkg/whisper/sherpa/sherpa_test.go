@@ -27,8 +27,8 @@ func TestSherpaWhisper(t *testing.T) {
 	// modelTokensPath := path.Join(basePath, "sherpa-onnx-whisper-tiny.en", "tiny.en-tokens.txt")
 
 	sherpaConfig := SherpaConfig{
-		EmbeddingModelPath: path.Join(basePath, "3dspeaker_speech_eres2net_base_sv_zh-cn_3dspeaker_16k.onnx"),
-		PyannoteModelPath  : path.Join(basePath, "sherpa-onnx-pyannote-segmentation-3-0/model.onnx"),
+		EmbeddingModelPath: path.Join(basePath, "speaker-embedding.onnx"),
+		PyannoteModelPath:  path.Join(basePath, "sherpa-onnx-pyannote-segmentation-3-0/model.onnx"),
 		OfflineModelConfig: sherpa.OfflineModelConfig{
 			// Whisper: sherpa.OfflineWhisperModelConfig{
 			// 	Decoder:      path.Join(basePath, "sherpa-onnx-paraformer-zh-2023-09-14", "model.int8.onnx"),
@@ -40,11 +40,10 @@ func TestSherpaWhisper(t *testing.T) {
 			SenseVoice: sherpa.OfflineSenseVoiceModelConfig{
 				Model: path.Join(basePath, "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17", "model.onnx"),
 			},
-	
+
 			Tokens: modelTokensPath,
 		},
 	}
-
 
 	sherpaWhisper := NewSherpaWhisper(sherpaConfig)
 	result, err := sherpaWhisper.HandleWhisper(context.Background(), whisper.WhisperInput{
