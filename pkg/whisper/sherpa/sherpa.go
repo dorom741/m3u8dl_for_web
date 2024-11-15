@@ -40,6 +40,11 @@ func (sherpaWhisper *SherpaWhisper) MaximumFileSize() int64 {
 }
 
 func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
+	var progressCallback  = func (int)  {}
+	if input.ProgressCallback != nil {
+		progressCallback = input.ProgressCallback
+	}
+
 	file, err := os.Open(input.FilePath)
 	if err != nil {
 		return nil, err
@@ -60,8 +65,10 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 	if err != nil {
 		return nil, err
 	}
-	whisperSegments := make([]whisper.Segment, len(speakerDiarizationSegmentList))
+	whisperSegmentLen :=  len(speakerDiarizationSegmentList)
+	whisperSegments := make([]whisper.Segment,whisperSegmentLen)
 	logrus.Debugf("speaker diarization segment list:%+v", speakerDiarizationSegmentList)
+	progressCallback(10)
 
 	recognizerConfig := sherpaWhisper.newRecognizerConfig()
 	recognizer := sherpa.NewOfflineRecognizer(recognizerConfig)
@@ -77,6 +84,8 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 		if result == nil {
 			continue
 		}
+
+		progressCallback((i+1)*90/whisperSegmentLen+10)
 
 		whisperSegments[i] = whisper.Segment{
 			Num:   i,
