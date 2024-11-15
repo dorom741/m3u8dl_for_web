@@ -45,7 +45,7 @@ func (service *SubtitleService) cacheKey(provider string, input whisper.WhisperI
 	return fmt.Sprintf("%s_%s_%s_%.2f", prefix, filename[:len(filename)-len(ext)], provider, input.Temperature)
 }
 
-func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggregate.SubtitleInput) error {
+func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggregate.SubtitleInput) (*aggregate.SubtitleOutput, error) {
 	var (
 		filename     = filepath.Base(input.InputPath)
 		ext          = filepath.Ext(filename)
@@ -54,7 +54,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 
 	handler, exist := whisper.DefaultWhisperProvider.Get(input.Provider)
 	if !exist {
-		return fmt.Errorf("whisper provider '%s' not exist,available provider:%+v", input.Provider, strings.Join(whisper.DefaultWhisperProvider.AllProviderNames(), ","))
+		return nil, fmt.Errorf("whisper provider '%s' not exist,available provider:%+v", input.Provider, strings.Join(whisper.DefaultWhisperProvider.AllProviderNames(), ","))
 	}
 
 	if input.SavePath == "" {
@@ -64,14 +64,14 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 	stat, _ := os.Stat(input.SavePath)
 	if stat != nil && stat.Size() > 0 && !input.ReplaceOnExist {
 		logrus.Warnf("target file '%s' exist,skiped", input.SavePath)
-		return nil
+		return &aggregate.SubtitleOutput{Skip: true}, nil
 	}
 
 	tempPath := path.Join(service.tempAudioPath, pureFilename)
 	subtitleTempPath := path.Join(service.tempAudioPath, strings.ReplaceAll(filename, ext, ".ass"))
 
 	if err := os.MkdirAll(tempPath, os.ModePerm); err != nil {
-		return err
+		return nil, err
 	}
 
 	subtitleBuffer := new(bytes.Buffer)
@@ -92,7 +92,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 
 	outputFileList, err := service.getAudioFromMediaWithFFmpeg(input.InputPath, tempPath, filename, handler.MaximumFileSize())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var (
@@ -120,14 +120,14 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 
 		logrus.Infof("process segment file '%s' in whisper,progress:%d/%d", audioPath, i+1, totalFile)
 		if err := service.cache.Get(cacheKey, &whisperOutput); err != nil {
-			return err
+			return nil, err
 		} else if whisperOutput == nil {
 			whisperOutput, err = handler.HandleWhisper(ctx, whisperInput)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if err := service.cache.Set(cacheKey, whisperOutput); err != nil {
-				return err
+				return nil, err
 			}
 
 		}
@@ -141,7 +141,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 
 			translatedTextList, err = service.BatchTranslate(ctx, allTextList, "", input.TranslateTo)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 		}
@@ -171,17 +171,22 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 		accumulateDuration += whisperOutput.Duration
 	}
 
-	fileDuration := time.Duration(float64(time.Second) * accumulateDuration).String()
-	processDuration := time.Since(startTime).String()
-	logrus.Infof("success process file '%s' in whisper,file duration:%s,process duration:%s", input.InputPath, fileDuration, processDuration)
+	fileDuration := time.Duration(float64(time.Second) * accumulateDuration)
+	processDuration := time.Since(startTime)
+	logrus.Infof("success process file '%s' in whisper,file duration:%s,process duration:%s", input.InputPath, fileDuration.String(), processDuration.String())
 
 	if err := subtitleSub.WriteToFile(subtitleBuffer); err != nil {
-		return nil
+		return nil, nil
 	}
 
 	_ = os.RemoveAll(tempPath)
 
-	return nil
+	return &aggregate.SubtitleOutput{
+		ProcessDuration: processDuration.Seconds(),
+		MediaDuration:   fileDuration.Seconds(),
+		StartTimestamp:  startTime.Unix(),
+		FinishTimestamp: time.Now().Unix(),
+	}, nil
 }
 
 func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string, segmentSize int64) ([]string, error) {

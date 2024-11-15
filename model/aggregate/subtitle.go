@@ -16,4 +16,10 @@ type SubtitleInput struct {
 	ReplaceOnExist bool      `yaml:"replaceOnExist" json:"replaceOnExist"`
 }
 
-type SubtitleOutput struct{}
+type SubtitleOutput struct {
+	Skip            bool
+	ProcessDuration float64
+	MediaDuration   float64
+	FinishTimestamp int64
+	StartTimestamp  int64
+}

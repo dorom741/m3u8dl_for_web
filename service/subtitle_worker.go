@@ -44,10 +44,13 @@ func (service *SubtitleWorkerService) AddTask(taskRecord model.TaskRecord[aggreg
 }
 
 func (service *SubtitleWorkerService) OnTaskRun(task model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]) error {
-	if err := SubtitleServiceInstance.GenerateSubtitle(context.Background(), task.Input); err != nil {
+	output, err := SubtitleServiceInstance.GenerateSubtitle(context.Background(), task.Input)
+	if err != nil {
 		return err
 	}
-	return nil
+	task.Output = *output
+
+	return task.Save()
 }
 
 func (service *SubtitleWorkerService) OnTaskFinish(task model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput], taskErr error) {

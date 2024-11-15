@@ -38,7 +38,7 @@ func TestGenerateSubtitle(t *testing.T) {
 		Language:    "",
 	}
 
-	err := SubtitleServiceInstance.GenerateSubtitle(ctx, input)
+	_,err := SubtitleServiceInstance.GenerateSubtitle(ctx, input)
 	if err != nil {
 		t.Error(err)
 	}
