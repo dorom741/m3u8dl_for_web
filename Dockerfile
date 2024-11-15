@@ -23,8 +23,8 @@ COPY . .
 RUN go mod download
 RUN go build -tags localWhisper  -o app ./cmd/
 
-RUN mkdir -p /app/sherpa_lib/ && find /go/pkg/mod/github.com/k2-fsa/ -name "*.so" -exec cp {} /app/sherpa_lib/ \;
-
+# RUN mkdir -p /app/sherpa_lib/ && find /go/pkg/mod/github.com/k2-fsa/ -name "*.so" -exec cp {} /app/sherpa_lib/ \;
+RUN  mkdir -p /app/sherpa_lib/  && cp /go/pkg/mod/github.com/k2-fsa/sherpa-onnx-go-linux@*/lib/x86_64-unknown-linux-gnu/*.so /app/sherpa_lib/
 
 FROM ubuntu:22.04
 
