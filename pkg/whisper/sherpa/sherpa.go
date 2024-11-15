@@ -9,6 +9,7 @@ import (
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 	sherpa "github.com/k2-fsa/sherpa-onnx-go/sherpa_onnx"
+	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/pkg/whisper"
 )
@@ -75,7 +76,8 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 	for i, segment := range speakerDiarizationSegmentList {
 		pcmData, err := sherpaWhisper.selectPCMData(dec.SampleRate, pcmBuffer, float64(segment.Start), float64(segment.End))
 		if err != nil {
-			return nil, err
+			logrus.Warnf("skip cause selectPCMData error:%+v", err)
+			continue
 		}
 
 		result := sherpaWhisper.OfflineRecognizer(recognizer, int(dec.SampleRate), pcmData)
@@ -182,7 +184,7 @@ func (sherpaWhisper *SherpaWhisper) selectPCMData(sampleRate uint32, audioBuffer
 	endSample := int(endTime * float64(sampleRate))
 
 	if startSample < 0 || endSample > len(audioBuffer.Data) || startSample >= endSample {
-		return nil, fmt.Errorf("Invalid start or end time")
+		return nil, fmt.Errorf("Invalid start or end time on pickup time range [%.2f,%.2f]", startTime, endTime)
 	}
 
 	trimmedBuffer := &audio.IntBuffer{
