@@ -39,11 +39,6 @@ func (sherpaWhisper *SherpaWhisper) MaximumFileSize() int64 {
 }
 
 func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
-	progressCallback := func(int) {}
-	if input.ProgressCallback != nil {
-		progressCallback = input.ProgressCallback
-	}
-
 	file, err := os.Open(input.FilePath)
 	if err != nil {
 		return nil, err
@@ -60,41 +55,12 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 		return nil, err
 	}
 
-	speakerDiarizationSegmentList, err := sherpaWhisper.SpeakerDiarization(pcmBuffer.AsFloat32Buffer().Data)
+	whisperSegments, err := sherpaWhisper.OfflineRecognizerStreams(dec.SampleRate, pcmBuffer, input.ProgressCallback)
 	if err != nil {
 		return nil, err
 	}
-	whisperSegmentLen := len(speakerDiarizationSegmentList)
-	whisperSegments := make([]whisper.Segment, whisperSegmentLen)
+
 	// logrus.Debugf("speaker diarization segment list:%+v", speakerDiarizationSegmentList)
-	progressCallback(10)
-
-	recognizerConfig := sherpaWhisper.newRecognizerConfig()
-	recognizer := sherpa.NewOfflineRecognizer(recognizerConfig)
-	defer sherpa.DeleteOfflineRecognizer(recognizer)
-
-	for i, segment := range speakerDiarizationSegmentList {
-		pcmData, err := sherpaWhisper.selectPCMData(dec.SampleRate, pcmBuffer, float64(segment.Start), float64(segment.End))
-		if err != nil {
-			logrus.Warnf("skip cause selectPCMData error:%+v", err)
-			continue
-		}
-
-		result := sherpaWhisper.OfflineRecognizer(recognizer, int(dec.SampleRate), pcmData)
-		if result == nil {
-			continue
-		}
-
-		progressCallback((i+1)*90/whisperSegmentLen + 10)
-
-		whisperSegments[i] = whisper.Segment{
-			Num:   i,
-			Start: float64(segment.Start),
-			End:   float64(segment.End),
-			Text:  result.Text,
-		}
-
-	}
 
 	return &whisper.WhisperOutput{Duration: duration.Seconds(), Segments: whisperSegments}, nil
 }
@@ -128,16 +94,60 @@ func (sherpaWhisper *SherpaWhisper) SpeakerDiarization(inputdata []float32) ([]s
 	return segments, nil
 }
 
-func (sherpaWhisper *SherpaWhisper) OfflineRecognizer(recognizer *sherpa.OfflineRecognizer, sampleRate int, inputdata []float32) *sherpa.OfflineRecognizerResult {
-	stream := sherpa.NewOfflineStream(recognizer)
-	defer sherpa.DeleteOfflineStream(stream)
-	stream.AcceptWaveform(sampleRate, inputdata)
-	recognizer.Decode(stream)
-	result := stream.GetResult()
+func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, pcmBuffer *audio.IntBuffer, progressCallback func(int)) ([]whisper.Segment, error) {
+	if progressCallback == nil {
+		progressCallback = func(int) {}
+	}
 
+	speakerDiarizationSegmentList, err := sherpaWhisper.SpeakerDiarization(pcmBuffer.AsFloat32Buffer().Data)
+	if err != nil {
+		return nil, err
+	}
+
+	progressCallback(50)
+	whisperSegmentLen := len(speakerDiarizationSegmentList)
+	offlineStreams := make([]*sherpa.OfflineStream, whisperSegmentLen)
+	segmentList := make([]whisper.Segment, whisperSegmentLen)
+
+	recognizerConfig := sherpaWhisper.newRecognizerConfig()
+	recognizer := sherpa.NewOfflineRecognizer(recognizerConfig)
+	defer sherpa.DeleteOfflineRecognizer(recognizer)
+
+	for i, segment := range speakerDiarizationSegmentList {
+		pcmData, err := sherpaWhisper.selectPCMData(uint32(sampleRate), pcmBuffer, float64(segment.Start), float64(segment.End))
+		if err != nil {
+			logrus.Warnf("skip cause selectPCMData error:%+v", err)
+			continue
+		}
+		stream := sherpa.NewOfflineStream(recognizer)
+		defer sherpa.DeleteOfflineStream(stream)
+		stream.AcceptWaveform(int(sampleRate), pcmData)
+
+		offlineStreams[i] = stream
+
+		// progressCallback((i+1)*50/whisperSegmentLen + 50)
+
+	}
+
+	progressCallback(60)
+
+	recognizer.DecodeStreams(offlineStreams)
+
+	for i, offlineStream := range offlineStreams {
+		result := offlineStream.GetResult()
+		segmentList[i] = whisper.Segment{
+			Num:   i,
+			Start: float64(speakerDiarizationSegmentList[i].Start),
+			End:   float64(speakerDiarizationSegmentList[i].End),
+			Text:  result.Text,
+		}
+
+	}
+
+	progressCallback(90)
 	// logrus.Debugf("offline recognizer result:  %+v", result)
 
-	return result
+	return segmentList, nil
 }
 
 func (sherpaWhisper *SherpaWhisper) newRecognizerConfig() *sherpa.OfflineRecognizerConfig {
