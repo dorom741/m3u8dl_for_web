@@ -34,7 +34,7 @@ func NewSherpaWhisper(sherpaConfig SherpaConfig) *SherpaWhisper {
 	}
 }
 
-// 3 hours,32M
+// 2 hours,219M
 func (sherpaWhisper *SherpaWhisper) MaximumFileSize() int64 {
 	return 33554432
 }
