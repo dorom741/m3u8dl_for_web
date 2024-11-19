@@ -106,13 +106,25 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 	}
 
 	progressCallback(50)
-	whisperSegmentLen := len(speakerDiarizationSegmentList)
-	offlineStreams := make([]*sherpa.OfflineStream, whisperSegmentLen)
-	segmentList := make([]whisper.Segment, whisperSegmentLen)
+	var (
+		recognizerConfig  = sherpaWhisper.newRecognizerConfig()
+		whisperSegmentLen = len(speakerDiarizationSegmentList)
+		segmentList       = make([]whisper.Segment, whisperSegmentLen)
+		sampleRateInt     = int(sampleRate)
+	)
 
-	recognizerConfig := sherpaWhisper.newRecognizerConfig()
 	recognizer := sherpa.NewOfflineRecognizer(recognizerConfig)
 	defer sherpa.DeleteOfflineRecognizer(recognizer)
+
+	doRecognize := func(data []float32) *sherpa.OfflineRecognizerResult {
+		stream := sherpa.NewOfflineStream(recognizer)
+		defer sherpa.DeleteOfflineStream(stream)
+
+		stream.AcceptWaveform(sampleRateInt, data)
+		recognizer.Decode(stream)
+		result := stream.GetResult()
+		return result
+	}
 
 	for i, segment := range speakerDiarizationSegmentList {
 		pcmData, err := sherpaWhisper.selectPCMData(uint32(sampleRate), pcmBuffer, float64(segment.Start), float64(segment.End))
@@ -120,22 +132,10 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 			logrus.Warnf("skip cause selectPCMData error:%+v", err)
 			continue
 		}
-		stream := sherpa.NewOfflineStream(recognizer)
-		defer sherpa.DeleteOfflineStream(stream)
-		stream.AcceptWaveform(int(sampleRate), pcmData)
 
-		offlineStreams[i] = stream
+		result := doRecognize(pcmData)
 
-		// progressCallback((i+1)*50/whisperSegmentLen + 50)
-
-	}
-
-	progressCallback(60)
-
-	recognizer.DecodeStreams(offlineStreams)
-
-	for i, offlineStream := range offlineStreams {
-		result := offlineStream.GetResult()
+		// logrus.Debugf("offline recognizer result:  %+v", result)
 		segmentList[i] = whisper.Segment{
 			Num:   i,
 			Start: float64(speakerDiarizationSegmentList[i].Start),
@@ -143,10 +143,8 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 			Text:  result.Text,
 		}
 
+		progressCallback((i+1)*50/whisperSegmentLen + 50)
 	}
-
-	progressCallback(90)
-	// logrus.Debugf("offline recognizer result:  %+v", result)
 
 	return segmentList, nil
 }
