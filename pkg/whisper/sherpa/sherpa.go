@@ -36,8 +36,7 @@ func NewSherpaWhisper(sherpaConfig SherpaConfig) *SherpaWhisper {
 
 // 3 hours,32M
 func (sherpaWhisper *SherpaWhisper) MaximumFileSize() int64 {
-	return 10780
-
+	return 33554432
 }
 
 func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
