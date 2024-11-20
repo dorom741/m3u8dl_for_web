@@ -37,7 +37,7 @@ require (
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
-	github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241106210211-31aea563a838
+	github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241119165422-6266a9f9e56a
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

@@ -30,6 +30,8 @@ github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241008170800-fdbfb460ed54 
 github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241008170800-fdbfb460ed54/go.mod h1:qyHjS/50ORo01H0NsuEEGsQR9VCtOcEye0gUl2sx1s8=
 github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241106210211-31aea563a838 h1:EIAXdoHSmPHkZhoiC+JcvK7iVi2XSetLM9hdXNnCRcc=
 github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241106210211-31aea563a838/go.mod h1:qyHjS/50ORo01H0NsuEEGsQR9VCtOcEye0gUl2sx1s8=
+github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241119165422-6266a9f9e56a h1:z2WNQosLNg2hUOcpaef/rIjOTwSGGrPBtD+uRCrXcbU=
+github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241119165422-6266a9f9e56a/go.mod h1:qyHjS/50ORo01H0NsuEEGsQR9VCtOcEye0gUl2sx1s8=
 github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=
 github.com/gin-contrib/sse v0.1.0/go.mod h1:RHrZQHXnP2xjPF+u1gW/2HnVO7nvIa9PG3Gm+fLHvGI=
 github.com/gin-gonic/gin v1.10.0 h1:nTuyha1TYqgedzytsKYqna+DfLos46nTv2ygFy86HFU=

@@ -39,7 +39,7 @@ WORKDIR /app
 COPY --from=build  /app/sherpa_lib/ /app/
 COPY --from=build /app/app .
 COPY --from=build /whisper.cpp/build/ggml/src/libggml.so ./libggml.so
-COPY --from=build /whisper.cpp/build/src/libwhisper.so.1.7.1 ./libwhisper.so.1
+COPY --from=build /whisper.cpp/build/src/libwhisper.so.1.7.2 ./libwhisper.so.1
 # RUN ln -s /app/libwhisper.so /app/libwhisper.so.1
 
 ENV LD_LIBRARY_PATH=/app
