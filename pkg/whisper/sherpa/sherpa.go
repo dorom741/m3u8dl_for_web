@@ -34,9 +34,9 @@ func NewSherpaWhisper(sherpaConfig SherpaConfig) *SherpaWhisper {
 	}
 }
 
-// 2 hours,219M
+// 2 hours,329M
 func (sherpaWhisper *SherpaWhisper) MaximumFileSize() int64 {
-	return 33554432
+	return 345600000
 }
 
 func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {
@@ -145,7 +145,7 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 			End:   float64(speakerDiarizationSegmentList[i].End),
 			Text:  result.Text,
 		}
-		if i % 10 == 0 {
+		if i%10 == 0 {
 			progressCallback((i+1)*50/whisperSegmentLen + 50)
 		}
 	}
