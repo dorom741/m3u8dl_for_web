@@ -145,8 +145,9 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 			End:   float64(speakerDiarizationSegmentList[i].End),
 			Text:  result.Text,
 		}
-
-		progressCallback((i+1)*50/whisperSegmentLen + 50)
+		if i % 10 == 0 {
+			progressCallback((i+1)*50/whisperSegmentLen + 50)
+		}
 	}
 
 	return segmentList, nil
