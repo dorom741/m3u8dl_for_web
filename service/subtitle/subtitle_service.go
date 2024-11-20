@@ -199,7 +199,7 @@ func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ou
 	if segmentSize > 0 {
 		// 采样率 × 采样位深 × 声道数 × 时长 / 8
 		segmentTime = segmentSize * 8 / 16 / 16000
-		suffix = "%03d"
+		suffix = "_%03d"
 	}
 	dirEntryList, err := os.ReadDir(ouputDir)
 	if err != nil {
@@ -207,7 +207,7 @@ func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ou
 	}
 
 	if len(dirEntryList) == 0 {
-		fileName := fmt.Sprintf("%s_%s%s", outputName[:len(outputName)-len(ext)], suffix, ".wav")
+		fileName := fmt.Sprintf("%s%s%s", outputName[:len(outputName)-len(ext)], suffix, ".wav")
 		outputPath := path.Join(ouputDir, fileName)
 		if err := media.ConvertToWavWithFFmpeg(inputFile, outputPath, media.ConvertToWavOption{SegmentTime: segmentTime}); err != nil {
 			return nil, err
