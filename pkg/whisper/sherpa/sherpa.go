@@ -134,6 +134,9 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 		}
 
 		result := doRecognize(pcmData)
+		if result == nil {
+			continue
+		}
 
 		// logrus.Debugf("offline recognizer result:  %+v", result)
 		segmentList[i] = whisper.Segment{
