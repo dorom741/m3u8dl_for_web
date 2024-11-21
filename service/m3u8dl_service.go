@@ -40,11 +40,11 @@ func NewM3u8dlService() *M3u8dlService {
 	return service
 }
 
-func (service *M3u8dlService) AddTask(taskRecord model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) error {
+func (service *M3u8dlService) AddTask(taskRecord *model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) error {
 	return service.worker.AddTask(taskRecord)
 }
 
-func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) error {
+func (service *M3u8dlService) OnTaskRun(task *model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) error {
 	req := task.Input.ToStartDownloadReq()
 	req.ProgressBarShow = true
 	downloadEnv := m3u8d.DownloadEnv{}
@@ -87,7 +87,7 @@ func (service *M3u8dlService) OnTaskRun(task model.TaskRecord[aggregate.M3u8dlIn
 	return nil
 }
 
-func (service *M3u8dlService) OnTaskFinish(task model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput], taskErr error) {
+func (service *M3u8dlService) OnTaskFinish(task *model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput], taskErr error) {
 	errMsg := ""
 	if taskErr != nil {
 		logrus.Errorf("m3u8 url:%s download error:%s", task.Input.URL, taskErr.Error())
@@ -111,7 +111,7 @@ func (service *M3u8dlService) getVideoId(url string) string {
 	return hex.EncodeToString(tmp1[:])
 }
 
-func (service *M3u8dlService) getTempDirAndFile(task model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) (tempDir string, mergeTempFile string, err error) {
+func (service *M3u8dlService) getTempDirAndFile(task *model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) (tempDir string, mergeTempFile string, err error) {
 	videoId := service.getVideoId(task.Input.URL)
 	tempDir, err = filepath.Abs(path.Join(task.Input.SaveDir, "downloading", videoId))
 	if err != nil {
@@ -121,7 +121,7 @@ func (service *M3u8dlService) getTempDirAndFile(task model.TaskRecord[aggregate.
 	return tempDir, path.Join(tempDir, task.Input.Name+".mp4.temp"), nil
 }
 
-func (service *M3u8dlService) MergeWithFFMPEG(task model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) (string, error) {
+func (service *M3u8dlService) MergeWithFFMPEG(task *model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]) (string, error) {
 	var out bytes.Buffer
 	workingDir, _, err := service.getTempDirAndFile(task)
 	if err != nil {

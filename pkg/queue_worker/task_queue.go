@@ -12,23 +12,22 @@ type QueueWorkerOption struct {
 
 type QueueWorker[T any] struct {
 	option QueueWorkerOption
-	queue  chan T
-	//workerCount atomic.Int64
+	queue  chan *T
+	// workerCount atomic.Int64
 	workingWorkerChan chan struct{}
 
-	onTaskRun    func(task T) error
-	onTaskFinish func(task T, err error)
+	onTaskRun    func(task *T) error
+	onTaskFinish func(task *T, err error)
 }
 
 func NewQueueWorker[T any](option QueueWorkerOption, consumer QueueWorkerConsumer[T]) QueueWorker[T] {
-
 	if option.MaxQueueLen == 0 {
 		option.MaxQueueLen = 10
 	}
 
 	return QueueWorker[T]{
 		workingWorkerChan: make(chan struct{}, option.MaxWorker),
-		queue:             make(chan T, option.MaxQueueLen),
+		queue:             make(chan *T, option.MaxQueueLen),
 		option:            option,
 		onTaskRun:         consumer.OnTaskRun,
 		onTaskFinish:      consumer.OnTaskFinish,
@@ -44,7 +43,6 @@ func (worker *QueueWorker[T]) QueueLen() int64 {
 }
 
 func (worker *QueueWorker[T]) Run() {
-
 	for {
 		worker.workingWorkerChan <- struct{}{}
 		task := <-worker.queue
@@ -53,14 +51,12 @@ func (worker *QueueWorker[T]) Run() {
 				<-worker.workingWorkerChan
 			}()
 			worker.doTask(task)
-
 		}()
 
 	}
-
 }
 
-func (worker *QueueWorker[T]) AddTask(task T) error {
+func (worker *QueueWorker[T]) AddTask(task *T) error {
 	if worker.option.MaxQueueLen > 0 && worker.QueueLen() >= worker.option.MaxQueueLen {
 		return errors.New("task queue exceeding limits")
 	}
@@ -69,12 +65,11 @@ func (worker *QueueWorker[T]) AddTask(task T) error {
 	return nil
 }
 
-func (worker *QueueWorker[T]) AddTaskBlocking(task T)  {
+func (worker *QueueWorker[T]) AddTaskBlocking(task *T) {
 	worker.queue <- task
 }
 
-
-func (worker *QueueWorker[T]) doTask(task T) {
+func (worker *QueueWorker[T]) doTask(task *T) {
 	var err error
 
 	for i := 0; i < worker.option.RetryOnFail; i++ {
@@ -84,5 +79,4 @@ func (worker *QueueWorker[T]) doTask(task T) {
 		}
 	}
 	worker.onTaskFinish(task, err)
-
 }

@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"m3u8dl_for_web/conf"
-	"m3u8dl_for_web/model/aggregate"
 	"m3u8dl_for_web/model"
+	"m3u8dl_for_web/model/aggregate"
 	"m3u8dl_for_web/service"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +38,7 @@ func (controller *TaskController) AddM3u8dlTask(c *gin.Context) {
 		fileName := strings.Trim(addTaskReq.Name, " ")
 		fileName = strings.ReplaceAll(fileName, ".mp4", "")
 
-		taskRecord := model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]{
+		taskRecord := &model.TaskRecord[aggregate.M3u8dlInput, aggregate.M3u8dlOutput]{
 			Input: aggregate.M3u8dlInput{
 				URL:     url,
 				Name:    fileName,
@@ -76,7 +76,7 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 		c.JSON(400, gin.H{"msg": err.Error()})
 	}
 
-	taskRecord := model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]{
+	taskRecord := &model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]{
 		Type:  "generateSubtitle",
 		State: model.StateReady,
 		Input: aggregate.SubtitleInput{

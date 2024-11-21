@@ -40,11 +40,11 @@ func NewSubtitleWorkerService(subtitleConfig *conf.SubtitleConfig) *SubtitleWork
 	return service
 }
 
-func (service *SubtitleWorkerService) AddTask(taskRecord model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]) error {
+func (service *SubtitleWorkerService) AddTask(taskRecord *model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]) error {
 	return service.worker.AddTask(taskRecord)
 }
 
-func (service *SubtitleWorkerService) OnTaskRun(task model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]) error {
+func (service *SubtitleWorkerService) OnTaskRun(task *model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]) error {
 	output, err := SubtitleServiceInstance.GenerateSubtitle(context.Background(), task.Input)
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (service *SubtitleWorkerService) OnTaskRun(task model.TaskRecord[aggregate.
 	return task.Save()
 }
 
-func (service *SubtitleWorkerService) OnTaskFinish(task model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput], taskErr error) {
+func (service *SubtitleWorkerService) OnTaskFinish(task *model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput], taskErr error) {
 	errMsg := ""
 	if taskErr != nil {
 		logrus.Errorf("%s generate subtitle error:%s", task.Input.InputPath, taskErr.Error())
@@ -88,7 +88,7 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPatt
 	addTask := func(filePath string) {
 		newTaskInput := input
 		newTaskInput.InputPath = filePath
-		task := model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]{
+		task := &model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]{
 			Type:   "generateSubtitle",
 			State:  model.StateReady,
 			Input:  newTaskInput,
