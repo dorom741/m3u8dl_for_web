@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/conf"
@@ -69,15 +70,24 @@ func (service *SubtitleWorkerService) OnTaskFinish(task model.TaskRecord[aggrega
 }
 
 func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPattern string, watch bool, input aggregate.SubtitleInput) error {
-	allFileList, err := service.scanDir(dirPath, matchPattern)
+	compiledRexp, err := regexp.Compile(matchPattern)
 	if err != nil {
 		return err
 	}
 
-	for i := range allFileList {
-		fileItem := allFileList[i]
+	fullDirPath, err := filepath.Abs(dirPath)
+	if err != nil {
+		return err
+	}
+
+	allFileList, err := service.scanDir(fullDirPath, compiledRexp)
+	if err != nil {
+		return err
+	}
+
+	addTask := func(filePath string) {
 		newTaskInput := input
-		newTaskInput.InputPath = fileItem
+		newTaskInput.InputPath = filePath
 		task := model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]{
 			Type:   "generateSubtitle",
 			State:  model.StateReady,
@@ -88,32 +98,72 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPatt
 		service.worker.AddTaskBlocking(task)
 		if err := task.Save(); err != nil {
 			logrus.Warnf("save task error %+v on '%s'", err, task.Input.InputPath)
-			continue
 		}
-
-		logrus.Infof("add generate subtitle task for path:%s", task.Input.InputPath)
-
 	}
 
-	// TODO: watch dirt to add task
 	if watch {
+		logrus.Infof("start dir watch:%s", fullDirPath)
+		service.doDirWatch(fullDirPath, func(filename string) {
+			if compiledRexp.MatchString(filename) {
+				addTask(filename)
+				logrus.Infof("add generate subtitle task for path:%s on dir watch", filename)
+
+			}
+		})
+	}
+
+	for i := range allFileList {
+		fileItem := allFileList[i]
+		addTask(fileItem)
+
+		logrus.Infof("add generate subtitle task for path:%s", fileItem)
 	}
 
 	return nil
 }
 
-func (service *SubtitleWorkerService) scanDir(dirPath string, matchPattern string) ([]string, error) {
-	re, err := regexp.Compile(matchPattern)
+func (service *SubtitleWorkerService) doDirWatch(dirPath string, onAddFile func(filename string)) error {
+	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return nil, err
+		return err
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(dirPath)
+	if err != nil {
+		return err
 	}
 
+	defer func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				logrus.Infof("fsnotify event: %+v", event)
+				if event.Has(fsnotify.Create) {
+					onAddFile(event.Name)
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				logrus.Errorf("watcher dir error:%+v", err)
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (service *SubtitleWorkerService) scanDir(dirPath string, compiledRexp *regexp.Regexp) ([]string, error) {
 	fileList := make([]string, 0)
-	err = filepath.Walk(dirPath, func(path string, info fs.FileInfo, err error) error {
+	err := filepath.Walk(dirPath, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() || !re.MatchString(path) {
+		if info.IsDir() || !compiledRexp.MatchString(path) {
 			return nil
 		}
 

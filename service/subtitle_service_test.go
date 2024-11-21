@@ -38,7 +38,7 @@ func TestGenerateSubtitle(t *testing.T) {
 		Language:    "",
 	}
 
-	_,err := SubtitleServiceInstance.GenerateSubtitle(ctx, input)
+	_, err := SubtitleServiceInstance.GenerateSubtitle(ctx, input)
 	if err != nil {
 		t.Error(err)
 	}
@@ -66,7 +66,7 @@ func TestAstisub(t *testing.T) {
 }
 
 func TestScanDirToAddTask(t *testing.T) {
-	err := SubtitleWorkerServiceInstance.ScanDirToAddTask("./", `\.go$`, false, aggregate.SubtitleInput{
+	err := SubtitleWorkerServiceInstance.ScanDirToAddTask("./", `\.go$`, true, aggregate.SubtitleInput{
 		Prompt:         "",
 		Temperature:    0.0,
 		Language:       "",
