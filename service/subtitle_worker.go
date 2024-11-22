@@ -148,7 +148,7 @@ func (service *SubtitleWorkerService) doDirWatch(dirPath string, onAddFile func(
 				}
 				logrus.Infof("fsnotify event: %+v", event)
 				if event.Has(fsnotify.Create) {
-					onAddFile(event.Name)
+					go onAddFile(event.Name)
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
