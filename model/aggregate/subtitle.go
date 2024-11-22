@@ -2,6 +2,9 @@ package aggregate
 
 import (
 	"io"
+	"os"
+	"path"
+	"strings"
 )
 
 type SubtitleInput struct {
@@ -14,6 +17,19 @@ type SubtitleInput struct {
 	Language       string    `yaml:"language" json:"language"`
 	TranslateTo    string    `yaml:"translateTo" json:"translateTo"`
 	ReplaceOnExist bool      `yaml:"replaceOnExist" json:"replaceOnExist"`
+}
+
+func (subtitleInput *SubtitleInput) GetSavePath() string {
+	if subtitleInput.SavePath == "" {
+		subtitleInput.SavePath = strings.ReplaceAll(subtitleInput.InputPath, path.Ext(subtitleInput.InputPath), ".ass")
+	}
+
+	return subtitleInput.SavePath
+}
+
+func (subtitleInput *SubtitleInput) HasSavePathExists() bool {
+	stat, _ := os.Stat(subtitleInput.GetSavePath())
+	return stat != nil && stat.Size() > 0
 }
 
 type SubtitleOutput struct {

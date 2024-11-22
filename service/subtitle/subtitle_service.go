@@ -57,13 +57,8 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 		return nil, fmt.Errorf("whisper provider '%s' not exist,available provider:%+v", input.Provider, strings.Join(whisper.DefaultWhisperProvider.AllProviderNames(), ","))
 	}
 
-	if input.SavePath == "" {
-		input.SavePath = strings.ReplaceAll(input.InputPath, path.Ext(input.InputPath), ".ass")
-	}
-
-	stat, _ := os.Stat(input.SavePath)
-	if stat != nil && stat.Size() > 0 && !input.ReplaceOnExist {
-		logrus.Warnf("target file '%s' exist,skiped", input.SavePath)
+	if input.HasSavePathExists() && !input.ReplaceOnExist {
+		logrus.Warnf("target file '%s' exist,skiped", input.GetSavePath())
 		return &aggregate.SubtitleOutput{Skip: true}, nil
 	}
 
@@ -79,7 +74,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 		if subtitleBuffer.Len() == 0 {
 			return
 		}
-		if err := os.WriteFile(input.SavePath, subtitleBuffer.Bytes(), os.ModePerm); err != nil {
+		if err := os.WriteFile(input.GetSavePath(), subtitleBuffer.Bytes(), os.ModePerm); err != nil {
 			logrus.Warnf("write target file error,fallback write to tempfile:%s", subtitleTempPath)
 			_ = os.WriteFile(subtitleTempPath, subtitleBuffer.Bytes(), os.ModePerm)
 		}
