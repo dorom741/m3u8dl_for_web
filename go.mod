@@ -5,10 +5,14 @@ go 1.23.0
 toolchain go1.23.1
 
 require (
+	github.com/asticode/go-astisub v0.29.0
 	github.com/conneroisu/groq-go v0.9.2
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/glebarez/sqlite v1.11.0
+	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
+	github.com/k2-fsa/sherpa-onnx-go v1.8.14
 	github.com/orestonce/m3u8d v1.24.39
 	github.com/sirupsen/logrus v1.9.3
 	github.com/yapingcat/gomedia v0.0.0-20240906162731-17feea57090c
@@ -19,12 +23,10 @@ require (
 
 require (
 	github.com/asticode/go-astikit v0.20.0 // indirect
-	github.com/asticode/go-astisub v0.29.0 // indirect
 	github.com/asticode/go-astits v1.8.0 // indirect
-	github.com/go-audio/audio v1.0.0 // indirect
 	github.com/go-audio/riff v1.0.0 // indirect
-	github.com/k2-fsa/sherpa-onnx-go v1.8.14 // indirect
 	github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30 // indirect
+	github.com/k2-fsa/sherpa-onnx-go-macos v1.10.31 // indirect
 	github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30 // indirect
 )
 

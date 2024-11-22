@@ -24,12 +24,10 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
+github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/8M=
+github.com/fsnotify/fsnotify v1.8.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uqxgUFjbI0=
 github.com/gabriel-vasile/mimetype v1.4.3/go.mod h1:d8uq/6HKRL6CGdk+aubisF/M5GcPfT7nKyLpA0lbSSk=
-github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241008170800-fdbfb460ed54 h1:C/FVqpPRU0WHVvxYh8vrT12/itLXEcskMmhcGQQ/bIo=
-github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241008170800-fdbfb460ed54/go.mod h1:qyHjS/50ORo01H0NsuEEGsQR9VCtOcEye0gUl2sx1s8=
-github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241106210211-31aea563a838 h1:EIAXdoHSmPHkZhoiC+JcvK7iVi2XSetLM9hdXNnCRcc=
-github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241106210211-31aea563a838/go.mod h1:qyHjS/50ORo01H0NsuEEGsQR9VCtOcEye0gUl2sx1s8=
 github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241119165422-6266a9f9e56a h1:z2WNQosLNg2hUOcpaef/rIjOTwSGGrPBtD+uRCrXcbU=
 github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241119165422-6266a9f9e56a/go.mod h1:qyHjS/50ORo01H0NsuEEGsQR9VCtOcEye0gUl2sx1s8=
 github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=
@@ -77,6 +75,8 @@ github.com/k2-fsa/sherpa-onnx-go v1.8.14 h1:5x/xuX+8/1VGnX5SFoX2/6OXXEoC0VnhcCBh
 github.com/k2-fsa/sherpa-onnx-go v1.8.14/go.mod h1:JEBDXFl5savR6cWxE/+wSodjG37XUAwQzewb9Qlcv5w=
 github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30 h1:KKOnbWXiqzHH0dHN71961UkpYO3UviAXRIcCVn8ER2U=
 github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30/go.mod h1:lHZRU/WtBUJetJVPyXHg092diEWYyIEoaob+LMJKWvo=
+github.com/k2-fsa/sherpa-onnx-go-macos v1.10.31 h1:lYiFnQ+kIyjg+92LmMLcrvS90DtqO8b/pX554V8xYRg=
+github.com/k2-fsa/sherpa-onnx-go-macos v1.10.31/go.mod h1:o1Cd6Zy+Tpq3bLAWqBoVcDenxi8HSaSubURtbtIqH2s=
 github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30 h1:JRLYL239ZHXAgsVAEO/tvSgAmJKSH5qzmW+UVaqrMSk=
 github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30/go.mod h1:R7JSrFkZGkfM/F/gVSR+yTJ+sPaHhJgdqsB5N7dTU6E=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
