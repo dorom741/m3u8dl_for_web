@@ -26,7 +26,7 @@ RUN go build -tags localWhisper  -o app ./cmd/
 RUN  mkdir -p /app/lib/  && \
  cp /go/pkg/mod/github.com/k2-fsa/sherpa-onnx-go-linux@*/lib/x86_64-unknown-linux-gnu/*.so /app/lib/ && \
  cp /whisper.cpp/build/ggml/src/*.so /app/lib && \
- cp /whisper.cpp/build/ggml/src/ggml-cpu/*.so /app/lib \
+ cp /whisper.cpp/build/ggml/src/ggml-cpu/*.so /app/lib && \
  cp /whisper.cpp/build/src/libwhisper.so.1.7.2 /app/lib
 
 FROM ubuntu:22.04
