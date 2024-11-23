@@ -23,9 +23,10 @@ COPY . .
 RUN go mod download
 RUN go build -tags localWhisper  -o app ./cmd/
 
-# RUN mkdir -p /app/sherpa_lib/ && find /go/pkg/mod/github.com/k2-fsa/ -name "*.so" -exec cp {} /app/sherpa_lib/ \;
-RUN  mkdir -p /app/sherpa_lib/  && cp /go/pkg/mod/github.com/k2-fsa/sherpa-onnx-go-linux@*/lib/x86_64-unknown-linux-gnu/*.so /app/sherpa_lib/
-
+RUN  mkdir -p /app/lib/  && \
+ cp /go/pkg/mod/github.com/k2-fsa/sherpa-onnx-go-linux@*/lib/x86_64-unknown-linux-gnu/*.so /app/lib/ && \
+ cp /whisper.cpp/build/ggml/src/*.so /app/lib && \ 
+ cp /whisper.cpp/build/src/libwhisper.so.1.7.2 /app/lib
 FROM ubuntu:22.04
 
 ENV GIN_MODE=release
@@ -36,10 +37,8 @@ RUN  apt-get update  \
 
 WORKDIR /app
 
-COPY --from=build  /app/sherpa_lib/ /app/
+COPY --from=build  /app/lib/ /app/
 COPY --from=build /app/app .
-COPY --from=build /whisper.cpp/build/ggml/src/libggml.so ./libggml.so
-COPY --from=build /whisper.cpp/build/src/libwhisper.so.1.7.2 ./libwhisper.so.1
 # RUN ln -s /app/libwhisper.so /app/libwhisper.so.1
 
 ENV LD_LIBRARY_PATH=/app
