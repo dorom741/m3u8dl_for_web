@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 	sherpa "github.com/k2-fsa/sherpa-onnx-go/sherpa_onnx"
 	"github.com/sirupsen/logrus"
@@ -46,7 +45,7 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 	}
 	defer file.Close()
 
-	dec, pcmBuffer, err := sherpaWhisper.readPCMInfo(file)
+	dec, pcmData, err := sherpaWhisper.readPCMInfo(file)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +55,7 @@ func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whi
 		return nil, err
 	}
 
-	whisperSegments, err := sherpaWhisper.OfflineRecognizerStreams(dec.SampleRate, pcmBuffer, input.ProgressCallback)
+	whisperSegments, err := sherpaWhisper.OfflineRecognizerStreams(dec.SampleRate, pcmData, input.ProgressCallback)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +94,12 @@ func (sherpaWhisper *SherpaWhisper) SpeakerDiarization(inputdata []float32) ([]s
 	return segments, nil
 }
 
-func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, pcmBuffer *audio.IntBuffer, progressCallback func(int)) ([]whisper.Segment, error) {
+func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, pcmData []float32, progressCallback func(int)) ([]whisper.Segment, error) {
 	if progressCallback == nil {
 		progressCallback = func(int) {}
 	}
 
-	speakerDiarizationSegmentList, err := sherpaWhisper.SpeakerDiarization(pcmBuffer.AsFloat32Buffer().Data)
+	speakerDiarizationSegmentList, err := sherpaWhisper.SpeakerDiarization(pcmData)
 	if err != nil {
 		return nil, err
 	}
@@ -114,27 +113,36 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 		counterStep       = whisperSegmentLen / 10
 	)
 
+	if counterStep == 0 {
+		counterStep = 1
+	}
+
 	recognizer := sherpa.NewOfflineRecognizer(recognizerConfig)
 	defer sherpa.DeleteOfflineRecognizer(recognizer)
 
-	doRecognize := func(data []float32) *sherpa.OfflineRecognizerResult {
-		stream := sherpa.NewOfflineStream(recognizer)
-		defer sherpa.DeleteOfflineStream(stream)
+	// doRecognize := func(data []float32) *sherpa.OfflineRecognizerResult {
+	// 	stream := sherpa.NewOfflineStream(recognizer)
+	// 	defer sherpa.DeleteOfflineStream(stream)
 
-		stream.AcceptWaveform(sampleRateInt, data)
-		recognizer.Decode(stream)
-		result := stream.GetResult()
-		return result
-	}
+	// 	stream.AcceptWaveform(sampleRateInt, data)
+	// 	recognizer.Decode(stream)
+	// 	result := stream.GetResult()
+	// 	return result
+	// }
 
 	for i, segment := range speakerDiarizationSegmentList {
-		pcmData, err := sherpaWhisper.selectPCMData(uint32(sampleRate), pcmBuffer, float64(segment.Start), float64(segment.End))
+		pcmData, err := sherpaWhisper.selectPCMData(uint32(sampleRate), pcmData, float64(segment.Start), float64(segment.End))
 		if err != nil {
 			logrus.Warnf("skip cause selectPCMData error:%+v", err)
 			continue
 		}
 
-		result := doRecognize(pcmData)
+		stream := sherpa.NewOfflineStream(recognizer)
+		sherpa.DeleteOfflineStream(stream)
+
+		stream.AcceptWaveform(sampleRateInt, pcmData)
+		recognizer.Decode(stream)
+		result := stream.GetResult()
 		if result == nil {
 			continue
 		}
@@ -168,7 +176,7 @@ func (sherpaWhisper *SherpaWhisper) newRecognizerConfig() *sherpa.OfflineRecogni
 	return recognizerConfig
 }
 
-func (sherpaWhisper *SherpaWhisper) readPCMInfo(reader io.ReadSeeker) (*wav.Decoder, *audio.IntBuffer, error) {
+func (sherpaWhisper *SherpaWhisper) readPCMInfo(reader io.ReadSeeker) (*wav.Decoder, []float32, error) {
 	dec := wav.NewDecoder(reader)
 
 	buffer, err := dec.FullPCMBuffer()
@@ -182,7 +190,7 @@ func (sherpaWhisper *SherpaWhisper) readPCMInfo(reader io.ReadSeeker) (*wav.Deco
 		return nil, nil, fmt.Errorf("unsupported number of channels: %d", dec.NumChans)
 	}
 
-	if _, err := dec.Seek(0, 0); err != nil {
+	if err := dec.Rewind(); err != nil {
 		return nil, nil, err
 	}
 	// duration, err := dec.Duration()
@@ -190,22 +198,16 @@ func (sherpaWhisper *SherpaWhisper) readPCMInfo(reader io.ReadSeeker) (*wav.Deco
 	// 	return nil,  err
 	// }
 
-	return dec, buffer, nil
+	return dec, buffer.AsFloat32Buffer().Data, nil
 }
 
-func (sherpaWhisper *SherpaWhisper) selectPCMData(sampleRate uint32, audioBuffer *audio.IntBuffer, startTime float64, endTime float64) ([]float32, error) {
+func (sherpaWhisper *SherpaWhisper) selectPCMData(sampleRate uint32, pcmData []float32, startTime float64, endTime float64) ([]float32, error) {
 	startSample := int(startTime * float64(sampleRate))
 	endSample := int(endTime * float64(sampleRate))
 
-	if startSample < 0 || endSample > len(audioBuffer.Data) || startSample >= endSample {
+	if startSample < 0 || endSample > len(pcmData) || startSample >= endSample {
 		return nil, fmt.Errorf("Invalid start or end time on pickup time range [%.2f,%.2f]", startTime, endTime)
 	}
 
-	trimmedBuffer := &audio.IntBuffer{
-		Format:         audioBuffer.Format,
-		SourceBitDepth: audioBuffer.SourceBitDepth,
-		Data:           audioBuffer.Data[startSample:endSample],
-	}
-
-	return trimmedBuffer.AsFloat32Buffer().Data, nil
+	return pcmData[startSample:endSample], nil
 }
