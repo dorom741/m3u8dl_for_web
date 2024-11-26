@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
@@ -60,6 +61,8 @@ func run(staticPath string) {
 	_ = r.SetTrustedProxies([]string{"*"})
 
 	// r.Use(middleware.LoggerMiddleware())
+
+	pprof.Register(r)
 
 	apiGroup := r.Group("/api")
 	apiGroup.POST("/addM3u8dlTask", controller.TaskControllerInstance.AddM3u8dlTask)
