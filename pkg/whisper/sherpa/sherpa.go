@@ -138,7 +138,7 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 		}
 
 		stream := sherpa.NewOfflineStream(recognizer)
-		sherpa.DeleteOfflineStream(stream)
+		defer sherpa.DeleteOfflineStream(stream)
 
 		stream.AcceptWaveform(sampleRateInt, pcmData)
 		recognizer.Decode(stream)
