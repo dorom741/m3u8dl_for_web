@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 
 	"github.com/go-audio/wav"
 	sherpa "github.com/k2-fsa/sherpa-onnx-go/sherpa_onnx"
@@ -111,6 +112,7 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 		segmentList       = make([]whisper.Segment, whisperSegmentLen)
 		sampleRateInt     = int(sampleRate)
 		counterStep       = whisperSegmentLen / 10
+		batchSize         = runtime.NumCPU() / 2
 	)
 
 	if counterStep == 0 {
@@ -120,44 +122,73 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 	recognizer := sherpa.NewOfflineRecognizer(recognizerConfig)
 	defer sherpa.DeleteOfflineRecognizer(recognizer)
 
-	// doRecognize := func(data []float32) *sherpa.OfflineRecognizerResult {
-	// 	stream := sherpa.NewOfflineStream(recognizer)
-	// 	defer sherpa.DeleteOfflineStream(stream)
+	for i := 0; i < whisperSegmentLen; i += batchSize {
+		streams := make([]*sherpa.OfflineStream, 0, batchSize)
+		for j := i; j < i+batchSize && j < whisperSegmentLen; j++ {
+			segment := speakerDiarizationSegmentList[j]
+			pcmDataSegment, err := sherpaWhisper.selectPCMData(uint32(sampleRate), pcmData, float64(segment.Start), float64(segment.End))
+			if err != nil {
+				logrus.Warnf("skip cause selectPCMData error:%+v", err)
+				continue
+			}
 
-	// 	stream.AcceptWaveform(sampleRateInt, data)
+			stream := sherpa.NewOfflineStream(recognizer)
+
+			stream.AcceptWaveform(sampleRateInt, pcmDataSegment)
+
+			streams = append(streams, stream)
+
+		}
+		recognizer.DecodeStreams(streams)
+		for k, s := range streams {
+			result := s.GetResult()
+			if result == nil {
+				continue
+			}
+			segmentList[i+k] = whisper.Segment{
+				Num:   i + k,
+				Start: float64(speakerDiarizationSegmentList[i+k].Start),
+				End:   float64(speakerDiarizationSegmentList[i+k].End),
+				Text:  result.Text,
+			}
+
+			sherpa.DeleteOfflineStream(s)
+			if (i+batchSize)%counterStep == 0 {
+				progressCallback((i+1)*50/whisperSegmentLen + 50)
+			}
+		}
+
+	}
+
+	// for i, segment := range speakerDiarizationSegmentList {
+	// 	pcmDataSegment, err := sherpaWhisper.selectPCMData(uint32(sampleRate), pcmData, float64(segment.Start), float64(segment.End))
+	// 	if err != nil {
+	// 		logrus.Warnf("skip cause selectPCMData error:%+v", err)
+	// 		continue
+	// 	}
+
+	// 	stream := sherpa.NewOfflineStream(recognizer)
+
+	// 	stream.AcceptWaveform(sampleRateInt, pcmDataSegment)
 	// 	recognizer.Decode(stream)
 	// 	result := stream.GetResult()
-	// 	return result
+	// 	sherpa.DeleteOfflineStream(stream)
+
+	// 	if result == nil {
+	// 		continue
+	// 	}
+
+	// 	// logrus.Debugf("offline recognizer result:  %+v", result)
+	// 	segmentList[i] = whisper.Segment{
+	// 		Num:   i,
+	// 		Start: float64(speakerDiarizationSegmentList[i].Start),
+	// 		End:   float64(speakerDiarizationSegmentList[i].End),
+	// 		Text:  result.Text,
+	// 	}
+	// 	if i%counterStep == 0 {
+	// 		progressCallback((i+1)*50/whisperSegmentLen + 50)
+	// 	}
 	// }
-
-	for i, segment := range speakerDiarizationSegmentList {
-		pcmData, err := sherpaWhisper.selectPCMData(uint32(sampleRate), pcmData, float64(segment.Start), float64(segment.End))
-		if err != nil {
-			logrus.Warnf("skip cause selectPCMData error:%+v", err)
-			continue
-		}
-
-		stream := sherpa.NewOfflineStream(recognizer)
-		defer sherpa.DeleteOfflineStream(stream)
-
-		stream.AcceptWaveform(sampleRateInt, pcmData)
-		recognizer.Decode(stream)
-		result := stream.GetResult()
-		if result == nil {
-			continue
-		}
-
-		// logrus.Debugf("offline recognizer result:  %+v", result)
-		segmentList[i] = whisper.Segment{
-			Num:   i,
-			Start: float64(speakerDiarizationSegmentList[i].Start),
-			End:   float64(speakerDiarizationSegmentList[i].End),
-			Text:  result.Text,
-		}
-		if i%counterStep == 0 {
-			progressCallback((i+1)*50/whisperSegmentLen + 50)
-		}
-	}
 
 	return segmentList, nil
 }
