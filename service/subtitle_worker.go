@@ -84,6 +84,7 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPatt
 	if err != nil {
 		return err
 	}
+	logrus.Infof("scanDir %d files to add task", len(allFileList))
 
 	addTask := func(filePath string) {
 		newTaskInput := input
