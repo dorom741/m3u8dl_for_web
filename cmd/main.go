@@ -69,8 +69,8 @@ func run(staticPath string) {
 	apiGroup.POST("/addGenerateSubtitleTask", controller.TaskControllerInstance.AddGenerateSubtitleTask)
 	// apiGroup.POST("/addM3u8dlTaskByAria2", taskController.AddTaskByAria2)
 
-	apiGroup.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{})
+	apiGroup.Any("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"success": true})
 	})
 
 	// r.Static("/", "./static")
