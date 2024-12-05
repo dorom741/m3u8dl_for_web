@@ -140,15 +140,14 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 
 		}
 
-		func(_streams []*sherpa.OfflineStream) {
+		func(_recognizer *sherpa.OfflineRecognizer, _streams []*sherpa.OfflineStream) {
 			defer func() {
 				if r := recover(); r != nil {
-					logrus.Warnf("Recovered from panic:", r)
+					logrus.Warnf("Recovered from panic:%r", r)
 				}
 			}()
-			recognizer.DecodeStreams(_streams)
-
-		}(streams)
+			_recognizer.DecodeStreams(_streams)
+		}(recognizer, streams)
 
 		for k, s := range streams {
 			result := s.GetResult()
