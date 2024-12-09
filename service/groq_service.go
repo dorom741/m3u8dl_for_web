@@ -2,14 +2,15 @@ package service
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/pkg/whisper"
@@ -99,8 +100,11 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 		if !strings.Contains(err.Error(), "429") {
 			return nil, err
 		}
-
-		waitDuration := service.parseDuration(err.Error())
+		logrus.Warnf("groq with 429 error:%s",err.Error())
+		waitDuration,err := service.parseDuration(err.Error())
+		if err != nil {
+			return nil, err
+		}
 		logrus.Warnf("groq service rate limit reached,wait for %s retry", waitDuration)
 		time.Sleep(waitDuration)
 	}
@@ -127,46 +131,23 @@ func (service *GroqService) GetWhisperOutput(response groq.AudioResponse) *whisp
 	return &whisper.WhisperOutput{Segments: segmentList, Duration: response.Duration}
 }
 
-func (service *GroqService) parseDuration(errString string) time.Duration {
-	toFloat := func(s string) float64 {
-		float, _ := strconv.ParseFloat(s, 10)
-		return float
-	}
+func (service *GroqService) parseDuration(errString string) (time.Duration,error) {
 
 	// 正则表达式，用于匹配时间格式
-	re := regexp.MustCompile(`(\d+)([smh])`)
+	re := regexp.MustCompile(`Please try again in (.*)\.Visit`)
 
 	// 匹配结果
 	matches := re.FindAllStringSubmatch(errString, -1)
 
-	// 初始化时长
-	var totalDuration time.Duration
-
-	// 解析匹配结果
-	for _, match := range matches {
-		if len(match) != 3 {
-			continue
-		}
-
-		// 获取数值和单位
-		value := match[1]
-		unit := match[2]
-
-		// 将值转换为整数
-		var duration time.Duration
-		switch unit {
-		case "s":
-			duration = time.Duration(toFloat(value)) * time.Second
-		case "m":
-			duration = time.Duration(toFloat(value)) * time.Minute
-		case "h":
-			duration = time.Duration(toFloat(value)) * time.Hour
-		}
-
-		// 累加总时长
-		totalDuration += duration
+	if len(matches) < 1 && len(matches[0]) > 2 {
+		return 0,fmt.Errorf("not match wait duration")
 	}
 
-	return totalDuration
+	waitDuration, err := time.ParseDuration(matches[0][1])
+	if err != nil {
+		return 0, err
+	}
+
+	return waitDuration,nil
 
 }
