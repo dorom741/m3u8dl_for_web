@@ -1,103 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M3U8 存储页面</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <title>视频工具箱</title>
+    <link href="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/bootstrap/5.1.3/css/bootstrap.min.css"
+        rel="stylesheet" />
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.6.0/jquery.js"></script>
+    <script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/popper.js/2.11.2/umd/popper.min.js"></script>
+    <script src="https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/bootstrap/5.1.3/js/bootstrap.min.js"></script>
 </head>
+
 <body>
-<div class="container mt-5">
-    <h1 class="text-center">M3U8 URL下载</h1>
+    <div class="container mt-5">
+        <h1 class="text-center">M3U8 URL下载</h1>
 
-    <!-- Tab Navigation -->
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-        <li class="nav-item">
-            <a class="nav-link active" id="url-tab" data-toggle="tab" href="#url" role="tab" aria-controls="url" aria-selected="true">URL下载</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="command-tab" data-toggle="tab" href="#command" role="tab" aria-controls="command" aria-selected="false">命令行解析下载</a>
-        </li>
-    </ul>
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="url-tab" data-bs-toggle="tab" href="#url" role="tab" aria-controls="url"
+                    aria-selected="true">URL下载</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="command-tab" data-bs-toggle="tab" href="#command" role="tab"
+                    aria-controls="command" aria-selected="false">命令行解析下载</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="add-subtitle-task-tab" data-bs-toggle="tab" href="#addSubtitleTask" role="tab"
+                    aria-controls="addSubtitleTask" aria-selected="false">添加字幕生成任务</a>
+            </li>
 
-    <div class="tab-content mt-4" id="myTabContent">
-        <!-- 第一个表单的卡片 -->
-        <div class="tab-pane fade show active" id="url" role="tabpanel" aria-labelledby="url-tab">
-            <div class="card">
-                <div class="card-body">
-                    <form id="urlForm">
-                        <div id="urlFields">
-                            <div class="form-row align-items-end mb-3">
-                                <div class="col">
-                                    <label for="url">URL 地址</label>
-                                    <input type="text" class="form-control" name="url" placeholder="输入 URL 地址" required>
-                                </div>
-                                <div class="col">
-                                    <label for="file_name">存储文件名</label>
-                                    <input type="text" class="form-control" name="file_name" placeholder="存储文件名" required>
-                                </div>
-                                <div class="col-auto">
-                                    <button type="button" class="btn btn-danger removeUrlField">删除</button>
+        </ul>
+
+        <div class="tab-content mt-4" id="myTabContent">
+            <!-- 第一个表单的卡片 -->
+            <div class="tab-pane fade show active" id="url" role="tabpanel" aria-labelledby="url-tab">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="urlForm">
+                            <div id="urlFields">
+                                <div class="form-row align-items-end mb-3">
+                                    <div class="col">
+                                        <label for="url">URL 地址</label>
+                                        <input type="text" class="form-control" id="url" name="url"
+                                            placeholder="输入 URL 地址" required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="file_name">存储文件名</label>
+                                        <input type="text" class="form-control" id="file_name" name="file_name"
+                                            placeholder="存储文件名" required>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="button" class="btn btn-danger removeUrlField">删除</button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <button type="button" id="addUrlField" class="btn btn-secondary">添加更多字段</button>
-                        <button type="submit" class="btn btn-primary btn-block mt-3">存储 URL</button>
-                    </form>
+                            <button type="button" id="addUrlField" class="btn btn-secondary">添加更多字段</button>
+                            <button type="submit" class="btn btn-primary btn-block mt-3">存储 URL</button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 第二个表单的卡片 -->
-        <div class="tab-pane fade" id="command" role="tabpanel" aria-labelledby="command-tab">
-            <div class="card">
-                <div class="card-body">
-                    <form id="simpleForm">
-                        <div class="form-group">
-                            <label for="commandLine">命令行</label>
-                            <textarea id="commandLine" name="commandLine" class="form-control" rows="5" placeholder="输入简单内容" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-secondary btn-block">提交</button>
-                    </form>
+            <!-- 第二个表单的卡片 -->
+            <div class="tab-pane fade" id="command" role="tabpanel" aria-labelledby="command-tab">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="simpleForm">
+                            <div class="form-group">
+                                <label for="commandLine">命令行</label>
+                                <textarea id="commandLine" name="commandLine" class="form-control" rows="5"
+                                    placeholder="输入简单内容" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-secondary btn-block">提交</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 添加字幕生成任务的卡片 -->
+            <div class="tab-pane fade" id="addSubtitleTask" role="tabpanel" aria-labelledby="add-subtitle-task-tab">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="add-subtitle-task-form">
+                            <div class="form-group">
+                                <label for="" add-subtitle-task-data">数据</label>
+                                <textarea id="add-subtitle-task-data" name="data" class="form-control" rows="8"
+                                    placeholder="输入任务数据" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-secondary btn-block">提交</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Snackbar Toast -->
-<div id="snackbar" class="toast" style="position: fixed; top: 20px; right: 20px; z-index: 1050;">
-    <div class="toast-body" id="toastMessage">
-        <!-- 消息内容 -->
+    <!-- Snackbar Toast -->
+    <div id="snackbar" class="toast" style="position: fixed; top: 20px; right: 20px; z-index: 1050;">
+        <div class="toast-body" id="toastMessage">
+            <!-- 消息内容 -->
+        </div>
     </div>
-</div>
 
-<script>
-    function parseCommandLine(input) {
-        const args = input.split(/\s+/);
-        let url = '';
-        let name = '';
+    <script>
+        const defaultAddSubtitleTaskData = {
+            "provider": "groq",
+            "filepath": "",
+            "saveSubtitleFilePath": "",
+            "prompt": "",
+            "temperature": 0.0,
+            "language": ""
+        }
 
-        args.forEach((arg, index) => {
-            if (arg.startsWith('http')) {
-                url = arg;
-            }
-            if (arg === '-o' && args[index + 1]) {
-                name = args[index + 1].replace(/^"|"$/g, '');
-                for (let j = index + 2; j < args.length && !args[j].startsWith('-'); j++) {
-                    name += ' ' + args[j].replace(/^"|"$/g, '');
-                }
-            }
-        });
-
-        return { url, name };
-    }
-
-    // 添加新的 URL 输入字段
-    $('#addUrlField').on('click', function() {
-        const newField = `
+        $(document).ready(function () {
+            // 添加新的 URL 输入字段
+            $('#addUrlField').on('click', function () {
+                const newField = `
             <div class="form-row align-items-end mb-3">
                 <div class="col">
                     <input type="text" class="form-control" name="url" placeholder="输入 URL 地址" required>
@@ -109,86 +129,149 @@
                     <button type="button" class="btn btn-danger removeUrlField">删除</button>
                 </div>
             </div>`;
-        $('#urlFields').append(newField);
-    });
+                $('#urlFields').append(newField);
+            });
 
-    // 删除 URL 输入字段
-    $(document).on('click', '.removeUrlField', function() {
-        $(this).closest('.form-row').remove();
-    });
+            // 删除 URL 输入字段
+            $(document).on('click', '.removeUrlField', function () {
+                $(this).closest('.form-row').remove();
+            });
 
-    // 显示 Snackbar
-    function showSnackbar(message, type = 'success') {
-        $('#toastMessage').text(message);
+            const addSubtitleTaskData = localStorage.getItem('addSubtitleTaskData') || JSON.stringify(defaultAddSubtitleTaskData,null,4) ; 
 
-        let backgroundColor;
-        switch (type) {
-            case 'success':
-                backgroundColor = 'bg-success text-white';
-                break;
-            case 'error':
-                backgroundColor = 'bg-danger text-white';
-                break;
-            case 'info':
-                backgroundColor = 'bg-info text-white';
-                break;
-            default:
-                backgroundColor = 'bg-light text-dark';
-        }
+            $('#add-subtitle-task-data').val(addSubtitleTaskData);
+        });
 
-        $('#snackbar').removeClass('bg-success bg-danger bg-info bg-light text-white text-dark').addClass(backgroundColor);
-        $('#snackbar').toast({ delay: 3000 });
-        $('#snackbar').toast('show');
-    }
+        function parseCommandLine(input) {
+            const args = input.split(/\s+/);
+            let url = '';
+            let name = '';
 
-    function addTask(data) {
-        fetch('api/addM3u8dlTask', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('网络响应不正常');
+            args.forEach((arg, index) => {
+                if (arg.startsWith('http')) {
+                    url = arg;
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log('成功:', data);
-                showSnackbar('URL 存储成功!', 'success');
-            })
-            .catch((error) => {
-                console.error('错误:', error);
-                showSnackbar('存储失败，请重试。', 'error');
+                if (arg === '-o' && args[index + 1]) {
+                    name = args[index + 1].replace(/^"|"$/g, '');
+                    for (let j = index + 2; j < args.length && !args[j].startsWith('-'); j++) {
+                        name += ' ' + args[j].replace(/^"|"$/g, '');
+                    }
+                }
             });
-    }
 
-    // 第一个表单的提交处理
-    $('#urlForm').on('submit', function(event) {
-        event.preventDefault();
-
-        const formData = $(this).serializeArray();
-        const data = [];
-
-        for (let i = 0; i < formData.length; i += 2) {
-            data.push({
-                url: formData[i].value,
-                name: formData[i + 1].value
-            });
+            return { url, name };
         }
-        addTask(data);
-    });
 
-    // 第二个表单的提交处理
-    $('#simpleForm').on('submit', function(event) {
-        event.preventDefault();
+        // 显示 Snackbar
+        function showSnackbar(message, type = 'success') {
+            $('#toastMessage').text(message);
 
-        const simpleInputValue = $('#commandLine').val();
-        const data = parseCommandLine(simpleInputValue);
-        addTask([data]);
-    });
-</script>
+            let backgroundColor;
+            switch (type) {
+                case 'success':
+                    backgroundColor = 'bg-success text-white';
+                    break;
+                case 'error':
+                    backgroundColor = 'bg-danger text-white';
+                    break;
+                case 'info':
+                    backgroundColor = 'bg-info text-white';
+                    break;
+                default:
+                    backgroundColor = 'bg-light text-dark';
+            }
+
+            $('#snackbar').removeClass('bg-success bg-danger bg-info bg-light text-white text-dark').addClass(backgroundColor);
+            $('#snackbar').toast({ delay: 3000 });
+            $('#snackbar').toast('show');
+        }
+
+        function addTask(data) {
+            fetch('api/addM3u8dlTask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('成功:', data);
+                    showSnackbar('URL 存储成功!', 'success');
+                })
+                .catch((error) => {
+                    console.error('错误:', error);
+                    showSnackbar('存储失败，请重试。', 'error');
+                });
+        }
+
+        // 第一个表单的提交处理
+        $('#urlForm').on('submit', function (event) {
+            event.preventDefault();
+
+            const formData = $(this).serializeArray();
+            const data = [];
+
+            for (let i = 0; i < formData.length; i += 2) {
+                data.push({
+                    url: formData[i].value,
+                    name: formData[i + 1].value
+                });
+            }
+            addTask(data);
+        });
+
+        // 第二个表单的提交处理
+        $('#simpleForm').on('submit', function (event) {
+            event.preventDefault();
+
+            const simpleInputValue = $('#commandLine').val();
+            const data = parseCommandLine(simpleInputValue);
+            addTask([data]);
+        });
+
+
+
+        // 添加字幕生成任务表单的提交处理
+        $('#add-subtitle-task-form').on('submit', function (event) {
+            event.preventDefault();
+
+            const postDataVal = $('#add-subtitle-task-data').val();
+            try {
+                const postData = JSON.parse(postDataVal)
+                localStorage.setItem('addSubtitleTaskData', postDataVal);
+                fetch('api/addGenerateSubtitleTask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(postData),
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应不正常');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('成功:', data);
+                        showSnackbar('添加任务成功!', 'success');
+                    })
+            } catch (error) {
+                showSnackbar(`'处理失败，请重试。${JSON.stringify(error)}`, 'error');
+
+            }
+
+        });
+
+
+
+    </script>
 </body>
+
 </html>
