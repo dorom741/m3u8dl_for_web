@@ -73,7 +73,7 @@
                                 <textarea id="commandLine" name="commandLine" class="form-control" rows="5"
                                     placeholder="输入简单内容" required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-secondary btn-block">提交</button>
+                            <button type="submit" class="btn btn-primary btn-block">提交</button>
                         </form>
                     </div>
                 </div>
@@ -89,7 +89,7 @@
                                 <textarea id="add-subtitle-task-data" name="data" class="form-control" rows="8"
                                     placeholder="输入任务数据" required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-secondary btn-block">提交</button>
+                            <button type="submit" class="btn btn-primary btn-block">提交</button>
                         </form>
                     </div>
                 </div>
@@ -137,7 +137,7 @@
                 $(this).closest('.form-row').remove();
             });
 
-            const addSubtitleTaskData = localStorage.getItem('addSubtitleTaskData') || JSON.stringify(defaultAddSubtitleTaskData,null,4) ; 
+            const addSubtitleTaskData = localStorage.getItem('addSubtitleTaskData') || JSON.stringify(defaultAddSubtitleTaskData, null, 4);
 
             $('#add-subtitle-task-data').val(addSubtitleTaskData);
         });
@@ -238,32 +238,31 @@
 
 
         // 添加字幕生成任务表单的提交处理
-        $('#add-subtitle-task-form').on('submit', function (event) {
+        $('#add-subtitle-task-form').on('submit', async (event) => {
             event.preventDefault();
 
             const postDataVal = $('#add-subtitle-task-data').val();
             try {
                 const postData = JSON.parse(postDataVal)
                 localStorage.setItem('addSubtitleTaskData', postDataVal);
-                fetch('api/addGenerateSubtitleTask', {
+
+                const response = await fetch('api/addGenerateSubtitleTask', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(postData),
                 })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('网络响应不正常');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('成功:', data);
-                        showSnackbar('添加任务成功!', 'success');
-                    })
+
+                if (!response.ok) {
+                    throw new Error(`网络响应不正常,状态码：${response.status}`);
+                }
+                const result = await response.text();
+
+                console.log('成功:', result);
+                showSnackbar('添加任务成功!', 'success');
             } catch (error) {
-                showSnackbar(`'处理失败，请重试。${JSON.stringify(error)}`, 'error');
+                showSnackbar(`处理失败，请重试。${JSON.stringify(error)}`, 'error');
 
             }
 
