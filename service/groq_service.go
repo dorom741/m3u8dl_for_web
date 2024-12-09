@@ -100,8 +100,8 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 		if !strings.Contains(err.Error(), "429") {
 			return nil, err
 		}
-		logrus.Warnf("groq with 429 error:%s",err.Error())
-		waitDuration,err := service.parseDuration(err.Error())
+		logrus.Warnf("groq with 429 error:%s", err.Error())
+		waitDuration, err := service.parseDuration(err.Error())
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +131,7 @@ func (service *GroqService) GetWhisperOutput(response groq.AudioResponse) *whisp
 	return &whisper.WhisperOutput{Segments: segmentList, Duration: response.Duration}
 }
 
-func (service *GroqService) parseDuration(errString string) (time.Duration,error) {
+func (service *GroqService) parseDuration(errString string) (time.Duration, error) {
 
 	// 正则表达式，用于匹配时间格式
 	re := regexp.MustCompile(`Please try again in (.*)\.Visit`)
@@ -139,8 +139,8 @@ func (service *GroqService) parseDuration(errString string) (time.Duration,error
 	// 匹配结果
 	matches := re.FindAllStringSubmatch(errString, -1)
 
-	if len(matches) < 1 && len(matches[0]) > 2 {
-		return 0,fmt.Errorf("not match wait duration")
+	if len(matches) < 1 || len(matches[0]) > 2 {
+		return 0, fmt.Errorf("not match wait duration")
 	}
 
 	waitDuration, err := time.ParseDuration(matches[0][1])
@@ -148,6 +148,6 @@ func (service *GroqService) parseDuration(errString string) (time.Duration,error
 		return 0, err
 	}
 
-	return waitDuration,nil
+	return waitDuration, nil
 
 }
