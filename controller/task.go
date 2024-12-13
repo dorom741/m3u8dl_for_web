@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"errors"
+	"os"
 	"strings"
 
 	"m3u8dl_for_web/conf"
@@ -90,6 +92,12 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 			TranslateTo:    req.TranslateTo,
 			ReplaceOnExist: req.ReplaceOnExist,
 		},
+	}
+
+	stat, err := os.Stat(req.Filepath)
+	if errors.Is(err, os.ErrNotExist) || stat.IsDir() {
+		c.JSON(400, gin.H{"err": "路径不存在或为目录"})
+		return
 	}
 
 	if err := taskRecord.Save(); err != nil {
