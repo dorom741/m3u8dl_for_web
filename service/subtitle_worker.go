@@ -100,6 +100,7 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPatt
 			Input:  newTaskInput,
 			Output: aggregate.SubtitleOutput{},
 		}
+		logrus.Infof("add generate subtitle task for path:%s", filePath)
 
 		service.worker.AddTaskBlocking(task)
 		if err := task.Save(); err != nil {
@@ -122,7 +123,6 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPatt
 		fileItem := allFileList[i]
 		addTask(fileItem)
 
-		logrus.Infof("add generate subtitle task for path:%s", fileItem)
 	}
 
 	return nil
