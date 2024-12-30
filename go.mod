@@ -29,6 +29,9 @@ require (
 	github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30 // indirect
 	github.com/k2-fsa/sherpa-onnx-go-macos v1.10.31 // indirect
 	github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30 // indirect
+	github.com/pemistahl/lingua-go v1.4.0 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
+	golang.org/x/exp v0.0.0-20221106115401-f9659909a136 // indirect
 )
 
 require (
