@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 )
 
 var _ ITranslation = &DeepLXTranslation{}
@@ -60,32 +59,23 @@ func (translation *DeepLXTranslation) Translate(ctx context.Context, text string
 	}
 	request.WithContext(ctx)
 
-	maxRetries := 3
-	for i := 0; i < maxRetries; i++ {
-		response, err := translation.client.Do(request)
-		if err != nil {
-			return "", err
-		}
-		defer response.Body.Close()
+	response, err := translation.client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
 
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return "", err
-		}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
 
-		if response.StatusCode == http.StatusServiceUnavailable {
-			time.Sleep(1 * time.Second)
-			continue
-		}
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("request error status:%d err:%s", response.StatusCode, body)
+	}
 
-		if response.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("request error status:%d err:%s", response.StatusCode, body)
-		}
-
-		if err := json.Unmarshal(body, result); err != nil {
-			return "", err
-		}
-
+	if err := json.Unmarshal(body, result); err != nil {
+		return "", err
 	}
 
 	return result.Data, nil
