@@ -94,7 +94,10 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 		newTaskInput.InputPath = filePath
 
 		if newTaskInput.HasSavePathExists() {
-			go fixMissTranslateFunc(filePath)
+			go fixMissTranslateFunc(newTaskInput.GetSavePath())
+			return
+		}
+		if config.JustFixMissTranslate {
 			return
 		}
 
@@ -114,13 +117,16 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 
 	if config.Watch {
 		logrus.Infof("start dir watch:%s", fullDirPath)
-		service.doDirWatch(fullDirPath, func(filename string) {
+		err := service.doDirWatch(fullDirPath, func(filename string) {
 			if compiledRexp.MatchString(filename) {
 				addTask(filename)
 				logrus.Infof("add generate subtitle task for path:%s on dir watch", filename)
 
 			}
 		})
+		if err != nil {
+			return err
+		}
 	}
 
 	for i := range allFileList {

@@ -34,10 +34,10 @@ type TranslationConfig struct {
 }
 
 type SubtitleConfig struct {
-	DirPath       string                  `yaml:"dirPath"`
-	Pattern       string                  `yaml:"pattern"`
-	Watch         bool                    `yaml:"watch"`
-	SubtitleInput aggregate.SubtitleInput `yaml:"subtitleInput"`
-	FixMissTranslate bool `yaml:"fixMissTranslate"`
+	DirPath              string                  `yaml:"dirPath"`
+	Pattern              string                  `yaml:"pattern"`
+	Watch                bool                    `yaml:"watch"`
+	SubtitleInput        aggregate.SubtitleInput `yaml:"subtitleInput"`
+	FixMissTranslate     bool                    `yaml:"fixMissTranslate"`
+	JustFixMissTranslate bool                    `yaml:"justFixMissTranslate"`
 }
-
