@@ -156,7 +156,6 @@ func (service *SubtitleWorkerService) fixMissTranslateFunc(fixMissTranslateChan 
 		fixMissTranslateChan <- struct{}{}
 		defer func() { <-fixMissTranslateChan }()
 
-		logrus.Debug("process regenerate subtitle file:%s", filePath)
 		if err := SubtitleServiceInstance.ReGenerateBilingualSubtitleFromSegmentList(
 			ctx,
 			filePath,

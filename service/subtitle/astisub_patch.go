@@ -2,6 +2,7 @@ package subtitle
 
 import (
 	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
@@ -26,49 +27,52 @@ func detectLanguage(text string) string {
 	return strings.ToLower(result[0].Language().IsoCode639_1().String())
 }
 
-func SplitBilingualSubtitle(subtitlePath string) (map[string][]whisper.Segment, error) {
+func SplitBilingualSubtitle(subtitlePath string) (bool, []whisper.Segment, error) {
 	subtitles, err := astisub.OpenFile(subtitlePath)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 
-	result := make(map[string][]whisper.Segment)
+	result := make([]whisper.Segment, 0)
+	lastTimestamp := ""
+	currentTimestamp := ""
+	isBilingualSubtitle := false
 
 	for _, item := range subtitles.Items {
+		currentTimestamp = fmt.Sprintf("%.2f-%.2f", item.StartAt.Seconds(), item.EndAt.Seconds())
+		if currentTimestamp == lastTimestamp && item.StartAt.Seconds() != 0 {
+			isBilingualSubtitle = true
+			continue
+		}
+		lastTimestamp = currentTimestamp
 		for _, line := range item.Lines {
 			for _, lineItem := range line.Items {
-				lang := detectLanguage(lineItem.Text)
-				if result[lang] == nil {
-					result[lang] = make([]whisper.Segment, 0)
-				}
-
 				segment := whisper.Segment{
-					Num:   len(result[lang]),
+					Num:   len(result),
 					Start: item.StartAt.Seconds(),
 					End:   item.EndAt.Seconds(),
 					Text:  lineItem.Text,
 				}
-
-				result[lang] = append(result[lang], segment)
+				result = append(result, segment)
 			}
 		}
 	}
 
-	return result, nil
+	return isBilingualSubtitle, result, nil
 }
 
 func (service *SubtitleService) ReGenerateBilingualSubtitleFromSegmentList(ctx context.Context, subtitlePath string, sourceLang string, targetLang string, savePath string, skipOnExists bool) error {
 	sub := NewSubtitleSub()
-	subtitleMap, err := SplitBilingualSubtitle(subtitlePath)
+	isBilingualSubtitle, subtitleList, err := SplitBilingualSubtitle(subtitlePath)
 	if err != nil {
 		return err
 	}
-	if skipOnExists && subtitleMap[targetLang] != nil {
+	if skipOnExists && isBilingualSubtitle {
 		return nil
 	}
 	logrus.Infof("start regenerate subtitle on %s", subtitlePath)
 
-	for _, segment := range subtitleMap[sourceLang] {
+	for _, segment := range subtitleList {
 		translatedText, err := service.translation.Translate(ctx, segment.Text, "", targetLang)
 		if err != nil {
 			continue

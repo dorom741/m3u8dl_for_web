@@ -18,10 +18,11 @@ func TestDetectLanguage(t *testing.T) {
 }
 
 func TestSplitBilingualSubtitle(t *testing.T) {
-	result, err := SplitBilingualSubtitle("../../resource/samples/jfk.ass")
+	isBilingualSubtitle, result, err := SplitBilingualSubtitle("../../resource/samples/jfk.ass")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf("result %+v", result)
+	t.Logf("isBilingualSubtitle %+v", isBilingualSubtitle)
+	t.Logf("result %+v", len(result))
 }
