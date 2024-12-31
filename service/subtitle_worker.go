@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"path/filepath"
 	"regexp"
+	"sync"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
@@ -86,8 +87,11 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 	}
 	logrus.Infof("scanDir %d files to add task", len(allFileList))
 
-	fixMissTranslateChan := make(chan struct{}, 1)
-	fixMissTranslateFunc := service.fixMissTranslateFunc(fixMissTranslateChan, config)
+	var (
+		fixMissTranslateChan = make(chan struct{}, 1)
+		wg                   sync.WaitGroup
+		fixMissTranslateFunc = service.fixMissTranslateFunc(fixMissTranslateChan, &wg, config)
+	)
 
 	addTask := func(filePath string) {
 		newTaskInput := config.SubtitleInput
@@ -135,10 +139,11 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 
 	}
 
+	wg.Wait()
 	return nil
 }
 
-func (service *SubtitleWorkerService) fixMissTranslateFunc(fixMissTranslateChan chan struct{}, config *conf.SubtitleConfig) func(filePath string) {
+func (service *SubtitleWorkerService) fixMissTranslateFunc(fixMissTranslateChan chan struct{}, wg *sync.WaitGroup, config *conf.SubtitleConfig) func(filePath string) {
 	ctx := context.Background()
 
 	if !config.FixMissTranslate {
@@ -146,8 +151,11 @@ func (service *SubtitleWorkerService) fixMissTranslateFunc(fixMissTranslateChan 
 	}
 
 	return func(filePath string) {
+		wg.Add(1)
+		defer wg.Done()
 		fixMissTranslateChan <- struct{}{}
 		defer func() { <-fixMissTranslateChan }()
+
 		if err := SubtitleServiceInstance.ReGenerateBilingualSubtitleFromSegmentList(
 			ctx,
 			filePath,
