@@ -67,12 +67,12 @@ func (service *SubtitleService) ReGenerateBilingualSubtitleFromSegmentList(ctx c
 	if err != nil {
 		return err
 	}
-	logrus.Infof("subtitle file '%s' isBilingualSubtitle: %v ,segment len: %d", subtitlePath, isBilingualSubtitle, len(subtitleList))
+	logrus.Debugf("subtitle file '%s' isBilingualSubtitle: %v ,segment len: %d", subtitlePath, isBilingualSubtitle, len(subtitleList))
 
 	if skipOnExists && isBilingualSubtitle {
 		return nil
 	}
-
+	logrus.Infof("start regenerate subtitle on %s", subtitlePath)
 	for _, segment := range subtitleList {
 		translatedText, err := service.translation.Translate(ctx, segment.Text, "", targetLang)
 		if err != nil {
