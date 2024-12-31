@@ -2,6 +2,7 @@ package subtitle
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
 
@@ -65,6 +66,8 @@ func (service *SubtitleService) ReGenerateBilingualSubtitleFromSegmentList(ctx c
 	if skipOnExists && subtitleMap[targetLang] != nil {
 		return nil
 	}
+	logrus.Infof("start regenerate subtitle on %s", subtitlePath)
+
 	for _, segment := range subtitleMap[sourceLang] {
 		translatedText, err := service.translation.Translate(ctx, segment.Text, "", targetLang)
 		if err != nil {
