@@ -30,7 +30,7 @@ func NewSubtitleWorkerService(subtitleConfig *conf.SubtitleConfig) *SubtitleWork
 	go service.worker.Run()
 	if subtitleConfig != nil {
 		go func() {
-			err := service.ScanDirToAddTask(subtitleConfig.DirPath, subtitleConfig.Pattern, subtitleConfig.Watch, subtitleConfig.SubtitleInput)
+			err := service.ScanDirToAddTask(subtitleConfig)
 			if err != nil {
 				logrus.Errorf("scanDir error:%+v", err)
 			}
@@ -69,13 +69,13 @@ func (service *SubtitleWorkerService) OnTaskFinish(task *model.TaskRecord[aggreg
 	}
 }
 
-func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPattern string, watch bool, input aggregate.SubtitleInput) error {
-	compiledRexp, err := regexp.Compile(matchPattern)
+func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConfig) error {
+	compiledRexp, err := regexp.Compile(config.Pattern)
 	if err != nil {
 		return err
 	}
 
-	fullDirPath, err := filepath.Abs(dirPath)
+	fullDirPath, err := filepath.Abs(config.DirPath)
 	if err != nil {
 		return err
 	}
@@ -86,11 +86,15 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPatt
 	}
 	logrus.Infof("scanDir %d files to add task", len(allFileList))
 
+	fixMissTranslateChan := make(chan struct{}, 1)
+	fixMissTranslateFunc := service.fixMissTranslateFunc(fixMissTranslateChan, config)
+
 	addTask := func(filePath string) {
-		newTaskInput := input
+		newTaskInput := config.SubtitleInput
 		newTaskInput.InputPath = filePath
 
 		if newTaskInput.HasSavePathExists() {
+			go fixMissTranslateFunc(filePath)
 			return
 		}
 
@@ -108,7 +112,7 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPatt
 		}
 	}
 
-	if watch {
+	if config.Watch {
 		logrus.Infof("start dir watch:%s", fullDirPath)
 		service.doDirWatch(fullDirPath, func(filename string) {
 			if compiledRexp.MatchString(filename) {
@@ -126,6 +130,29 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(dirPath string, matchPatt
 	}
 
 	return nil
+}
+
+func (service *SubtitleWorkerService) fixMissTranslateFunc(fixMissTranslateChan chan struct{}, config *conf.SubtitleConfig) func(filePath string) {
+	ctx := context.Background()
+
+	if !config.FixMissTranslate {
+		return func(filePath string) {}
+	}
+
+	return func(filePath string) {
+		fixMissTranslateChan <- struct{}{}
+		if err := SubtitleServiceInstance.ReGenerateBilingualSubtitleFromSegmentList(
+			ctx,
+			filePath,
+			config.SubtitleInput.Language,
+			config.SubtitleInput.TranslateTo,
+			filePath,
+			true); err != nil {
+			logrus.Warnf("re generate bilingual subtitle error %s", err)
+		}
+
+		<-fixMissTranslateChan
+	}
 }
 
 func (service *SubtitleWorkerService) doDirWatch(dirPath string, onAddFile func(filename string)) error {

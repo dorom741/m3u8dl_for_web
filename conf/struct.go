@@ -38,4 +38,6 @@ type SubtitleConfig struct {
 	Pattern       string                  `yaml:"pattern"`
 	Watch         bool                    `yaml:"watch"`
 	SubtitleInput aggregate.SubtitleInput `yaml:"subtitleInput"`
+	FixMissTranslate bool `yaml:"fixMissTranslate"`
 }
+

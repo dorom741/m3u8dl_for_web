@@ -66,14 +66,32 @@ func TestAstisub(t *testing.T) {
 }
 
 func TestScanDirToAddTask(t *testing.T) {
-	err := SubtitleWorkerServiceInstance.ScanDirToAddTask("./", `\.go$`, true, aggregate.SubtitleInput{
-		Prompt:         "",
-		Temperature:    0.0,
-		Language:       "",
-		TranslateTo:    "",
-		ReplaceOnExist: false,
-	})
+	config := &conf.SubtitleConfig{
+		DirPath: "./",
+		Pattern: `\.go$`,
+		Watch:   true,
+		SubtitleInput: aggregate.SubtitleInput{
+			Prompt:         "",
+			Temperature:    0.0,
+			Language:       "",
+			TranslateTo:    "",
+			ReplaceOnExist: false,
+		},
+		FixMissTranslate: false,
+	}
+	err := SubtitleWorkerServiceInstance.ScanDirToAddTask(config)
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestReGenerateSubtitle(t *testing.T) {
+	ctx := context.Background()
+	inputPath := "../resource/samples/jfk.ass"
+	outputPath := "../resource/samples/jfk.ass"
+
+	err := SubtitleServiceInstance.ReGenerateBilingualSubtitleFromSegmentList(ctx, inputPath, "en", "zh", outputPath, true)
+	if err != nil {
+		t.Error(err)
 	}
 }

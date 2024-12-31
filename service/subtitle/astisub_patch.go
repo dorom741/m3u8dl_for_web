@@ -56,11 +56,14 @@ func SplitBilingualSubtitle(subtitlePath string) (map[string][]whisper.Segment, 
 	return result, nil
 }
 
-func (service *SubtitleService) ReGenerateBilingualSubtitleFromSegmentList(ctx context.Context, subtitlePath string, sourceLang string, targetLang string, savePath string) error {
+func (service *SubtitleService) ReGenerateBilingualSubtitleFromSegmentList(ctx context.Context, subtitlePath string, sourceLang string, targetLang string, savePath string, skipOnExists bool) error {
 	sub := NewSubtitleSub()
 	subtitleMap, err := SplitBilingualSubtitle(subtitlePath)
 	if err != nil {
 		return err
+	}
+	if skipOnExists && subtitleMap[targetLang] != nil {
+		return nil
 	}
 	for _, segment := range subtitleMap[sourceLang] {
 		translatedText, err := service.translation.Translate(ctx, segment.Text, "", targetLang)
