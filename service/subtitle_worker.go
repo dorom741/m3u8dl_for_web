@@ -147,6 +147,7 @@ func (service *SubtitleWorkerService) fixMissTranslateFunc(fixMissTranslateChan 
 
 	return func(filePath string) {
 		fixMissTranslateChan <- struct{}{}
+		defer func() { <-fixMissTranslateChan }()
 		if err := SubtitleServiceInstance.ReGenerateBilingualSubtitleFromSegmentList(
 			ctx,
 			filePath,
@@ -157,7 +158,6 @@ func (service *SubtitleWorkerService) fixMissTranslateFunc(fixMissTranslateChan 
 			logrus.Warnf("re generate bilingual subtitle error %s", err)
 		}
 
-		<-fixMissTranslateChan
 	}
 }
 
