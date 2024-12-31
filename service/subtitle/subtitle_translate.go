@@ -11,7 +11,7 @@ func (service *SubtitleService) BatchTranslate(ctx context.Context, textList []s
 	batchTranslateForSingle := func(textListForTranslate []string) ([]string, error) {
 		var (
 			wg                     sync.WaitGroup
-			sem                    = make(chan struct{}, 3)
+			sem                    = make(chan struct{}, 5)
 			translatedTextListTemp = make([]string, len(textListForTranslate))
 		)
 		for i, text := range textListForTranslate {
