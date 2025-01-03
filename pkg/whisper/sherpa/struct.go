@@ -9,4 +9,6 @@ type SherpaConfig struct {
 	PyannoteModelPath  string `yaml:"pyannoteModelPath"`
 
 	OfflineModelConfig sherpa.OfflineModelConfig `yaml:"offlineModelConfig"`
+
+	OfflineStreamBatchSize int `yaml:"offlineStreamBatchSize"`
 }

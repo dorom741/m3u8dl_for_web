@@ -22,15 +22,21 @@ type SherpaWhisper struct {
 	embeddingModelPath string
 	pyannoteModelPath  string
 
-	modelConfig sherpa.OfflineModelConfig
+	modelConfig            sherpa.OfflineModelConfig
+	offlineStreamBatchSize int
 }
 
 func NewSherpaWhisper(sherpaConfig SherpaConfig) *SherpaWhisper {
+	if sherpaConfig.OfflineStreamBatchSize == 0 {
+		sherpaConfig.OfflineStreamBatchSize = runtime.NumCPU()
+	}
+
 	return &SherpaWhisper{
 		// vadModelPath:       vadModelPath,
-		embeddingModelPath: sherpaConfig.EmbeddingModelPath,
-		pyannoteModelPath:  sherpaConfig.PyannoteModelPath,
-		modelConfig:        sherpaConfig.OfflineModelConfig,
+		embeddingModelPath:     sherpaConfig.EmbeddingModelPath,
+		pyannoteModelPath:      sherpaConfig.PyannoteModelPath,
+		modelConfig:            sherpaConfig.OfflineModelConfig,
+		offlineStreamBatchSize: sherpaConfig.OfflineStreamBatchSize,
 	}
 }
 
@@ -112,7 +118,7 @@ func (sherpaWhisper *SherpaWhisper) OfflineRecognizerStreams(sampleRate uint32, 
 		segmentList       = make([]whisper.Segment, whisperSegmentLen)
 		sampleRateInt     = int(sampleRate)
 		counterStep       = whisperSegmentLen / 10
-		batchSize         = runtime.NumCPU() / 2
+		batchSize         = sherpaWhisper.offlineStreamBatchSize
 	)
 
 	if counterStep == 0 {
