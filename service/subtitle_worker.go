@@ -88,9 +88,10 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 	logrus.Infof("scanDir %d files to add task", len(allFileList))
 
 	var (
-		fixMissTranslateChan = make(chan struct{}, 1)
-		wg                   sync.WaitGroup
-		fixMissTranslateFunc = service.fixMissTranslateFunc(fixMissTranslateChan, &wg, config)
+		fixMissTranslateChan   = make(chan struct{}, 1)
+		wg                     sync.WaitGroup
+		fixMissTranslateFunc   = service.fixMissTranslateFunc(fixMissTranslateChan, &wg, config)
+		blacklistJudgementFunc = config.GenerateBlacklistJudgement()
 	)
 
 	addTask := func(filePath string) {
@@ -122,7 +123,7 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 	if config.Watch {
 		logrus.Infof("start dir watch:%s", fullDirPath)
 		err := service.doDirWatch(fullDirPath, func(filename string) {
-			if compiledRexp.MatchString(filename) {
+			if compiledRexp.MatchString(filename) && !blacklistJudgementFunc(filename) {
 				addTask(filename)
 				logrus.Infof("add generate subtitle task for path:%s on dir watch", filename)
 
@@ -165,7 +166,6 @@ func (service *SubtitleWorkerService) fixMissTranslateFunc(fixMissTranslateChan 
 			true); err != nil {
 			logrus.Warnf("re generate bilingual subtitle error %s", err)
 		}
-
 	}
 }
 

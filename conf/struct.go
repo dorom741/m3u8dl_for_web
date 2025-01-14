@@ -1,6 +1,10 @@
 package conf
 
 import (
+	"fmt"
+	"regexp"
+	"strings"
+
 	"m3u8dl_for_web/model/aggregate"
 )
 
@@ -40,4 +44,15 @@ type SubtitleConfig struct {
 	SubtitleInput        aggregate.SubtitleInput `yaml:"subtitleInput"`
 	FixMissTranslate     bool                    `yaml:"fixMissTranslate"`
 	JustFixMissTranslate bool                    `yaml:"justFixMissTranslate"`
+	Blacklist            []string                `yaml:"blacklist"`
+}
+
+func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() func(filePath string) bool {
+	if len(subtitleConfig.Blacklist) == 0 {
+		return func(filePath string) bool { return false }
+	}
+	patten := fmt.Sprintf(".*(%s).*", strings.Join(subtitleConfig.Blacklist, "|"))
+	reMulti := regexp.MustCompile(patten)
+
+	return func(filePath string) bool { return reMulti.MatchString(filePath) }
 }
