@@ -48,11 +48,11 @@ type SubtitleConfig struct {
 }
 
 func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() func(filePath string) bool {
-	println(subtitleConfig.Blacklist)
 	if len(subtitleConfig.Blacklist) == 0 {
 		return func(filePath string) bool { return false }
 	}
 	patten := fmt.Sprintf(".*(%s).*", strings.Join(subtitleConfig.Blacklist, "|"))
+	println(patten)
 	reMulti := regexp.MustCompile(patten)
 
 	return func(filePath string) bool { return reMulti.MatchString(filePath) }
