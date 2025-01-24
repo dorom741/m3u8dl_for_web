@@ -48,6 +48,7 @@ type SubtitleConfig struct {
 }
 
 func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() func(filePath string) bool {
+	println(subtitleConfig.Blacklist)
 	if len(subtitleConfig.Blacklist) == 0 {
 		return func(filePath string) bool { return false }
 	}
