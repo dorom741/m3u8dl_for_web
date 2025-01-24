@@ -1,6 +1,8 @@
 package conf
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"m3u8dl_for_web/model/aggregate"
@@ -49,13 +51,9 @@ func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() func(filePath
 	if len(subtitleConfig.Blacklist) == 0 {
 		return func(filePath string) bool { return false }
 	}
+	patten := fmt.Sprintf(".*(%s).*", strings.Join(subtitleConfig.Blacklist, "|"))
+	println(patten)
+	reMulti := regexp.MustCompile(patten)
 
-	return func(filePath string) bool {
-		for _, item := range subtitleConfig.Blacklist {
-			if strings.Contains(filePath, item) {
-				return true
-			}
-		}
-		return false
-	}
+	return func(filePath string) bool { return reMulti.MatchString(filePath) }
 }
