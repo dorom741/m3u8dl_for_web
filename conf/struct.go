@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"m3u8dl_for_web/model/aggregate"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ServerConfig struct {
@@ -108,6 +110,7 @@ func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() (func(filePat
 	}
 
 	patten := fmt.Sprintf(".*(%s).*", strings.Join(subtitleConfig.Blacklist, "|"))
+	logrus.Debugf("patten %s", patten)
 	reMulti := regexp.MustCompile(patten)
 
 	return func(filePath string) bool { return reMulti.MatchString(filePath) }, nil
