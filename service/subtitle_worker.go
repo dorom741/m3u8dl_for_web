@@ -49,6 +49,9 @@ func (service *SubtitleWorkerService) AddTask(taskRecord *model.TaskRecord[aggre
 }
 
 func (service *SubtitleWorkerService) OnTaskRun(task *model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]) error {
+	if err := service.subtitleConfig.WriteLockFile(path.Base(task.Input.InputPath)); err != nil {
+		logrus.Errorf("write lock file error %s", err)
+	}
 	output, err := SubtitleServiceInstance.GenerateSubtitle(context.Background(), task.Input)
 	if err != nil {
 		return err
@@ -126,10 +129,6 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 			Output: aggregate.SubtitleOutput{},
 		}
 		// logrus.Infof("add generate subtitle task for path:%s", filePath)
-
-		if err := config.WriteLockFile(path.Base(filePath)); err != nil {
-			logrus.Errorf("write lock file error %s", err)
-		}
 
 		service.worker.AddTaskBlocking(task)
 		if err := task.Save(); err != nil {
