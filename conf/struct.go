@@ -2,6 +2,7 @@ package conf
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -45,14 +46,68 @@ type SubtitleConfig struct {
 	FixMissTranslate     bool                    `yaml:"fixMissTranslate"`
 	JustFixMissTranslate bool                    `yaml:"justFixMissTranslate"`
 	Blacklist            []string                `yaml:"blacklist"`
+	BlacklistFilePath    string                  `yaml:"blacklistFilePath"`
+	LockFilePath         string                  `yaml:"lockFilePath"`
+}
+
+func (subtitleConfig *SubtitleConfig) saveBlacklistFile(blacklist []string) error {
+	seen := make(map[string]bool)
+	uniqueSlice := []string{}
+
+	for _, value := range blacklist {
+		if !seen[value] {
+			uniqueSlice = append(uniqueSlice, value)
+			seen[value] = true
+		}
+	}
+
+	if subtitleConfig.BlacklistFilePath == "" {
+		return nil
+	}
+	return os.WriteFile(subtitleConfig.BlacklistFilePath, []byte(strings.Join(uniqueSlice, "\n")), os.ModePerm)
+}
+
+func (subtitleConfig *SubtitleConfig) WriteLockFile(data string) error {
+	return os.WriteFile(subtitleConfig.LockFilePath, []byte(data), os.ModePerm)
+}
+
+func (subtitleConfig *SubtitleConfig) ReadLastLockFile() string {
+	lockFileData, err := os.ReadFile(subtitleConfig.LockFilePath)
+	if err == nil {
+		return string(lockFileData)
+	}
+
+	return ""
+}
+
+func (subtitleConfig *SubtitleConfig) RemoveLastLockFile() error {
+	return os.Remove(subtitleConfig.LockFilePath)
 }
 
 func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() func(filePath string) bool {
+	if lastLockFile := subtitleConfig.ReadLastLockFile(); lastLockFile != "" {
+		subtitleConfig.Blacklist = append(subtitleConfig.Blacklist, lastLockFile)
+	}
+
+	if subtitleConfig.BlacklistFilePath != "" {
+		blacklistFileBytes, err := os.ReadFile(subtitleConfig.BlacklistFilePath)
+		if err != nil {
+			panic(fmt.Errorf("read blacklist file error:%w", err))
+		}
+
+		blacklistFromFile := strings.Split(string(blacklistFileBytes), "\n")
+		subtitleConfig.Blacklist = append(subtitleConfig.Blacklist, blacklistFromFile...)
+	}
+
 	if len(subtitleConfig.Blacklist) == 0 {
 		return func(filePath string) bool { return false }
 	}
+
+	if err := subtitleConfig.saveBlacklistFile(subtitleConfig.Blacklist); err != nil {
+		panic(fmt.Errorf("save blacklist file error:%w", err))
+	}
+
 	patten := fmt.Sprintf(".*(%s).*", strings.Join(subtitleConfig.Blacklist, "|"))
-	println(patten)
 	reMulti := regexp.MustCompile(patten)
 
 	return func(filePath string) bool { return reMulti.MatchString(filePath) }

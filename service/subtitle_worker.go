@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"io/fs"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sync"
@@ -18,6 +19,8 @@ import (
 
 type SubtitleWorkerService struct {
 	worker queue_worker.QueueWorker[model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]]
+
+	subtitleConfig *conf.SubtitleConfig
 }
 
 func NewSubtitleWorkerService(subtitleConfig *conf.SubtitleConfig) *SubtitleWorkerService {
@@ -25,7 +28,7 @@ func NewSubtitleWorkerService(subtitleConfig *conf.SubtitleConfig) *SubtitleWork
 		MaxWorker:   1,
 		RetryOnFail: 1,
 	}
-	service := &SubtitleWorkerService{}
+	service := &SubtitleWorkerService{subtitleConfig: subtitleConfig}
 	service.worker = queue_worker.NewQueueWorker[model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]](option, service)
 
 	go service.worker.Run()
@@ -64,6 +67,10 @@ func (service *SubtitleWorkerService) OnTaskFinish(task *model.TaskRecord[aggreg
 		logrus.Infof("%s generate subtitle success,save to %s", task.Input.InputPath, task.Input.GetSavePath())
 	}
 
+	if err := service.subtitleConfig.RemoveLastLockFile(); err != nil {
+		logrus.Errorf("remove last lock file error:%s", err.Error())
+	}
+
 	err := task.Finish(errMsg)
 	if err != nil {
 		logrus.Warnf("save generate subtitle task record error:%s", err.Error())
@@ -85,7 +92,8 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 	if err != nil {
 		return err
 	}
-	logrus.Infof("scanDir %d files to add task", len(allFileList))
+	totalFileList := len(allFileList)
+	logrus.Infof("scanDir %d files to add task", totalFileList)
 
 	var (
 		fixMissTranslateChan   = make(chan struct{}, 1)
@@ -112,7 +120,11 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 			Input:  newTaskInput,
 			Output: aggregate.SubtitleOutput{},
 		}
-		logrus.Infof("add generate subtitle task for path:%s", filePath)
+		// logrus.Infof("add generate subtitle task for path:%s", filePath)
+
+		if err := config.WriteLockFile(path.Base(filePath)); err != nil {
+			logrus.Errorf("write lock file error %s", err)
+		}
 
 		service.worker.AddTaskBlocking(task)
 		if err := task.Save(); err != nil {
@@ -138,7 +150,7 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 		fileItem := allFileList[i]
 		if !blacklistJudgementFunc(fileItem) {
 			addTask(fileItem)
-			logrus.Infof("add generate subtitle task for path:%s on dir watch", fileItem)
+			logrus.Infof("add generate subtitle task for path:%s on dir watch [%d/%d]", fileItem, i+1, totalFileList)
 
 		}
 

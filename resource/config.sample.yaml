@@ -36,7 +36,8 @@ translation:
 #    language: ""
 #    translateTo: ""
 #    blacklist: []
-
+#  blacklistFilePath: ./blacklist.txt
+#  lockFilePath: ./.lock
 
 # sherpa:
 #   embeddingModelPath: "path/to/3dspeaker_speech_eres2net_base_sv_zh-cn_3dspeaker_16k.onnx"
