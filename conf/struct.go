@@ -57,7 +57,7 @@ func (subtitleConfig *SubtitleConfig) saveBlacklistFile(blacklist []string) erro
 	uniqueSlice := []string{}
 
 	for _, value := range blacklist {
-		if !seen[value] {
+		if !seen[value] && value != "" {
 			uniqueSlice = append(uniqueSlice, value)
 			seen[value] = true
 		}
@@ -110,6 +110,10 @@ func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() (func(filePat
 	}
 
 	patten := fmt.Sprintf(".*(%s).*", strings.Join(subtitleConfig.Blacklist, "|"))
+	if strings.HasSuffix(patten, "|") {
+		patten = patten[:len(patten)-1]
+	}
+		
 	logrus.Debugf("patten %s", patten)
 	reMulti := regexp.MustCompile(patten)
 
