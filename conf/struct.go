@@ -109,11 +109,14 @@ func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() (func(filePat
 		return nil, err
 	}
 
-	patten := fmt.Sprintf(".*(%s).*", strings.Join(subtitleConfig.Blacklist, "|"))
-	if strings.HasSuffix(patten, "|") {
-		patten = patten[:len(patten)-1]
+	blacklistStr := strings.Join(subtitleConfig.Blacklist, "|")
+
+	if strings.HasSuffix(blacklistStr, "|") {
+		blacklistStr = blacklistStr[:len(blacklistStr)-1]
 	}
-		
+
+	patten := fmt.Sprintf(".*(%s).*", blacklistStr)
+
 	logrus.Debugf("patten %s", patten)
 	reMulti := regexp.MustCompile(patten)
 
