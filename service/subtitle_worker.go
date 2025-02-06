@@ -154,8 +154,8 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 	for i := range allFileList {
 		fileItem := allFileList[i]
 		if !blacklistJudgementFunc(fileItem) {
-			addTask(fileItem)
 			logrus.Infof("add generate subtitle task for path:%s on dir watch [%d/%d]", fileItem, i+1, totalFileList)
+			addTask(fileItem)
 
 		}
 
