@@ -108,6 +108,7 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 
 		if newTaskInput.HasSavePathExists() {
 			go fixMissTranslateFunc(newTaskInput.GetSavePath())
+			logrus.Debugf("skip subtitle task: %s", filePath)
 			return
 		}
 		if config.JustFixMissTranslate {
