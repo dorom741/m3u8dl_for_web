@@ -84,7 +84,7 @@ func (subtitleConfig *SubtitleConfig) RemoveLastLockFile() error {
 	return os.Remove(subtitleConfig.LockFilePath)
 }
 
-func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() func(filePath string) bool {
+func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() (func(filePath string) bool, error) {
 	if lastLockFile := subtitleConfig.ReadLastLockFile(); lastLockFile != "" {
 		subtitleConfig.Blacklist = append(subtitleConfig.Blacklist, lastLockFile)
 	}
@@ -92,7 +92,7 @@ func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() func(filePath
 	if subtitleConfig.BlacklistFilePath != "" {
 		blacklistFileBytes, err := os.ReadFile(subtitleConfig.BlacklistFilePath)
 		if err != nil {
-			panic(fmt.Errorf("read blacklist file error:%w", err))
+			return nil, err
 		}
 
 		blacklistFromFile := strings.Split(string(blacklistFileBytes), "\n")
@@ -100,15 +100,15 @@ func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() func(filePath
 	}
 
 	if len(subtitleConfig.Blacklist) == 0 {
-		return func(filePath string) bool { return false }
+		return func(filePath string) bool { return false }, nil
 	}
 
 	if err := subtitleConfig.saveBlacklistFile(subtitleConfig.Blacklist); err != nil {
-		panic(fmt.Errorf("save blacklist file error:%w", err))
+		return nil, err
 	}
 
 	patten := fmt.Sprintf(".*(%s).*", strings.Join(subtitleConfig.Blacklist, "|"))
 	reMulti := regexp.MustCompile(patten)
 
-	return func(filePath string) bool { return reMulti.MatchString(filePath) }
+	return func(filePath string) bool { return reMulti.MatchString(filePath) }, nil
 }

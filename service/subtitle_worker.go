@@ -96,11 +96,15 @@ func (service *SubtitleWorkerService) ScanDirToAddTask(config *conf.SubtitleConf
 	logrus.Infof("scanDir %d files to add task", totalFileList)
 
 	var (
-		fixMissTranslateChan   = make(chan struct{}, 1)
-		wg                     sync.WaitGroup
-		fixMissTranslateFunc   = service.fixMissTranslateFunc(fixMissTranslateChan, &wg, config)
-		blacklistJudgementFunc = config.GenerateBlacklistJudgement()
+		fixMissTranslateChan = make(chan struct{}, 1)
+		wg                   sync.WaitGroup
+		fixMissTranslateFunc = service.fixMissTranslateFunc(fixMissTranslateChan, &wg, config)
 	)
+
+	blacklistJudgementFunc, err := config.GenerateBlacklistJudgement()
+	if err != nil {
+		return err
+	}
 
 	addTask := func(filePath string) {
 		newTaskInput := config.SubtitleInput
