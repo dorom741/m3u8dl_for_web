@@ -134,7 +134,7 @@ func (service *GroqService) GetWhisperOutput(response groq.AudioResponse) *whisp
 func (service *GroqService) parseDuration(errString string) (time.Duration, error) {
 
 	// 正则表达式，用于匹配时间格式
-	re := regexp.MustCompile(`Please try again in (.*)\. Visit`)
+	re := regexp.MustCompile(`Please try again in (.*)\. `)
 
 	// 匹配结果
 	matches := re.FindAllStringSubmatch(errString, -1)
