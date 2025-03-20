@@ -38,6 +38,17 @@ type TranslationConfig struct {
 		Url    string `yaml:"url"`
 		ApiKey string `yaml:"apiKey"`
 	} `yaml:"deeplX"`
+
+	OpenAiCompatible *OpenAiCompatibleConfig `yaml:"openAiCompatible"`
+}
+
+type OpenAiCompatibleConfig struct {
+	BaseUrl      string `yaml:"baseUrl"`
+	ApiKey       string `yaml:"apiKey"`
+	Model        string `yaml:"model"`
+	SystemPrompt string `yaml:"systemPrompt"`
+	Prompt       string `yaml:"prompt"`
+	ContextLen   int    `yaml:"contextLen"`
 }
 
 type SubtitleConfig struct {
@@ -93,12 +104,11 @@ func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() (func(filePat
 
 	if subtitleConfig.BlacklistFilePath != "" {
 		blacklistFileBytes, err := os.ReadFile(subtitleConfig.BlacklistFilePath)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			blacklistFromFile := strings.Split(string(blacklistFileBytes), "\n")
+			subtitleConfig.Blacklist = append(subtitleConfig.Blacklist, blacklistFromFile...)
 		}
 
-		blacklistFromFile := strings.Split(string(blacklistFileBytes), "\n")
-		subtitleConfig.Blacklist = append(subtitleConfig.Blacklist, blacklistFromFile...)
 	}
 
 	if len(subtitleConfig.Blacklist) == 0 {

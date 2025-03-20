@@ -16,7 +16,10 @@ var (
 )
 
 func InitService(config *conf.Config) {
-	var err error
+	var (
+		err                error
+		translationService translation.ITranslation
+	)
 
 	GroqServiceInstance, err = NewGroqService(config.Groq.ApiKey, infra.DefaultCache, config.Server.HttpClientProxy)
 	if err != nil {
@@ -26,7 +29,11 @@ func InitService(config *conf.Config) {
 	whisper.DefaultWhisperProvider.Register("groq", GroqServiceInstance)
 	M3u8dlServiceInstance = NewM3u8dlService()
 
-	translationService := translation.NewDeepLXTranslation(config.Translation.DeeplX.Url, infra.DefaultHttpClient)
+	if config.Translation.OpenAiCompatible != nil {
+		translationService = translation.NewOpenAiCompatibleTranslation(config.Translation.OpenAiCompatible)
+	} else {
+		translationService = translation.NewDeepLXTranslation(config.Translation.DeeplX.Url, infra.DefaultHttpClient)
+	}
 
 	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(), infra.DefaultCache, translationService)
 

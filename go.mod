@@ -29,8 +29,13 @@ require (
 	github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30 // indirect
 	github.com/k2-fsa/sherpa-onnx-go-macos v1.10.31 // indirect
 	github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30 // indirect
+	github.com/openai/openai-go v0.1.0-alpha.65 // indirect
 	github.com/pemistahl/lingua-go v1.4.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	golang.org/x/exp v0.0.0-20221106115401-f9659909a136 // indirect
 )
 
@@ -51,7 +56,7 @@ require (
 	github.com/go-playground/validator/v10 v10.23.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
