@@ -29,7 +29,7 @@ translation:
     model: ""
     systemPrompt: "You are a professional, authentic machine translation engine."
     prompt: ";; Treat next line as plain text input and translate it into {{.targetLang}},output translation ONLY. If translation is unnecessary (e.g. proper nouns, codes, etc.), return the original text.If a newline character is encountered: '\n' then each result is output as a newline character. NO explanations. NO notes. Input: {{.text}}"
-
+    RPM: 10
 
 
 

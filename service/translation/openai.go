@@ -3,10 +3,14 @@ package translation
 import (
 	"bytes"
 	"context"
+	"net/http"
 	"strings"
 	"text/template"
+	"time"
 
 	"m3u8dl_for_web/conf"
+
+	"golang.org/x/time/rate"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -22,10 +26,24 @@ type OpenAiCompatibleTranslation struct {
 }
 
 func NewOpenAiCompatibleTranslation(config *conf.OpenAiCompatibleConfig) *OpenAiCompatibleTranslation {
-	client := openai.NewClient(
+	opts := []option.RequestOption{
 		option.WithAPIKey(config.ApiKey),
 		option.WithBaseURL(config.BaseUrl),
-	)
+	}
+
+	if config.RPM > 0 {
+		limiter := rate.NewLimiter(rate.Every(time.Second*time.Duration(int(60/config.RPM)+1)), config.RPM)
+		rateLimitMiddleware := func(request *http.Request, next option.MiddlewareNext) (*http.Response, error) {
+			if err := limiter.Wait(context.Background()); err != nil {
+				return nil, err
+			}
+			return next(request)
+		}
+		logrus.Infof("enable openAi compatible translation rate limit RPM %d", config.RPM)
+
+		opts = append(opts, option.WithMiddleware(rateLimitMiddleware))
+	}
+	client := openai.NewClient(opts...)
 
 	return &OpenAiCompatibleTranslation{
 		config: config,

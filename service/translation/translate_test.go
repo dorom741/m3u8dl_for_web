@@ -28,9 +28,18 @@ func TestOpenaiTranslate(t *testing.T) {
 
 	translation := NewOpenAiCompatibleTranslation(conf.ConfigInstance.Translation.OpenAiCompatible)
 
-	result, err := translation.Translate(ctx, "car", "en", "zh")
-	if err != nil {
-		t.Error(err)
+	for i, word := range []string{"computer", "car", "bye", "page", "big", "sad", "hello", "goodbye", "happy", "love", "hate", "like", "dislike", "good", "bad", "beautiful"} {
+		result, err := translation.Translate(ctx, word, "en", "zh")
+		if err != nil {
+			t.Error(err)
+		}
+		t.Logf("translate %d resultL %+v", i, result)
+
 	}
-	t.Logf("translate resultL %+v", result)
+
+	// result, err := translation.Translate(ctx, "computer", "en", "zh")
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+	// t.Logf("translate resultL %+v", result)
 }

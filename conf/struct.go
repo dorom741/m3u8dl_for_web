@@ -49,6 +49,7 @@ type OpenAiCompatibleConfig struct {
 	SystemPrompt string `yaml:"systemPrompt"`
 	Prompt       string `yaml:"prompt"`
 	ContextLen   int    `yaml:"contextLen"`
+	RPM          int    `yaml:"RPM"`
 }
 
 type SubtitleConfig struct {
