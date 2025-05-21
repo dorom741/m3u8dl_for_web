@@ -40,7 +40,7 @@ FROM ubuntu:22.04
 ENV GIN_MODE=release
 
 RUN  apt-get update  \
-    && apt-get install -y  --no-install-suggests ca-certificates  ffmpeg  \
+    && apt-get install -y  --no-install-suggests --no-install-recommends ca-certificates  ffmpeg  \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 WORKDIR /app
