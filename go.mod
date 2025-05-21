@@ -18,6 +18,7 @@ require (
 	github.com/pemistahl/lingua-go v1.4.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/yapingcat/gomedia v0.0.0-20240906162731-17feea57090c
+	golang.org/x/time v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.10
