@@ -8,19 +8,23 @@ import (
 )
 
 func init() {
-	conf.InitConf("../../config.yaml")
+	conf.InitConf("./config.yaml")
 }
 
-func TestDeelxTranslate(t *testing.T) {
+func TestDeepLXTranslate(t *testing.T) {
 	ctx := context.Background()
 
 	translation := NewDeepLXTranslation(conf.ConfigInstance.Translation.DeeplX.Url, nil)
 
-	result, err := translation.Translate(ctx, "car", "en", "zh")
-	if err != nil {
-		t.Error(err)
+	for i, word := range []string{"computer", "car", "bye", "page", "big", "sad", "hello", "goodbye", "happy", "love", "hate", "like", "dislike", "good", "bad", "beautiful"} {
+		result, err := translation.Translate(ctx, word, "en", "zh")
+		if err != nil {
+			t.Error(err)
+		}
+		t.Logf("translate %d resultL %+v", i, result)
+
 	}
-	t.Logf("translate resultL %+v", result)
+
 }
 
 func TestOpenaiTranslate(t *testing.T) {

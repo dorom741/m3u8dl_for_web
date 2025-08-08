@@ -20,9 +20,10 @@ groq:
   apiKey: ""
 
 translation:
-  deeplX:
+  deepLX:
     url: ""
     apiKey: ""
+    RPM: 10
   openAiCompatible:
     baseUrl: ""
     apiKey: ""

@@ -5,20 +5,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
 	"io"
+	"m3u8dl_for_web/conf"
 	"net/http"
+	"time"
 )
 
 var _ ITranslation = &DeepLXTranslation{}
 
 type DeepLXTranslation struct {
-	Url    string
-	client *http.Client
+	Url     string
+	client  *http.Client
+	limiter *rate.Limiter
 }
 
-func NewDeepLXTranslation(deeplXUrl string, httpClient *http.Client) *DeepLXTranslation {
+func NewDeepLXTranslation(config conf.DeepLXConfig, httpClient *http.Client) *DeepLXTranslation {
 	translation := &DeepLXTranslation{
-		Url:    deeplXUrl,
+		Url:    config.Url,
 		client: httpClient,
 	}
 
@@ -26,11 +31,26 @@ func NewDeepLXTranslation(deeplXUrl string, httpClient *http.Client) *DeepLXTran
 		translation.client = http.DefaultClient
 	}
 
+	if config.RPM > 0 {
+		translation.limiter = rate.NewLimiter(rate.Every(time.Second*time.Duration(int(60/config.RPM)+1)), config.RPM)
+		logrus.Infof("enable DeepLX translation rate limit RPM %d", config.RPM)
+
+	}
+
 	return translation
 }
 
 type Result struct {
 	Data string
+}
+
+func (translation *DeepLXTranslation) httpClientDo(req *http.Request) (*http.Response, error) {
+	if translation.limiter != nil {
+		if err := translation.limiter.Wait(context.Background()); err != nil {
+			return nil, err
+		}
+	}
+	return translation.client.Do(req)
 }
 
 func (translation *DeepLXTranslation) SupportMultipleTextBySeparator() (bool, string) {

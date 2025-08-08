@@ -34,12 +34,15 @@ type GroqConfig struct {
 }
 
 type TranslationConfig struct {
-	DeeplX *struct {
-		Url    string `yaml:"url"`
-		ApiKey string `yaml:"apiKey"`
-	} `yaml:"deeplX"`
+	DeepLX DeepLXConfig `yaml:"deepLX"`
 
 	OpenAiCompatible *OpenAiCompatibleConfig `yaml:"openAiCompatible"`
+}
+
+type DeepLXConfig struct {
+	Url    string `yaml:"url"`
+	ApiKey string `yaml:"apiKey"`
+	RPM    int    `yaml:"RPM"`
 }
 
 type OpenAiCompatibleConfig struct {
