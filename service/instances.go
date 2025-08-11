@@ -31,8 +31,10 @@ func InitService(config *conf.Config) {
 
 	if config.Translation.OpenAiCompatible != nil {
 		translationService = translation.NewOpenAiCompatibleTranslation(config.Translation.OpenAiCompatible)
-	} else {
+	} else if config.Translation.DeepLX != nil {
 		translationService = translation.NewDeepLXTranslation(config.Translation.DeepLX, infra.DefaultHttpClient)
+	} else {
+		panic("translation config is empty, please check your config file")
 	}
 
 	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(), infra.DefaultCache, translationService)

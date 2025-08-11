@@ -23,7 +23,7 @@ type DeepLXTranslation struct {
 	limiter *rate.Limiter
 }
 
-func NewDeepLXTranslation(config conf.DeepLXConfig, httpClient *http.Client) *DeepLXTranslation {
+func NewDeepLXTranslation(config *conf.DeepLXConfig, httpClient *http.Client) *DeepLXTranslation {
 	translation := &DeepLXTranslation{
 		Url:    config.Url,
 		client: httpClient,

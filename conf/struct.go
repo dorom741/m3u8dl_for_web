@@ -34,7 +34,7 @@ type GroqConfig struct {
 }
 
 type TranslationConfig struct {
-	DeepLX DeepLXConfig `yaml:"deepLX"`
+	DeepLX *DeepLXConfig `yaml:"deepLX"`
 
 	OpenAiCompatible *OpenAiCompatibleConfig `yaml:"openAiCompatible"`
 }
