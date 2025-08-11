@@ -5,12 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/time/rate"
 	"io"
-	"m3u8dl_for_web/conf"
 	"net/http"
 	"time"
+
+	"m3u8dl_for_web/conf"
+
+	"github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
 )
 
 var _ ITranslation = &DeepLXTranslation{}
@@ -32,8 +34,9 @@ func NewDeepLXTranslation(config conf.DeepLXConfig, httpClient *http.Client) *De
 	}
 
 	if config.RPM > 0 {
-		translation.limiter = rate.NewLimiter(rate.Every(time.Second*time.Duration(int(60/config.RPM)+1)), config.RPM)
-		logrus.Infof("enable DeepLX translation rate limit RPM %d", config.RPM)
+		burst := (config.RPM + 60 - 1) / 60
+		translation.limiter = rate.NewLimiter(rate.Every(time.Second*time.Duration(int(60/config.RPM)+1)), burst)
+		logrus.Infof("enable DeepLX translation rate limit RPM %d burst %d", config.RPM,burst)
 
 	}
 
@@ -79,7 +82,7 @@ func (translation *DeepLXTranslation) Translate(ctx context.Context, text string
 	}
 	request.WithContext(ctx)
 
-	response, err := translation.client.Do(request)
+	response, err := translation.httpClientDo(request)
 	if err != nil {
 		return "", err
 	}

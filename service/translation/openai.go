@@ -32,14 +32,15 @@ func NewOpenAiCompatibleTranslation(config *conf.OpenAiCompatibleConfig) *OpenAi
 	}
 
 	if config.RPM > 0 {
-		limiter := rate.NewLimiter(rate.Every(time.Second*time.Duration(int(60/config.RPM)+1)), config.RPM)
+		burst := (config.RPM + 60 - 1) / 60
+		limiter := rate.NewLimiter(rate.Every(time.Second*time.Duration(int(60/config.RPM)+1)), burst)
 		rateLimitMiddleware := func(request *http.Request, next option.MiddlewareNext) (*http.Response, error) {
 			if err := limiter.Wait(context.Background()); err != nil {
 				return nil, err
 			}
 			return next(request)
 		}
-		logrus.Infof("enable openAi compatible translation rate limit RPM %d", config.RPM)
+		logrus.Infof("enable openAi compatible translation rate limit RPM %d burst %d", config.RPM,burst)
 
 		opts = append(opts, option.WithMiddleware(rateLimitMiddleware))
 	}
