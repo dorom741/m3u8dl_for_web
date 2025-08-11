@@ -125,9 +125,7 @@ func (subtitleConfig *SubtitleConfig) GenerateBlacklistJudgement() (func(filePat
 
 	blacklistStr := strings.Join(subtitleConfig.Blacklist, "|")
 
-	if strings.HasSuffix(blacklistStr, "|") {
-		blacklistStr = blacklistStr[:len(blacklistStr)-1]
-	}
+	blacklistStr = strings.TrimSuffix(blacklistStr, "|")
 
 	patten := fmt.Sprintf(".*(%s).*", blacklistStr)
 
