@@ -13,6 +13,7 @@ import (
 	"m3u8dl_for_web/controller"
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
+	"m3u8dl_for_web/resource"
 	"m3u8dl_for_web/service"
 )
 
@@ -50,7 +51,7 @@ func searchPath(filePath string) (string, error) {
 		return "", err
 	}
 
-	filePathOnParent := path.Join("re/", filePath)
+	filePathOnParent := path.Join("resource/", filePath)
 	_, err = os.Stat(filePathOnParent)
 
 	return filePathOnParent, err
@@ -79,8 +80,15 @@ func run(staticPath string) {
 		if len(fullPath) == 0 || fullPath == "/" {
 			fullPath = "index.html"
 		}
-		// 返回静态文件
-		c.File(path.Join(staticPath, fullPath)) // 请确保该文件存在
+		physicsPath := path.Join(staticPath, fullPath)
+		if _, err := os.Stat(physicsPath); err == nil {
+			// 返回静态文件
+			c.File(physicsPath)
+			return
+		}
+
+		c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+		c.Writer.WriteString(resource.IndexHtmlContent)
 	})
 
 	// log.Infof("open http://127.0.0.1:2045/")
