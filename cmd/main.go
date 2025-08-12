@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	configFilePath, err := searchPath("./config.yaml")
+	configFilePath, err := findConfigFile()
 	if err != nil {
 		panic("配置文件不存在")
 	}
@@ -42,11 +42,19 @@ func main() {
 	run(conf.ConfigInstance.Server.StaticPath)
 }
 
-func searchPath(filePath string) (string, error) {
+func findConfigFile() (string, error) {
+	filePath := "config.yaml"
+
+	configFilePathEnv, exists := os.LookupEnv("CONFILE_PATH")
+	if exists {
+		filePath = configFilePathEnv
+	}
+
 	_, err := os.Stat(filePath)
 	if err == nil {
 		return filePath, nil
 	}
+
 	if !errors.Is(os.ErrNotExist, err) {
 		return "", err
 	}
