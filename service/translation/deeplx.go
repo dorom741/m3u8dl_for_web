@@ -36,7 +36,7 @@ func NewDeepLXTranslation(config *conf.DeepLXConfig, httpClient *http.Client) *D
 	if config.RPM > 0 {
 		burst := (config.RPM + 60 - 1) / 60
 		translation.limiter = rate.NewLimiter(rate.Every(time.Second*time.Duration(int(60/config.RPM)+1)), burst)
-		logrus.Infof("enable DeepLX translation rate limit RPM %d burst %d", config.RPM,burst)
+		logrus.Infof("enable DeepLX translation rate limit RPM %d burst %d", config.RPM, burst)
 
 	}
 
@@ -49,7 +49,7 @@ type Result struct {
 
 func (translation *DeepLXTranslation) httpClientDo(req *http.Request) (*http.Response, error) {
 	if translation.limiter != nil {
-		if err := translation.limiter.Wait(context.Background()); err != nil {
+		if err := translation.limiter.Wait(req.Context()); err != nil {
 			return nil, err
 		}
 	}

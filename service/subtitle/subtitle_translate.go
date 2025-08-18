@@ -31,6 +31,7 @@ func (service *SubtitleService) BatchTranslate(ctx context.Context, textList []s
 			}(i, text)
 		}
 
+		wg.Wait()
 		return translatedTextListTemp, nil
 
 	}
