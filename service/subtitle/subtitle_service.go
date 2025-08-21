@@ -128,7 +128,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 		}
 
 		var translatedTextList []string
-		if input.TranslateTo != "" {
+		if input.TranslateTo != ""  && input.TranslateTo != input.Language {
 			allTextList := make([]string, len(whisperOutput.Segments))
 			for i, segment := range whisperOutput.Segments {
 				allTextList[i] = segment.Text
