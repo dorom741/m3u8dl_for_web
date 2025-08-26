@@ -24,8 +24,8 @@ func NewSubtitleSub() *subtitleSub {
 
 	s.Styles["main"] = &astisub.Style{ID: "main", InlineStyle: sub.newStyleAttributes()}
 	secondInlineStyle := *s.Styles["main"].InlineStyle
-	secondInlineStyle.SSAFontSize = floatPointer(10)
-	secondInlineStyle.SSAMarginVertical = intPointer(20)
+	secondInlineStyle.SSAFontSize = floatPointer(8)
+	secondInlineStyle.SSAMarginVertical = intPointer(0)
 
 	s.Styles["second"] = &astisub.Style{ID: "second", InlineStyle: &secondInlineStyle}
 
@@ -75,12 +75,12 @@ func (sub *subtitleSub) newStyleAttributes() *astisub.StyleAttributes {
 		SSAEffect:          "",
 		SSAEncoding:        intPointer(1),
 		SSAFontName:        "Noto Sans",
-		SSAFontSize:        floatPointer(15.0),
+		SSAFontSize:        floatPointer(10.0),
 		SSAItalic:          boolPointer(false),
 		SSALayer:           intPointer(0),
 		SSAMarginLeft:      intPointer(10),
 		SSAMarginRight:     intPointer(10),
-		SSAMarginVertical:  intPointer(55),
+		SSAMarginVertical:  intPointer(20),
 		SSAMarked:          boolPointer(false),
 		SSAOutline:         floatPointer(2.0),
 		SSAOutlineColour:   &astisub.Color{Alpha: 0, Red: 0, Green: 0, Blue: 0}, // #00000000,
