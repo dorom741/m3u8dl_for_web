@@ -128,7 +128,7 @@ func (localWhisper *LocalWhisper) HandleWhisper(ctx context.Context, input whisp
 	)
 
 	modelContext.ResetTimings()
-	if err := modelContext.Process(data, cb, input.ProgressCallback); err != nil {
+	if err := modelContext.Process(data,nil, cb, input.ProgressCallback); err != nil {
 		return nil, err
 	}
 	modelContext.PrintTimings()
