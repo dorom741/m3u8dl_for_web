@@ -80,7 +80,7 @@ func (sub *subtitleSub) newStyleAttributes() *astisub.StyleAttributes {
 		SSALayer:           intPointer(0),
 		SSAMarginLeft:      intPointer(10),
 		SSAMarginRight:     intPointer(10),
-		SSAMarginVertical:  intPointer(20),
+		SSAMarginVertical:  intPointer(10),
 		SSAMarked:          boolPointer(false),
 		SSAOutline:         floatPointer(2.0),
 		SSAOutlineColour:   &astisub.Color{Alpha: 0, Red: 0, Green: 0, Blue: 0}, // #00000000,
