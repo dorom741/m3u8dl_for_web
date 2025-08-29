@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
+	"m3u8dl_for_web/pkg/whisper/whisper_cpp_client"
 )
 
 var ConfigInstance = NewConfig()
@@ -18,9 +19,10 @@ type Config struct {
 
 	Translation TranslationConfig `yaml:"translation"`
 
-	LocalWhisperModels map[string]string `yaml:"localWhisperModels"`
-	Subtitle           *SubtitleConfig   `yaml:"subtitle"`
-	SherpaConfig       *SherpaConfigType `yaml:"sherpa"`
+	WhisperCppClientConfig *whispercppclient.WhisperCppClientConfig `yaml:"whisperCppClientConfig"`
+	LocalWhisperModels     map[string]string `yaml:"localWhisperModels"`
+	Subtitle               *SubtitleConfig   `yaml:"subtitle"`
+	SherpaConfig           *SherpaConfigType `yaml:"sherpa"`
 }
 
 func (conf *Config) GetAbsSavePath() string {

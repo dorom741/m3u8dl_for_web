@@ -4,6 +4,8 @@ import (
 	"m3u8dl_for_web/conf"
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/pkg/whisper"
+	"m3u8dl_for_web/pkg/whisper/whisper_cpp_client"
+
 	"m3u8dl_for_web/service/subtitle"
 	"m3u8dl_for_web/service/translation"
 )
@@ -25,8 +27,13 @@ func InitService(config *conf.Config) {
 	if err != nil {
 		panic(err)
 	}
-
 	whisper.DefaultWhisperProvider.Register("groq", GroqServiceInstance)
+
+	if config.WhisperCppClientConfig != nil {
+		whisperProvider := whispercppclient.NewWhisperCppClient(config.WhisperCppClientConfig, infra.DefaultHttpClient)
+		whisper.DefaultWhisperProvider.Register("whisper_cpp_client", whisperProvider)
+	}
+
 	M3u8dlServiceInstance = NewM3u8dlService()
 
 	if config.Translation.OpenAiCompatible != nil {

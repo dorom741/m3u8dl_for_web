@@ -16,6 +16,8 @@ import (
 
 func init() {
 	conf.InitConf("../config.yaml")
+	infra.InitLogger(conf.ConfigInstance)
+
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, logrus.StandardLogger())
 	infra.MustInitCache(conf.ConfigInstance.GetAbsCachePath())
 	InitService(conf.ConfigInstance)
@@ -30,12 +32,13 @@ func TestGenerateSubtitle(t *testing.T) {
 	inputPath := "../resource/samples/jfk.wav"
 
 	input := aggregate.SubtitleInput{
-		Provider:    "sherpa",
-		InputPath:   inputPath,
-		SavePath:    "",
-		Prompt:      "",
-		Temperature: 0,
-		Language:    "",
+		Provider:       "whisper_cpp_client",
+		InputPath:      inputPath,
+		ReplaceOnExist: true,
+		SavePath:       "",
+		Prompt:         "",
+		Temperature:    0.2,
+		Language:       "",
 	}
 
 	_, err := SubtitleServiceInstance.GenerateSubtitle(ctx, input)

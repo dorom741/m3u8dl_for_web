@@ -19,6 +19,11 @@ log:
 groq:
   apiKey: ""
 
+whisperCppClientConfig:
+  baseUrl: http://127.0.0.1:8080/inference
+  splitDuration: 3600
+  debugMode: true
+
 translation:
   deepLX:
     url: ""
