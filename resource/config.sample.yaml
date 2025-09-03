@@ -54,6 +54,7 @@ translation:
 #  lockFilePath: ./.lock
 
 # sherpa:
+#   splitDuration: 3600
 #   embeddingModelPath: "path/to/3dspeaker_speech_eres2net_base_sv_zh-cn_3dspeaker_16k.onnx"
 #   pyannoteModelPath: "path/to/sherpa-onnx-pyannote-segmentation-3-0/model.onnx"
 #   offlineModelConfig:

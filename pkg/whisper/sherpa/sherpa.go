@@ -24,6 +24,7 @@ type SherpaWhisper struct {
 
 	modelConfig            sherpa.OfflineModelConfig
 	offlineStreamBatchSize int
+	splitDuration          int64
 }
 
 func NewSherpaWhisper(sherpaConfig SherpaConfig) *SherpaWhisper {
@@ -37,12 +38,13 @@ func NewSherpaWhisper(sherpaConfig SherpaConfig) *SherpaWhisper {
 		pyannoteModelPath:      sherpaConfig.PyannoteModelPath,
 		modelConfig:            sherpaConfig.OfflineModelConfig,
 		offlineStreamBatchSize: sherpaConfig.OfflineStreamBatchSize,
+		splitDuration:          sherpaConfig.SplitDuration,
 	}
 }
 
-// 2 hours,329M
+// 8/16/16000 * splitDuration
 func (sherpaWhisper *SherpaWhisper) MaximumFileSize() int64 {
-	return 345600000
+	return 32000 * sherpaWhisper.splitDuration
 }
 
 func (sherpaWhisper *SherpaWhisper) HandleWhisper(ctx context.Context, input whisper.WhisperInput) (*whisper.WhisperOutput, error) {

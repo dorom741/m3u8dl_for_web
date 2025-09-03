@@ -5,6 +5,8 @@ import (
 )
 
 type SherpaConfig struct {
+	SplitDuration int64 `yaml:"splitDuration"`
+
 	EmbeddingModelPath string `yaml:"embeddingModelPath"`
 	PyannoteModelPath  string `yaml:"pyannoteModelPath"`
 
