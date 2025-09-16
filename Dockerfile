@@ -40,10 +40,13 @@ FROM ubuntu:22.04
 ENV GIN_MODE=release
 
 RUN  apt-get update  \
-    && apt-get install -y  --no-install-suggests --no-install-recommends ca-certificates  ffmpeg  \
+    && apt-get install -y  --no-install-suggests --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 WORKDIR /app
+
+COPY --from=mwader/static-ffmpeg:latest /ffmpeg /usr/local/bin/
+COPY --from=mwader/static-ffmpeg:latest /ffprobe /usr/local/bin/
 
 COPY --from=build  /app/lib/ /app/
 COPY --from=build /app/app .
