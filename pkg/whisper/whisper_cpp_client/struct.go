@@ -10,10 +10,11 @@ import (
 )
 
 type WhisperCppClientConfig struct {
-	BaseUrl string `yaml:"baseUrl"`
-	SplitDuration int64 `yaml:"splitDuration"`
-	DebugMode bool `yaml:"debugMode"`
-
+	InferenceUrl       string `yaml:"inferenceUrl"`
+	InferenceResultUrl string `yaml:"inferenceResultUrl"`
+	SplitDuration      int64  `yaml:"splitDuration"`
+	DebugMode          bool   `yaml:"debugMode"`
+	Async              bool   `yaml:"async"`
 }
 
 // WhisperRequest 对应 server 中的可接受参数（简化与合理推断类型）
@@ -159,6 +160,17 @@ type WhisperResponse struct {
 	DetectedLanguage            string                `json:"detected_language"`
 	DetectedLanguageProbability float64               `json:"detected_language_probability"`
 	LanguageProbabilities       LanguageProbabilities `json:"language_probabilities"`
+}
+
+type AsyncInferenceResponse struct {
+	TaskId string `json:"task_id"`
+}
+
+type InferenceResultResponse struct {
+	Status string           `json:"status"`
+	Data   *WhisperResponse `json:"data"`
+	Params map[string]any   `json:"params"`
+	Error  string           `json:"error"`
 }
 
 type LanguageProbabilities struct {

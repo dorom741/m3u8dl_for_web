@@ -20,7 +20,9 @@ groq:
   apiKey: ""
 
 whisperCppClientConfig:
-  baseUrl: http://127.0.0.1:8080/inference
+  inferenceUrl: http://127.0.0.1:8080/inference_async
+  inferenceResultUrl: http://127.0.0.1:8080/inference_result
+  async: true
   splitDuration: 3600
   debugMode: true
 
