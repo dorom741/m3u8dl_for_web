@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"m3u8dl_for_web/conf"
@@ -18,14 +21,19 @@ import (
 var _ ITranslation = &DeepLXTranslation{}
 
 type DeepLXTranslation struct {
-	Url     string
+	urls    []string
+	mu      sync.Mutex
 	client  *http.Client
 	limiter *rate.Limiter
+	config  *conf.DeepLXConfig
 }
 
 func NewDeepLXTranslation(config *conf.DeepLXConfig, httpClient *http.Client) *DeepLXTranslation {
+	config.ParseUrlFile()
+	logrus.Debugf("all DeepLX url:%+v", config.Urls)
 	translation := &DeepLXTranslation{
-		Url:    config.Url,
+		config: config,
+		urls:   config.Urls,
 		client: httpClient,
 	}
 
@@ -56,50 +64,119 @@ func (translation *DeepLXTranslation) httpClientDo(req *http.Request) (*http.Res
 	return translation.client.Do(req)
 }
 
+func (translation *DeepLXTranslation) getRandomUrl() string {
+	translation.mu.Lock()
+	defer translation.mu.Unlock()
+
+	if len(translation.urls) == 0 {
+		return ""
+	}
+
+	index := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(translation.urls))
+	return translation.urls[index]
+}
+
+func (translation *DeepLXTranslation) removeUrl(url string) {
+	translation.mu.Lock()
+	defer translation.mu.Unlock()
+
+	for i, p := range translation.urls {
+		if p == url {
+			translation.urls = append(translation.urls[:i], translation.urls[i+1:]...)
+			break
+		}
+	}
+
+	translation.config.WriteUrlFile(translation.urls)
+}
+
 func (translation *DeepLXTranslation) SupportMultipleTextBySeparator() (bool, string) {
 	return false, "\n"
 }
 
 func (translation *DeepLXTranslation) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
-	var (
-		err            error
-		postDataReader = new(bytes.Buffer)
-		postData       = map[string]string{
-			"text":        text,
-			"source_lang": sourceLang,
-			"target_lang": targetLang,
+	postData := map[string]string{
+		"text":        text,
+		"source_lang": sourceLang,
+		"target_lang": targetLang,
+	}
+
+	// determine number of attempts = initial number of urls
+	translation.mu.Lock()
+	maxAttempts := len(translation.urls)
+	translation.mu.Unlock()
+
+	if maxAttempts == 0 {
+		return "", fmt.Errorf("no DeepLX urls configured")
+	}
+
+	var lastErr error
+	attempts := 0
+
+	for attempts < maxAttempts {
+		attempts++
+
+		url := translation.getRandomUrl()
+		if url == "" {
+			break
 		}
-		result = new(Result)
-	)
 
-	if err = json.NewEncoder(postDataReader).Encode(postData); err != nil {
-		return "", err
+		// prepare body for this attempt
+		postDataReader := new(bytes.Buffer)
+		if err := json.NewEncoder(postDataReader).Encode(postData); err != nil {
+			return "", err
+		}
+
+		req, err := http.NewRequestWithContext(ctx,"POST", url, postDataReader)
+		if err != nil {
+			logrus.Warnf("DeepLX: create request for %s failed: %v", url, err)
+			return "", err
+		}
+
+		resp, err := translation.httpClientDo(req)
+		if err != nil {
+			logrus.Warnf("DeepLX: request to %s failed: %v", url, err)
+			translation.removeUrl(url)
+			lastErr = err
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			logrus.Warnf("DeepLX: read body from %s failed: %v", url, err)
+			translation.removeUrl(url)
+			lastErr = err
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			logrus.Warnf("DeepLX: request to %s error status:%d body:%s", url, resp.StatusCode, string(body))
+			translation.removeUrl(url)
+			lastErr = fmt.Errorf("status %d", resp.StatusCode)
+			continue
+		}
+
+		result := new(Result)
+		if err := json.Unmarshal(body, result); err != nil {
+			logrus.Warnf("DeepLX: parse response from %s failed: %v", url, err)
+			translation.removeUrl(url)
+			lastErr = err
+			continue
+		}
+
+		if strings.TrimSpace(result.Data) == "" {
+			logrus.Warnf("DeepLX: empty result from %s", url)
+			translation.removeUrl(url)
+			lastErr = fmt.Errorf("empty result")
+			continue
+		}
+
+		return result.Data, nil
 	}
 
-	request, err := http.NewRequest("POST", translation.Url, postDataReader)
-	if err != nil {
-		return "", err
+	if lastErr != nil {
+		return "", fmt.Errorf("all DeepLX urls failed after %d attempts: last error: %v", attempts, lastErr)
 	}
-	request.WithContext(ctx)
-
-	response, err := translation.httpClientDo(request)
-	if err != nil {
-		return "", err
-	}
-	defer response.Body.Close()
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return "", err
-	}
-
-	if response.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("request error status:%d err:%s", response.StatusCode, body)
-	}
-
-	if err := json.Unmarshal(body, result); err != nil {
-		return "", err
-	}
-
-	return result.Data, nil
+	return "", fmt.Errorf("all DeepLX urls failed after %d attempts", attempts)
 }

@@ -40,9 +40,38 @@ type TranslationConfig struct {
 }
 
 type DeepLXConfig struct {
-	Url    string `yaml:"url"`
-	ApiKey string `yaml:"apiKey"`
-	RPM    int    `yaml:"RPM"`
+	UrlsFile string   `yaml:"urlsFile"`
+	Urls     []string `yaml:"urls"`
+	ApiKey   string   `yaml:"apiKey"`
+	RPM      int      `yaml:"RPM"`
+}
+
+func (deepLXConfig *DeepLXConfig) ParseUrlFile() {
+	if len(deepLXConfig.UrlsFile) == 0 {
+		return
+	}
+
+	data, err := os.ReadFile(deepLXConfig.UrlsFile)
+	if err != nil {
+		logrus.Warnf("parse DeepLX urls file error:%s", err)
+		return
+	}
+
+	urls := strings.Split(string(data), "\n")
+	deepLXConfig.Urls = append(deepLXConfig.Urls, urls...)
+}
+
+func (deepLXConfig *DeepLXConfig) WriteUrlFile(urls []string )   {
+	if len(deepLXConfig.UrlsFile) == 0 {
+		return
+	}
+
+	err := os.WriteFile(deepLXConfig.UrlsFile, []byte(strings.Join(urls, "\n")), os.ModePerm)
+	if err != nil {
+		logrus.Warnf("write DeepLX urls file error:%s", err)
+	}
+
+
 }
 
 type OpenAiCompatibleConfig struct {
