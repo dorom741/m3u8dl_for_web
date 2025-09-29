@@ -58,10 +58,11 @@ func (deepLXConfig *DeepLXConfig) ParseUrlFile() {
 	}
 
 	urls := strings.Split(string(data), "\n")
-	deepLXConfig.Urls = append(deepLXConfig.Urls, urls...)
+	deepLXConfig.Urls = append(urls, deepLXConfig.Urls...)
+	deepLXConfig.Urls = removeEmptyStrings(deepLXConfig.Urls)
 }
 
-func (deepLXConfig *DeepLXConfig) WriteUrlFile(urls []string )   {
+func (deepLXConfig *DeepLXConfig) WriteUrlFile(urls []string) {
 	if len(deepLXConfig.UrlsFile) == 0 {
 		return
 	}
@@ -70,7 +71,6 @@ func (deepLXConfig *DeepLXConfig) WriteUrlFile(urls []string )   {
 	if err != nil {
 		logrus.Warnf("write DeepLX urls file error:%s", err)
 	}
-
 
 }
 
