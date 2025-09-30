@@ -29,8 +29,6 @@ github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/
 github.com/fsnotify/fsnotify v1.8.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/gabriel-vasile/mimetype v1.4.7 h1:SKFKl7kD0RiPdbht0s7hFtjl489WcQ1VyPW8ZzUMYCA=
 github.com/gabriel-vasile/mimetype v1.4.7/go.mod h1:GDlAgAyIRT27BhFl53XNAFtfjzOkLaF35JdEG0P7LtU=
-github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241119165422-6266a9f9e56a h1:z2WNQosLNg2hUOcpaef/rIjOTwSGGrPBtD+uRCrXcbU=
-github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20241119165422-6266a9f9e56a/go.mod h1:qyHjS/50ORo01H0NsuEEGsQR9VCtOcEye0gUl2sx1s8=
 github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20250824163423-7745fcf32846 h1:aaLWbfqU+D/FQdUS/RvXB6AI0CIToj47pBVaLQE3pVs=
 github.com/ggerganov/whisper.cpp/bindings/go v0.0.0-20250824163423-7745fcf32846/go.mod h1:qyHjS/50ORo01H0NsuEEGsQR9VCtOcEye0gUl2sx1s8=
 github.com/gin-contrib/pprof v1.5.1 h1:Mzy+3HHtHbtwr4VewBTXZp/hR7pS6ZuZkueBIrQiLL4=
