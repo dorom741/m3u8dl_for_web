@@ -147,20 +147,17 @@ func (translation *DeepLXTranslation) Translate(ctx context.Context, text string
 		return "", fmt.Errorf("no DeepLX urls configured")
 	}
 
-	var lastErr error
-	attempts := 0
+	var (
+		lastErr  error
+		attempts = 0
+	)
 
 	if numUrls == 1 {
-		maxAttempts := 3
-		for attempts < maxAttempts {
-			attempts++
-			res, err := translation.translateOnce(ctx, translation.getRandomUrl(), postData)
-			if err == nil {
-				return res, nil
-			}
-			lastErr = err
+		res, err := translation.translateOnce(ctx, translation.getRandomUrl(), postData)
+		if err != nil {
+			return "", fmt.Errorf("DeepLX translate error: %v", err)
 		}
-		return "", fmt.Errorf("all DeepLX urls failed after %d attempts,last error: %v", attempts, lastErr)
+		return res, nil
 	}
 
 	for attempts < numUrls {

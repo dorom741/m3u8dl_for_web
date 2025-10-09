@@ -18,16 +18,26 @@ func (service *SubtitleService) BatchTranslate(ctx context.Context, textList []s
 			wg.Add(1)
 
 			go func(index int, t string) {
-				defer wg.Done()
 				sem <- struct{}{}
-				defer func() { <-sem }() // 请求结束
+				defer func() { <-sem }()
+				defer wg.Done()
 
-				translatedText, err := service.translation.Translate(ctx, t, sourceLang, targetLang)
-				if err != nil {
-					logrus.Warnf("translation error: %+v", err)
+				var (
+					lastErr        error
+					maxAttempts    = 3
+					attempts       = 0
+					translatedText = ""
+				)
+				for attempts < maxAttempts {
+					attempts++
+					translatedText, lastErr = service.translation.Translate(ctx, t, sourceLang, targetLang)
+					if lastErr == nil  {
+						translatedTextListTemp[index] = translatedText
+						return 
+					}
 				}
+				logrus.Warnf("translate failed after %d attempts,last error: %v", attempts, lastErr)
 
-				translatedTextListTemp[index] = translatedText
 			}(i, text)
 		}
 

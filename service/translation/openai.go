@@ -76,7 +76,7 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 		return "", err
 	}
 
-	logrus.Infof("translate prompt %s", directiveBuffer.String())
+	logrus.Debugf("translate prompt %s", directiveBuffer.String())
 
 	translation.messages = append(translation.messages, openai.UserMessage(directiveBuffer.String()))
 
@@ -85,9 +85,9 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 		Messages: openai.F(translation.messages),
 	})
 	if err != nil {
-		panic(err)
+		return "",err
 	}
-	logrus.Infof("chatCompletion Choices %+v", chatCompletion)
+	logrus.Debugf("chatCompletion Choices %+v", chatCompletion)
 	result := chatCompletion.Choices[0].Message.Content
 	translation.messages = append(translation.messages, chatCompletion.Choices[0].Message)
 
