@@ -8,8 +8,6 @@ import (
 	"text/template"
 	"time"
 
-	"m3u8dl_for_web/conf"
-
 	"golang.org/x/time/rate"
 
 	"github.com/openai/openai-go"
@@ -20,12 +18,12 @@ import (
 var _ ITranslation = &OpenAiCompatibleTranslation{}
 
 type OpenAiCompatibleTranslation struct {
-	config   *conf.OpenAiCompatibleConfig
+	config   *OpenAiCompatibleConfig
 	client   *openai.Client
 	messages []openai.ChatCompletionMessageParamUnion
 }
 
-func NewOpenAiCompatibleTranslation(config *conf.OpenAiCompatibleConfig) *OpenAiCompatibleTranslation {
+func NewOpenAiCompatibleTranslation(config *OpenAiCompatibleConfig) *OpenAiCompatibleTranslation {
 	opts := []option.RequestOption{
 		option.WithAPIKey(config.ApiKey),
 		option.WithBaseURL(config.BaseUrl),
@@ -76,7 +74,7 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 		return "", err
 	}
 
-	logrus.Debugf("translate prompt %s", directiveBuffer.String())
+	// logrus.Debugf("translate prompt %s", directiveBuffer.String())
 
 	translation.messages = append(translation.messages, openai.UserMessage(directiveBuffer.String()))
 
@@ -87,7 +85,7 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 	if err != nil {
 		return "",err
 	}
-	logrus.Debugf("chatCompletion Choices %+v", chatCompletion)
+	logrus.Debugf("openAi compatible translation chatCompletion Choices %+v", chatCompletion)
 	result := chatCompletion.Choices[0].Message.Content
 	translation.messages = append(translation.messages, chatCompletion.Choices[0].Message)
 

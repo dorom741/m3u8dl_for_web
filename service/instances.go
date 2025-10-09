@@ -15,12 +15,12 @@ var (
 	M3u8dlServiceInstance         *M3u8dlService
 	SubtitleServiceInstance       *subtitle.SubtitleService
 	SubtitleWorkerServiceInstance *SubtitleWorkerService
+	TranslationServiceInstance    *translation.TranslationProviderHub
 )
 
 func InitService(config *conf.Config) {
 	var (
-		err                error
-		translationService translation.ITranslation
+		err error
 	)
 
 	GroqServiceInstance, err = NewGroqService(config.Groq.ApiKey, infra.DefaultCache, config.Server.HttpClientProxy)
@@ -36,15 +36,12 @@ func InitService(config *conf.Config) {
 
 	M3u8dlServiceInstance = NewM3u8dlService()
 
-	if config.Translation.OpenAiCompatible != nil {
-		translationService = translation.NewOpenAiCompatibleTranslation(config.Translation.OpenAiCompatible)
-	} else if config.Translation.DeepLX != nil {
-		translationService = translation.NewDeepLXTranslation(config.Translation.DeepLX, infra.DefaultHttpClient)
-	} else {
-		panic("translation config is empty, please check your config file")
+	TranslationServiceInstance, err = translation.NewTranslationProviderHub(config.Translation, infra.DefaultHttpClient)
+	if err != nil {
+		panic(err)
 	}
 
-	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(), infra.DefaultCache, translationService)
+	SubtitleServiceInstance = subtitle.NewSubtitleService(config.GetAbsCachePath(), infra.DefaultCache, TranslationServiceInstance)
 
 	SubtitleWorkerServiceInstance = NewSubtitleWorkerService(config.Subtitle)
 }

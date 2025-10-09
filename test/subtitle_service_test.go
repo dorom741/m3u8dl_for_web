@@ -1,4 +1,4 @@
-package service
+package test
 
 import (
 	"context"
@@ -6,26 +6,10 @@ import (
 	"testing"
 
 	"m3u8dl_for_web/conf"
-	"m3u8dl_for_web/infra"
-	"m3u8dl_for_web/model"
 	"m3u8dl_for_web/model/aggregate"
+	"m3u8dl_for_web/service"
 	"m3u8dl_for_web/service/subtitle"
-
-	"github.com/sirupsen/logrus"
 )
-
-func init() {
-	conf.InitConf("../config.yaml")
-	infra.InitLogger(conf.ConfigInstance)
-
-	infra.InitGORM(conf.ConfigInstance.Server.Dsn, logrus.StandardLogger())
-	infra.MustInitCache(conf.ConfigInstance.GetAbsCachePath())
-	InitService(conf.ConfigInstance)
-	err := infra.DataDB.AutoMigrate(&model.TaskRecord[struct{}, struct{}]{})
-	if err != nil {
-		panic(err)
-	}
-}
 
 func TestGenerateSubtitle(t *testing.T) {
 	ctx := context.Background()
@@ -41,7 +25,7 @@ func TestGenerateSubtitle(t *testing.T) {
 		Language:       "",
 	}
 
-	_, err := SubtitleServiceInstance.GenerateSubtitle(ctx, input)
+	_, err := service.SubtitleServiceInstance.GenerateSubtitle(ctx, input)
 	if err != nil {
 		t.Error(err)
 	}
@@ -82,7 +66,7 @@ func TestScanDirToAddTask(t *testing.T) {
 		},
 		FixMissTranslate: false,
 	}
-	err := SubtitleWorkerServiceInstance.ScanDirToAddTask(config)
+	err := service.SubtitleWorkerServiceInstance.ScanDirToAddTask(config)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +77,7 @@ func TestReGenerateSubtitle(t *testing.T) {
 	inputPath := "../resource/samples/jfk.ass"
 	outputPath := "../resource/samples/jfk.ass"
 
-	err := SubtitleServiceInstance.ReGenerateBilingualSubtitleFromSegmentList(ctx, inputPath, "en", "zh", outputPath, true)
+	err := service.SubtitleServiceInstance.ReGenerateBilingualSubtitleFromSegmentList(ctx, inputPath, "en", "zh", outputPath, true)
 	if err != nil {
 		t.Error(err)
 	}

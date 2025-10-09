@@ -12,8 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"m3u8dl_for_web/conf"
-
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 )
@@ -25,10 +23,10 @@ type DeepLXTranslation struct {
 	mu      sync.Mutex
 	client  *http.Client
 	limiter *rate.Limiter
-	config  *conf.DeepLXConfig
+	config  *DeepLXConfig
 }
 
-func NewDeepLXTranslation(config *conf.DeepLXConfig, httpClient *http.Client) *DeepLXTranslation {
+func NewDeepLXTranslation(config *DeepLXConfig, httpClient *http.Client) *DeepLXTranslation {
 	config.ParseUrlFile()
 	logrus.Debugf("DeepLX all url:%+v", config.Urls)
 	translation := &DeepLXTranslation{

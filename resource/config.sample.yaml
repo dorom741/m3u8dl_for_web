@@ -27,20 +27,29 @@ whisperCppClientConfig:
   debugMode: true
 
 translation:
-  deepLX:
-    urls: []
-    urlsFile: "./resource/urls.txt"
-    apiKey: ""
-    RPM: 10
+  providers:
+    - name: deeplx
+      enable: true
+      type: deeplx
+      deepLXConfig:
+        RPM: 0
+        urlsFile: urls.txt
+        urls:
+          - ""
+
+    - name: openai
+      enable: true
+      type: openai
+      openaiConfig:
+        baseUrl: ""
+        apiKey: ""
+        model: ""
+        systemPrompt: "You are a professional, authentic machine translation engine."
+        prompt: ";; Treat next line as plain text input and translate it into {{.targetLang}},output translation ONLY. If translation is unnecessary (e.g. proper nouns, codes, etc.), return the original text.If a newline character is encountered: '\n' then each result is output as a newline character. NO explanations. NO notes. Input: {{.text}}"
+        RPM: 0
+        contextLen: 20
     
-  openAiCompatible:
-    baseUrl: ""
-    apiKey: ""
-    model: ""
-    systemPrompt: "You are a professional, authentic machine translation engine."
-    prompt: ";; Treat next line as plain text input and translate it into {{.targetLang}},output translation ONLY. If translation is unnecessary (e.g. proper nouns, codes, etc.), return the original text.If a newline character is encountered: '\n' then each result is output as a newline character. NO explanations. NO notes. Input: {{.text}}"
-    RPM: 10
-    contextLen: 20
+
 
 
 

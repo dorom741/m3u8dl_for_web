@@ -33,56 +33,7 @@ type GroqConfig struct {
 	ApiKey string `yaml:"apiKey"`
 }
 
-type TranslationConfig struct {
-	DeepLX *DeepLXConfig `yaml:"deepLX"`
-
-	OpenAiCompatible *OpenAiCompatibleConfig `yaml:"openAiCompatible"`
-}
-
-type DeepLXConfig struct {
-	UrlsFile string   `yaml:"urlsFile"`
-	Urls     []string `yaml:"urls"`
-	ApiKey   string   `yaml:"apiKey"`
-	RPM      int      `yaml:"RPM"`
-}
-
-func (deepLXConfig *DeepLXConfig) ParseUrlFile() {
-	if len(deepLXConfig.UrlsFile) == 0 {
-		return
-	}
-
-	data, err := os.ReadFile(deepLXConfig.UrlsFile)
-	if err != nil {
-		logrus.Warnf("parse DeepLX urls file error:%s", err)
-		return
-	}
-
-	urls := strings.Split(string(data), "\n")
-	deepLXConfig.Urls = append(urls, deepLXConfig.Urls...)
-	deepLXConfig.Urls = removeEmptyStrings(deepLXConfig.Urls)
-}
-
-func (deepLXConfig *DeepLXConfig) WriteUrlFile(urls []string) {
-	if len(deepLXConfig.UrlsFile) == 0 {
-		return
-	}
-
-	err := os.WriteFile(deepLXConfig.UrlsFile, []byte(strings.Join(urls, "\n")), os.ModePerm)
-	if err != nil {
-		logrus.Warnf("write DeepLX urls file error:%s", err)
-	}
-
-}
-
-type OpenAiCompatibleConfig struct {
-	BaseUrl      string `yaml:"baseUrl"`
-	ApiKey       string `yaml:"apiKey"`
-	Model        string `yaml:"model"`
-	SystemPrompt string `yaml:"systemPrompt"`
-	Prompt       string `yaml:"prompt"`
-	ContextLen   int    `yaml:"contextLen"`
-	RPM          int    `yaml:"RPM"`
-}
+// type TranslateConfig  translation.TranslationProviderHubConfig
 
 type SubtitleConfig struct {
 	DirPath              string                  `yaml:"dirPath"`
