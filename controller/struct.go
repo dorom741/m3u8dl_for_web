@@ -1,5 +1,11 @@
 package controller
 
+import (
+	"io"
+	"m3u8dl_for_web/model"
+	"m3u8dl_for_web/model/aggregate"
+)
+
 type Response struct {
 	OK      bool        `json:"ok"`
 	Message string      `json:"message"`
@@ -25,4 +31,29 @@ type AddGenerateSubtitleTaskReq struct {
 	Language       string  `json:"language"`
 	TranslateTo    string  `json:"translateTo"`
 	ReplaceOnExist bool    `json:"replaceOnExist"`
+}
+
+func (req *AddGenerateSubtitleTaskReq) ToTaskRecord() *model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput] {
+	return &model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]{
+		Type:  "generateSubtitle",
+		State: model.StateReady,
+		Input: aggregate.SubtitleInput{
+			Provider:  req.Provider,
+			InputPath: req.Filepath,
+			SavePath:  req.SaveSubtitleFilePath,
+
+			Prompt:         req.Prompt,
+			Temperature:    req.Temperature,
+			Language:       req.Language,
+			TranslateTo:    req.TranslateTo,
+			ReplaceOnExist: req.ReplaceOnExist,
+		},
+	}
+
+}
+
+type AddGenerateSubtitleAsyncTaskReq struct {
+	*AddGenerateSubtitleTaskReq
+
+	io.Reader
 }

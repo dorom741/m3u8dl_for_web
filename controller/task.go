@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"m3u8dl_for_web/conf"
@@ -76,28 +77,57 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 	req := new(AddGenerateSubtitleTaskReq)
 	if err := c.BindJSON(req); err != nil {
 		c.JSON(400, gin.H{"msg": err.Error()})
+		return
 	}
 
-	taskRecord := &model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]{
-		Type:  "generateSubtitle",
-		State: model.StateReady,
-		Input: aggregate.SubtitleInput{
-			Provider:  req.Provider,
-			InputPath: req.Filepath,
-			SavePath:  req.SaveSubtitleFilePath,
-
-			Prompt:         req.Prompt,
-			Temperature:    req.Temperature,
-			Language:       req.Language,
-			TranslateTo:    req.TranslateTo,
-			ReplaceOnExist: req.ReplaceOnExist,
-		},
-	}
+	taskRecord := req.ToTaskRecord()
 
 	stat, err := os.Stat(req.Filepath)
 	if errors.Is(err, os.ErrNotExist) || stat.IsDir() {
 		c.JSON(400, gin.H{"err": "路径不存在或为目录"})
 		return
+	}
+
+	if err := taskRecord.Save(); err != nil {
+		c.JSON(400, gin.H{"err": err.Error()})
+		return
+	}
+
+	if err := controller.subtitleService.AddTask(taskRecord); err != nil {
+		c.JSON(400, gin.H{"err": err.Error()})
+	}
+}
+
+func (controller *TaskController) AddGenerateSubtitleTaskAsync(c *gin.Context) {
+	req := new(AddGenerateSubtitleAsyncTaskReq)
+	if err := c.BindJSON(req); err != nil {
+		c.JSON(400, gin.H{"msg": err.Error()})
+		return
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "获取文件失败: " + err.Error(),
+		})
+		return
+	}
+
+	tempDir := os.TempDir()
+	tempFilePath := filepath.Join(tempDir, file.Filename)
+
+	if err := c.SaveUploadedFile(file, tempFilePath); err != nil {
+		c.JSON(500, gin.H{"error": "保存文件失败: " + err.Error()})
+		return
+	}
+
+	taskRecord := req.ToTaskRecord()
+
+	taskRecord.Input.OnFunishCallback = func(input aggregate.SubtitleInput) {
+		if err := os.Remove(tempFilePath); err != nil {
+
+		}
+
 	}
 
 	if err := taskRecord.Save(); err != nil {
