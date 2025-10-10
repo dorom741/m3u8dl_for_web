@@ -76,6 +76,7 @@ func run(staticPath string) {
 	apiGroup := r.Group("/api")
 	apiGroup.POST("/addM3u8dlTask", controller.TaskControllerInstance.AddM3u8dlTask)
 	apiGroup.POST("/addGenerateSubtitleTask", controller.TaskControllerInstance.AddGenerateSubtitleTask)
+	apiGroup.POST("/addGenerateSubtitleTaskAsync", controller.TaskControllerInstance.AddGenerateSubtitleTaskAsync)
 	// apiGroup.POST("/addM3u8dlTaskByAria2", taskController.AddTaskByAria2)
 
 	apiGroup.Any("/health", func(c *gin.Context) {
