@@ -1,8 +1,9 @@
 package model
 
 import (
-	"gorm.io/gorm"
 	"m3u8dl_for_web/infra"
+
+	"gorm.io/gorm"
 )
 
 const (
@@ -15,12 +16,12 @@ const (
 type TaskRecord[I any, O any] struct {
 	gorm.Model
 	ID     uint `gorm:"primaryKey;autoIncrement"` // 主键，自增
-	Input  I    `gorm:"serializer:json"`
-	Output O    `gorm:"serializer:json"`
+	Input  I    `gorm:"serializer:json" json:"input"`
+	Output O    `gorm:"serializer:json" json:"output" `
 
-	State  int `gorm:"not null"` // 状态，非空
-	Result string
-	Type   string
+	State  int    `gorm:"not null" json:"state"` // 状态，非空
+	Result string `json:"result"`
+	Type   string `json:"type"`
 }
 
 func (taskRecord *TaskRecord[I, O]) TableName() string {

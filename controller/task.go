@@ -2,16 +2,22 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"m3u8dl_for_web/conf"
+	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/model"
 	"m3u8dl_for_web/model/aggregate"
+
+	// "m3u8dl_for_web/pkg/whisper" // unused in async flow
 	"m3u8dl_for_web/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type TaskController struct {
@@ -99,17 +105,19 @@ func (controller *TaskController) AddGenerateSubtitleTask(c *gin.Context) {
 }
 
 func (controller *TaskController) AddGenerateSubtitleTaskAsync(c *gin.Context) {
-	req := new(AddGenerateSubtitleAsyncTaskReq)
-	if err := c.BindJSON(req); err != nil {
-		c.JSON(400, gin.H{"msg": err.Error()})
-		return
+	req := new(AddGenerateSubtitleTaskReq)
+
+	// accept form fields
+	req.Provider = c.PostForm("provider")
+	if temperature, err := strconv.ParseFloat(c.PostForm("temperature"), 32); err == nil {
+		req.Temperature = float32(temperature)
 	}
+	req.Prompt = c.PostForm("prompt")
+	req.Language = c.PostForm("language")
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "获取文件失败: " + err.Error(),
-		})
+		c.JSON(400, gin.H{"error": "获取文件失败: " + err.Error()})
 		return
 	}
 
@@ -122,13 +130,16 @@ func (controller *TaskController) AddGenerateSubtitleTaskAsync(c *gin.Context) {
 	}
 
 	taskRecord := req.ToTaskRecord()
+	taskRecord.Input.InputPath = tempFilePath
+	taskRecord.Input.JustTranscribe = true
 
-	taskRecord.Input.OnFunishCallback = func(input aggregate.SubtitleInput) {
+	taskRecord.Input.OnFinishCallback = func(input aggregate.SubtitleInput, output aggregate.SubtitleOutput) {
 		if err := os.Remove(tempFilePath); err != nil {
-
+			logrus.Warnf("remove temp file '%s' error:%s", tempFilePath, err)
 		}
-
 	}
+
+	logrus.Infof("creating async subtitle task: %+v", taskRecord)
 
 	if err := taskRecord.Save(); err != nil {
 		c.JSON(400, gin.H{"err": err.Error()})
@@ -137,5 +148,44 @@ func (controller *TaskController) AddGenerateSubtitleTaskAsync(c *gin.Context) {
 
 	if err := controller.subtitleService.AddTask(taskRecord); err != nil {
 		c.JSON(400, gin.H{"err": err.Error()})
+		return
 	}
+
+	c.JSON(200, gin.H{
+		"msg":     "task accepted, processing",
+		"task_id": strconv.FormatUint(uint64(taskRecord.ID), 10),
+	})
+}
+
+func (controller *TaskController) GetTaskResult(c *gin.Context) {
+	idStr := c.Query("id")
+	if len(idStr) == 0 {
+		c.JSON(400, gin.H{"err": "missing id"})
+		return
+	}
+
+	var id uint64
+	var err error
+	if id, err = strconv.ParseUint(idStr, 10, 64); err != nil {
+		c.JSON(400, gin.H{"err": fmt.Sprintf("parse id '%s' error: %s", idStr, err)})
+		return
+	}
+
+	var task model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]
+	db := infra.DataDB.First(&task, id)
+	if db.Error != nil {
+		c.JSON(404, gin.H{"err": db.Error.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"err": "",
+		"task": map[string]any{
+			"id":     task.ID,
+			"state":  task.State,
+			"result": task.Result,
+			"input":  task.Input,
+			"output": task.Output,
+		},
+	})
 }

@@ -4,23 +4,20 @@ import (
 	"io"
 	"os"
 
-	"m3u8dl_for_web/conf"
-
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-func InitLogger(conf *conf.Config) {
+// InitLogger initializes logging. Provide concrete log configuration instead of importing conf to avoid import cycles.
+func InitLogger(logPath string, maxSize int, maxAge int) {
 	logFile := &lumberjack.Logger{
-		Filename: conf.Log.Path,
-		MaxSize:  conf.Log.MaxSize, // MB
-		// MaxBackups: conf.Log.LogNu,
-		MaxAge:    conf.Log.MaxAge, // days
+		Filename:  logPath,
+		MaxSize:   maxSize, // MB
+		MaxAge:    maxAge,  // days
 		Compress:  false,
 		LocalTime: true,
 	}
 
-	
 	originalStdout, _, err := interceptStdio()
 	if err != nil {
 		panic(err)

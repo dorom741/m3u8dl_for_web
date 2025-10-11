@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"m3u8dl_for_web/pkg/whisper/lateral"
 	whispercppclient "m3u8dl_for_web/pkg/whisper/whisper_cpp_client"
 
 	"gopkg.in/yaml.v3"
@@ -21,6 +22,7 @@ type Config struct {
 
 	Translation *translation.TranslationProviderHubConfig `yaml:"translation"`
 
+	LateralConfig          *lateral.LateralProviderConfig           `yaml:"lateralProviderConfig"`
 	WhisperCppClientConfig *whispercppclient.WhisperCppClientConfig `yaml:"whisperCppClientConfig"`
 	LocalWhisperModels     map[string]string                        `yaml:"localWhisperModels"`
 	Subtitle               *SubtitleConfig                          `yaml:"subtitle"`

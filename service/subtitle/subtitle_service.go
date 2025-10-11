@@ -47,9 +47,12 @@ func (service *SubtitleService) cacheKey(provider string, input whisper.WhisperI
 
 func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggregate.SubtitleInput) (*aggregate.SubtitleOutput, error) {
 	var (
-		filename     = filepath.Base(input.InputPath)
-		ext          = filepath.Ext(filename)
-		pureFilename = strings.ReplaceAll(filename, ext, "")
+		filename       = filepath.Base(input.InputPath)
+		ext            = filepath.Ext(filename)
+		pureFilename   = strings.ReplaceAll(filename, ext, "")
+		segmentList    = make([]whisper.Segment, 0)
+		subtitleOutput = &aggregate.SubtitleOutput{}
+		subtitleBuffer = new(bytes.Buffer)
 	)
 
 	handler, exist := whisper.DefaultWhisperProvider.Get(input.Provider)
@@ -69,7 +72,6 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 		return nil, err
 	}
 
-	subtitleBuffer := new(bytes.Buffer)
 	defer func() {
 		if subtitleBuffer.Len() == 0 {
 			return
@@ -77,6 +79,8 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 		if err := os.WriteFile(input.GetSavePath(), subtitleBuffer.Bytes(), os.ModePerm); err != nil {
 			logrus.Warnf("write target file error,fallback write to tempfile:%s", subtitleTempPath)
 			_ = os.WriteFile(subtitleTempPath, subtitleBuffer.Bytes(), os.ModePerm)
+			logrus.Infof("%s generate subtitle success,save to %s", input.InputPath, input.GetSavePath())
+
 		}
 	}()
 
@@ -92,7 +96,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 
 	var (
 		accumulateDuration = 0.0
-		sequence           = int64(0)
+		sequence           = 0
 		totalFile          = len(outputFileList)
 		startTime          = time.Now() // 记录开始时间
 	)
@@ -124,13 +128,25 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 			if err := service.cache.Set(cacheKey, whisperOutput); err != nil {
 				return nil, err
 			}
+		}
+
+		for _, segment := range whisperOutput.Segments {
+			sequence++
+			segment.Num = sequence
+			segment.Start += accumulateDuration
+			segment.End += accumulateDuration
+			segmentList = append(segmentList, segment)
 
 		}
 
+		accumulateDuration += whisperOutput.Duration
+	}
+
+	if !input.JustTranscribe {
 		var translatedTextList []string
-		if input.TranslateTo != ""  && input.TranslateTo != input.Language {
-			allTextList := make([]string, len(whisperOutput.Segments))
-			for i, segment := range whisperOutput.Segments {
+		if input.TranslateTo != "" && input.TranslateTo != input.Language {
+			allTextList := make([]string, len(segmentList))
+			for i, segment := range segmentList {
 				allTextList[i] = segment.Text
 			}
 
@@ -140,11 +156,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 			}
 
 		}
-		for i, segment := range whisperOutput.Segments {
-			startTimestamp := segment.Start + accumulateDuration
-			endTimestamp := segment.End + accumulateDuration
-			sequence++
-
+		for i, segment := range segmentList {
 			segmentText := segment.Text
 			segmentText = ReplaceRepeatedWords(segmentText)
 
@@ -156,32 +168,31 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 			}
 
 			if translationText == "" {
-				subtitleSub.AddLine(int(sequence), startTimestamp, endTimestamp, segmentText, "")
+				subtitleSub.AddLine(segment.Num, segment.Start, segment.End, segmentText, "")
 			} else {
-				subtitleSub.AddLine(int(sequence), startTimestamp, endTimestamp, translationText, segmentText)
+				subtitleSub.AddLine(segment.Num, segment.Start, segment.End, translationText, segmentText)
 			}
 
 		}
 
-		accumulateDuration += whisperOutput.Duration
+		if err := subtitleSub.WriteToFile(subtitleBuffer); err != nil {
+			return nil, err
+		}
+
 	}
 
 	fileDuration := time.Duration(float64(time.Second) * accumulateDuration)
 	processDuration := time.Since(startTime)
 	logrus.Infof("success process file '%s' in whisper,file duration:%s,process duration:%s", input.InputPath, fileDuration.String(), processDuration.String())
 
-	if err := subtitleSub.WriteToFile(subtitleBuffer); err != nil {
-		return nil, nil
-	}
-
 	_ = os.RemoveAll(tempPath)
+	subtitleOutput.ProcessDuration = processDuration.Seconds()
+	subtitleOutput.MediaDuration = fileDuration.Seconds()
+	subtitleOutput.StartTimestamp = startTime.Unix()
+	subtitleOutput.FinishTimestamp = time.Now().Unix()
+	subtitleOutput.SegmentList = segmentList
 
-	return &aggregate.SubtitleOutput{
-		ProcessDuration: processDuration.Seconds(),
-		MediaDuration:   fileDuration.Seconds(),
-		StartTimestamp:  startTime.Unix(),
-		FinishTimestamp: time.Now().Unix(),
-	}, nil
+	return subtitleOutput, nil
 }
 
 func (service *SubtitleService) getAudioFromMediaWithFFmpeg(inputFile string, ouputDir string, outputName string, segmentSize int64) ([]string, error) {

@@ -1,4 +1,4 @@
-package test 
+package test
 
 import (
 	"m3u8dl_for_web/conf"
@@ -11,7 +11,7 @@ import (
 
 func init() {
 	conf.InitConf("../config.yaml")
-	infra.InitLogger(conf.ConfigInstance)
+	infra.InitLogger(conf.ConfigInstance.Log.Path, conf.ConfigInstance.Log.MaxSize, conf.ConfigInstance.Log.MaxAge)
 
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, logrus.StandardLogger())
 	infra.MustInitCache(conf.ConfigInstance.GetAbsCachePath())

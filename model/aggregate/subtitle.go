@@ -2,22 +2,24 @@ package aggregate
 
 import (
 	"io"
+	"m3u8dl_for_web/pkg/whisper"
 	"os"
 	"path"
 	"strings"
 )
 
 type SubtitleInput struct {
-	Provider         string              `yaml:"provider" json:"provider"`
-	InputPath        string              `yaml:"inputPath" json:"inputPath"`
-	SavePath         string              `yaml:"savePath" json:"savePath"`
-	Reader           io.Reader           `yaml:"-" json:"-"`
-	Prompt           string              `yaml:"prompt" json:"prompt"`
-	Temperature      float32             `yaml:"temperature" json:"temperature"`
-	Language         string              `yaml:"language" json:"language"`
-	TranslateTo      string              `yaml:"translateTo" json:"translateTo"`
-	ReplaceOnExist   bool                `yaml:"replaceOnExist" json:"replaceOnExist"`
-	OnFunishCallback func(SubtitleInput) `yaml:"-" json:"-"`
+	Provider         string                              `yaml:"provider" json:"provider"`
+	InputPath        string                              `yaml:"inputPath" json:"inputPath"`
+	SavePath         string                              `yaml:"savePath" json:"savePath"`
+	Reader           io.Reader                           `yaml:"-" json:"-"`
+	Prompt           string                              `yaml:"prompt" json:"prompt"`
+	Temperature      float32                             `yaml:"temperature" json:"temperature"`
+	Language         string                              `yaml:"language" json:"language"`
+	TranslateTo      string                              `yaml:"translateTo" json:"translateTo"`
+	ReplaceOnExist   bool                                `yaml:"replaceOnExist" json:"replaceOnExist"`
+	JustTranscribe   bool                                `yaml:"justTranscribe" json:"justTranscribe"`
+	OnFinishCallback func(SubtitleInput, SubtitleOutput) `yaml:"-" json:"-"`
 }
 
 func (subtitleInput *SubtitleInput) GetSavePath() string {
@@ -34,9 +36,10 @@ func (subtitleInput *SubtitleInput) HasSavePathExists() bool {
 }
 
 type SubtitleOutput struct {
-	Skip            bool
-	ProcessDuration float64
-	MediaDuration   float64
-	FinishTimestamp int64
-	StartTimestamp  int64
+	Skip            bool              `json:"skip"`
+	ProcessDuration float64           `json:"processDuration"`
+	MediaDuration   float64           `json:"mediaDuration"`
+	FinishTimestamp int64             `json:"finishTimestamp"`
+	StartTimestamp  int64             `json:"startTimestampip"`
+	SegmentList     []whisper.Segment `json:"segmentList"`
 }

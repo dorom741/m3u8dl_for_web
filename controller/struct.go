@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"io"
 	"m3u8dl_for_web/model"
 	"m3u8dl_for_web/model/aggregate"
 )
@@ -50,10 +49,4 @@ func (req *AddGenerateSubtitleTaskReq) ToTaskRecord() *model.TaskRecord[aggregat
 		},
 	}
 
-}
-
-type AddGenerateSubtitleAsyncTaskReq struct {
-	*AddGenerateSubtitleTaskReq
-
-	io.Reader
 }

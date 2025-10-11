@@ -4,7 +4,8 @@ import (
 	"m3u8dl_for_web/conf"
 	"m3u8dl_for_web/infra"
 	"m3u8dl_for_web/pkg/whisper"
-	"m3u8dl_for_web/pkg/whisper/whisper_cpp_client"
+	"m3u8dl_for_web/pkg/whisper/lateral"
+	whispercppclient "m3u8dl_for_web/pkg/whisper/whisper_cpp_client"
 
 	"m3u8dl_for_web/service/subtitle"
 	"m3u8dl_for_web/service/translation"
@@ -32,6 +33,11 @@ func InitService(config *conf.Config) {
 	if config.WhisperCppClientConfig != nil {
 		whisperProvider := whispercppclient.NewWhisperCppClient(config.WhisperCppClientConfig, infra.DefaultHttpClient)
 		whisper.DefaultWhisperProvider.Register("whisper_cpp_client", whisperProvider)
+	}
+
+	if config.LateralConfig != nil {
+		whisperProvider := lateral.NewLateralProvider(config.LateralConfig, infra.DefaultHttpClient)
+		whisper.DefaultWhisperProvider.Register("lateral", whisperProvider)
 	}
 
 	M3u8dlServiceInstance = NewM3u8dlService()

@@ -29,7 +29,7 @@ func NewSubtitleWorkerService(subtitleConfig *conf.SubtitleConfig) *SubtitleWork
 		RetryOnFail: 1,
 	}
 	service := &SubtitleWorkerService{subtitleConfig: subtitleConfig}
-	service.worker = queue_worker.NewQueueWorker[model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]](option, service)
+	service.worker = queue_worker.NewQueueWorker(option, service)
 
 	go service.worker.Run()
 	if subtitleConfig != nil {
@@ -58,6 +58,10 @@ func (service *SubtitleWorkerService) OnTaskRun(task *model.TaskRecord[aggregate
 	}
 	task.Output = *output
 
+	if task.Input.OnFinishCallback != nil {
+		task.Input.OnFinishCallback(task.Input, task.Output)
+	}
+
 	return task.Save()
 }
 
@@ -66,8 +70,6 @@ func (service *SubtitleWorkerService) OnTaskFinish(task *model.TaskRecord[aggreg
 	if taskErr != nil {
 		logrus.Errorf("%s generate subtitle error:%s", task.Input.InputPath, taskErr.Error())
 		errMsg = taskErr.Error()
-	} else {
-		logrus.Infof("%s generate subtitle success,save to %s", task.Input.InputPath, task.Input.GetSavePath())
 	}
 
 	if err := service.subtitleConfig.RemoveLastLockFile(); err != nil {

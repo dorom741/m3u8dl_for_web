@@ -25,7 +25,7 @@ func main() {
 
 	conf.InitConf(configFilePath)
 	infra.MustInitCache(conf.ConfigInstance.Server.CacheDir)
-	infra.InitLogger(conf.ConfigInstance)
+	infra.InitLogger(conf.ConfigInstance.Log.Path, conf.ConfigInstance.Log.MaxSize, conf.ConfigInstance.Log.MaxAge)
 	infra.InitGORM(conf.ConfigInstance.Server.Dsn, logrus.StandardLogger())
 	if err := infra.InitHttpClientWithProxy(conf.ConfigInstance.Server.HttpClientProxy); err != nil {
 		panic(err)
@@ -77,6 +77,7 @@ func run(staticPath string) {
 	apiGroup.POST("/addM3u8dlTask", controller.TaskControllerInstance.AddM3u8dlTask)
 	apiGroup.POST("/addGenerateSubtitleTask", controller.TaskControllerInstance.AddGenerateSubtitleTask)
 	apiGroup.POST("/addGenerateSubtitleTaskAsync", controller.TaskControllerInstance.AddGenerateSubtitleTaskAsync)
+	apiGroup.GET("/getTaskResult", controller.TaskControllerInstance.GetTaskResult)
 	// apiGroup.POST("/addM3u8dlTaskByAria2", taskController.AddTaskByAria2)
 
 	apiGroup.Any("/health", func(c *gin.Context) {

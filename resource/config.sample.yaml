@@ -16,15 +16,10 @@ log:
   maxAge: 30 # days
 
 
+
 groq:
   apiKey: ""
 
-whisperCppClientConfig:
-  inferenceUrl: http://127.0.0.1:8080/inference_async
-  inferenceResultUrl: http://127.0.0.1:8080/inference_result
-  async: true
-  splitDuration: 3600
-  debugMode: true
 
 translation:
   providers:
@@ -49,6 +44,20 @@ translation:
         RPM: 0
         contextLen: 20
     
+
+whisperCppClientConfig:
+  inferenceUrl: http://127.0.0.1:8080/inference_async
+  inferenceResultUrl: http://127.0.0.1:8080/inference_result
+  async: true
+  splitDuration: 3600
+  debugMode: true
+
+# lateralProviderConfig:
+#   inferenceUrl: http://127.0.0.1:2045/api/addGenerateSubtitleTaskAsync
+#   inferenceResultUrl: http://127.0.0.1:2045/api/getTaskResult
+#   splitDuration: 3600
+#   taskTimeoutDuration: 12h
+#   provider: "sherpa"
 
 
 

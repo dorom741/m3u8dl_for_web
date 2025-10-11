@@ -129,6 +129,7 @@ func (whisperCppClient *WhisperCppClient) handleWithAsync(body []byte) (*Whisper
 		// 超过6小时，退出循环，报超时错误
 		if count > 10800 {
 			resultChan <- InferenceResultResponse{Error: fmt.Sprintf("timeout to waiting inference result ontask id '%s'", asyncInferenceResponse.TaskId)}
+			return 
 		}
 
 		result, err := whisperCppClient.handleInferenceResult(asyncInferenceResponse.TaskId)
