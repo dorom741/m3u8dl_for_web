@@ -18,16 +18,18 @@ func TestSherpaWhisper(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	basePath := path.Join(dir, "../../../resource/download/sherpa")
+	basePath := path.Join(dir, "../../../download/model")
 	basePath, _ = filepath.Abs(basePath)
 	// vadModelPath := path.Join(basePath, "silero_vad.onnx")
+	senseVoicePath := "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17"
 
-	modelTokensPath := path.Join(basePath, "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17", "tokens.txt")
+	modelTokensPath := path.Join(basePath, senseVoicePath, "tokens.txt")
+	modelPath := path.Join(basePath, senseVoicePath, "model.onnx")
 
 	// modelTokensPath := path.Join(basePath, "sherpa-onnx-whisper-tiny.en", "tiny.en-tokens.txt")
 
 	sherpaConfig := SherpaConfig{
-		EmbeddingModelPath: path.Join(basePath, "speaker-embedding.onnx"),
+		EmbeddingModelPath: path.Join(basePath, "3dspeaker_speech_eres2net_sv_zh-cn_16k-common.onnx"),
 		PyannoteModelPath:  path.Join(basePath, "sherpa-onnx-pyannote-segmentation-3-0/model.onnx"),
 		OfflineModelConfig: sherpa.OfflineModelConfig{
 			// Whisper: sherpa.OfflineWhisperModelConfig{
@@ -38,9 +40,8 @@ func TestSherpaWhisper(t *testing.T) {
 			// 	TailPaddings: 0,
 			// },
 			SenseVoice: sherpa.OfflineSenseVoiceModelConfig{
-				Model: path.Join(basePath, "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17", "model.onnx"),
+				Model: modelPath,
 			},
-
 			Tokens: modelTokensPath,
 		},
 	}

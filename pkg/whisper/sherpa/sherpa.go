@@ -254,7 +254,7 @@ func (sherpaWhisper *SherpaWhisper) selectPCMData(sampleRate uint32, pcmData []f
 	endSample := int(endTime * float64(sampleRate))
 
 	if startSample < 0 || endSample > len(pcmData) || startSample >= endSample {
-		return nil, fmt.Errorf("Invalid start or end time on pickup time range [%.2f,%.2f]", startTime, endTime)
+		return nil, fmt.Errorf("invalid start or end time on pickup time range [%.2f,%.2f]", startTime, endTime)
 	}
 
 	return pcmData[startSample:endSample], nil
