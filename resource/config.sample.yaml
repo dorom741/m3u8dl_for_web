@@ -58,6 +58,8 @@ whisperCppClientConfig:
 #   splitDuration: 3600
 #   taskTimeoutDuration: 12h
 #   provider: "sherpa"
+#   bearerToken:
+
 
 
 

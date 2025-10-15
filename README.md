@@ -1,4 +1,4 @@
-# m3u8dl_for_web 纯自用，从开始的m3u8下载，扩展到字幕生成和翻译
+# m3u8dl_for_web 纯自用，脚本玩具性质，从开始的m3u8下载，扩展到字幕生成和翻译
 # 主要特性和功能
 #### m3u8 下载
 * 基于 orestonce/m3u8d 实现
@@ -22,7 +22,7 @@
 ![subtitle](img/subtitle.png)
 
 # 前端
-前端使用复古的`jquery` 和`bootstrap`,位于`resource/static/index.html`,单文件易于维护
+前端使用复古的`jquery` 和`bootstrap`,位于`resource/static/index.html`,单文件易于维护和部署
 
 # 配置
 参考`resource/config.sample.yaml`
