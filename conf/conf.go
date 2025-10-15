@@ -8,8 +8,9 @@ import (
 	"m3u8dl_for_web/pkg/whisper/lateral"
 	whispercppclient "m3u8dl_for_web/pkg/whisper/whisper_cpp_client"
 
-	"gopkg.in/yaml.v3"
 	"m3u8dl_for_web/service/translation"
+
+	"gopkg.in/yaml.v3"
 )
 
 var ConfigInstance = NewConfig()
@@ -20,7 +21,7 @@ type Config struct {
 
 	Groq GroqConfig `yaml:"groq"`
 
-	Translation *translation.TranslationProviderHubConfig `yaml:"translation"`
+	Translation translation.TranslationProviderHubConfig `yaml:"translation"`
 
 	LateralConfig          *lateral.LateralProviderConfig           `yaml:"lateralProviderConfig"`
 	WhisperCppClientConfig *whispercppclient.WhisperCppClientConfig `yaml:"whisperCppClientConfig"`

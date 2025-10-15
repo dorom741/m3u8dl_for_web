@@ -24,12 +24,14 @@ func InitService(config *conf.Config) {
 		err error
 	)
 
-	GroqServiceInstance, err = NewGroqService(config.Groq.ApiKey, infra.DefaultCache, config.Server.HttpClientProxy)
-	if err != nil {
-		panic(err)
+	if config.Groq.ApiKey != "" {
+		GroqServiceInstance, err = NewGroqService(config.Groq.ApiKey, infra.DefaultCache, config.Server.HttpClientProxy)
+		if err != nil {
+			panic(err)
+		}
+		whisper.DefaultWhisperProvider.Register("groq", GroqServiceInstance)
 	}
-	whisper.DefaultWhisperProvider.Register("groq", GroqServiceInstance)
-
+	
 	if config.WhisperCppClientConfig != nil {
 		whisperProvider := whispercppclient.NewWhisperCppClient(config.WhisperCppClientConfig, infra.DefaultHttpClient)
 		whisper.DefaultWhisperProvider.Register("whisper_cpp_client", whisperProvider)
