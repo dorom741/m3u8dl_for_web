@@ -1,10 +1,12 @@
 package lateral
 
 import (
+	"fmt"
 	"io"
 	"m3u8dl_for_web/model"
 	"m3u8dl_for_web/model/aggregate"
 	"mime/multipart"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -18,6 +20,7 @@ type LateralProviderConfig struct {
 	SplitDuration       int64  `yaml:"splitDuration"`
 	TaskTimeoutDuration string `yaml:"taskTimeoutDuration"`
 	Provider            string `yaml:"provider"`
+	BearerToken         string `yaml:"bearerToken"`
 
 	// DebugMode          bool   `yaml:"debugMode"`
 	// Async              bool   `yaml:"async"`
@@ -30,6 +33,14 @@ func (config *LateralProviderConfig) GetTaskTimeoutDurationOrDefault() time.Dura
 	}
 
 	return duration
+}
+
+func (config *LateralProviderConfig) AddBearerToken(req *http.Request) {
+	if config.BearerToken == "" {
+		return
+	}
+
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", config.BearerToken))
 }
 
 type LateralProviderRequest struct {

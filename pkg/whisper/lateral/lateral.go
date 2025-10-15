@@ -19,12 +19,8 @@ import (
 var _ whisper.WhisperHandler = &LateralProvider{}
 
 type LateralProvider struct {
-	InferenceUrl        string
-	InferenceResultUrl  string
-	client              *http.Client
-	splitDuration       int64
-	taskTimeoutDuration time.Duration
-	provider            string
+	client *http.Client
+	config *LateralProviderConfig
 }
 
 func NewLateralProvider(config *LateralProviderConfig, httpClient *http.Client) *LateralProvider {
@@ -33,26 +29,22 @@ func NewLateralProvider(config *LateralProviderConfig, httpClient *http.Client) 
 	}
 
 	LateralProvider := &LateralProvider{
-		client:              httpClient,
-		InferenceUrl:        config.InferenceUrl,
-		InferenceResultUrl:  config.InferenceResultUrl,
-		splitDuration:       config.SplitDuration,
-		provider:            config.Provider,
-		taskTimeoutDuration: config.GetTaskTimeoutDurationOrDefault(),
+		client: httpClient,
+		config: config,
 	}
 
 	return LateralProvider
 }
 
 // 8/16/16000 * splitDuration
-func (LateralProvider *LateralProvider) MaximumFileSize() int64 {
-	return 32000 * LateralProvider.splitDuration
+func (lateralProvider *LateralProvider) MaximumFileSize() int64 {
+	return 32000 * lateralProvider.config.SplitDuration
 }
 
-func (lateralProvider *LateralProvider) handleInferenceResult(taskId string) (*aggregate.SubtitleOutput, error) {
+func (lateralProvider *LateralProvider) handleInferenceResult(ctx context.Context, taskId string) (*aggregate.SubtitleOutput, error) {
 	var inferenceResultResponse = &LateralProviderResponse{}
 
-	inferenceResultUrl, err := url.Parse(lateralProvider.InferenceResultUrl)
+	inferenceResultUrl, err := url.Parse(lateralProvider.config.InferenceResultUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +53,13 @@ func (lateralProvider *LateralProvider) handleInferenceResult(taskId string) (*a
 	query.Add("id", taskId)
 	inferenceResultUrl.RawQuery = query.Encode()
 
-	response, err := lateralProvider.client.Get(inferenceResultUrl.String())
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", inferenceResultUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	lateralProvider.config.AddBearerToken(httpReq)
+
+	response, err := lateralProvider.client.Do(httpReq)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +114,7 @@ func (lateralProvider *LateralProvider) waitTaskFinish(ctx context.Context, task
 			return
 		default:
 		}
-		result, err := lateralProvider.handleInferenceResult(taskId)
+		result, err := lateralProvider.handleInferenceResult(ctx, taskId)
 		if err != nil {
 			resultChan <- resultWrap{err: err}
 			return
@@ -144,7 +142,7 @@ func (lateralProvider *LateralProvider) HandleWhisper(ctx context.Context, input
 		pr, pw = io.Pipe()
 		writer = multipart.NewWriter(pw)
 		req    = LateralProviderRequest{
-			Provider:    lateralProvider.provider,
+			Provider:    lateralProvider.config.Provider,
 			Prompt:      input.Prompt,
 			Language:    input.Language,
 			Temperature: float64(input.Temperature),
@@ -162,10 +160,11 @@ func (lateralProvider *LateralProvider) HandleWhisper(ctx context.Context, input
 		pw.Close()
 	}()
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", lateralProvider.InferenceUrl, pr)
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", lateralProvider.config.InferenceUrl, pr)
 	if err != nil {
 		return nil, err
 	}
+	lateralProvider.config.AddBearerToken(httpReq)
 	httpReq.Header.Set("Content-Type", writer.FormDataContentType())
 	response, err := lateralProvider.client.Do(httpReq)
 	if err != nil {
@@ -197,7 +196,7 @@ func (lateralProvider *LateralProvider) HandleWhisper(ctx context.Context, input
 
 	logrus.Debugf("asyncInferenceResponse %+v", asyncInferenceResponse)
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, lateralProvider.taskTimeoutDuration)
+	timeoutCtx, cancel := context.WithTimeout(ctx, lateralProvider.config.GetTaskTimeoutDurationOrDefault())
 	defer cancel()
 	if subtitleOutput, err = lateralProvider.waitTaskFinish(timeoutCtx, asyncInferenceResponse.TaskId); err != nil {
 		return nil, err
