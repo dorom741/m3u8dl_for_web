@@ -2,7 +2,7 @@ ROOT_DIR    = $(shell pwd)
 NAMESPACE   = "default"
 
 
-SERVER_NAME = "m3u8dl_for_web"
+SERVER_NAME = "m3u8dl"
 GOARCH ?= amd64
 GOOS ?= linux
 IMAGE_NAME = "ghcr.io/dorom741/m3u8dl_for_web"
@@ -22,7 +22,11 @@ build_server:
 #	@echo "开始检查代码..."
 #	golangci-lint run --out-format=colored-line-number
 	@echo "开始编译..."
-	CGO_ENABLED=0 GOARCH=$(GOARCH) GOOS=$(GOOS) go build -o ./bin/$(SERVER_NAME)
+	CGO_ENABLED=0 GOARCH=$(GOARCH) GOOS=$(GOOS) go build -o ./bin/$(SERVER_NAME) ./cmd
+
+build_arm64_linux:
+	@echo "开始编译..."
+	CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build -o ./bin/$(SERVER_NAME)_linux_arm64 ./cmd
 
 
 build_docker:
