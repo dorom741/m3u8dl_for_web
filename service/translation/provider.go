@@ -19,7 +19,7 @@ type TranslationProviderHub struct {
 	mu           sync.RWMutex
 }
 
-func NewTranslationProviderHub(config *TranslationProviderHubConfig, httpClient *http.Client) (*TranslationProviderHub, error) {
+func NewTranslationProviderHub(config TranslationProviderHubConfig, httpClient *http.Client) (*TranslationProviderHub, error) {
 	hub := &TranslationProviderHub{
 		// mu:           sync.RWMutex{},
 		providerList: make([]ITranslation, 0),
