@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"io/fs"
-	"path"
 	"path/filepath"
 	"regexp"
 	"sync"
@@ -49,9 +48,9 @@ func (service *SubtitleWorkerService) AddTask(taskRecord *model.TaskRecord[aggre
 }
 
 func (service *SubtitleWorkerService) OnTaskRun(task *model.TaskRecord[aggregate.SubtitleInput, aggregate.SubtitleOutput]) error {
-	if err := service.subtitleConfig.WriteLockFile(path.Base(task.Input.InputPath)); err != nil {
-		logrus.Errorf("write lock file error %s", err)
-	}
+	// if err := service.subtitleConfig.WriteLockFile(path.Base(task.Input.InputPath)); err != nil {
+	// 	logrus.Errorf("write lock file error %s", err)
+	// }
 	output, err := SubtitleServiceInstance.GenerateSubtitle(context.Background(), task.Input)
 	if err != nil {
 		return err
@@ -72,9 +71,9 @@ func (service *SubtitleWorkerService) OnTaskFinish(task *model.TaskRecord[aggreg
 		errMsg = taskErr.Error()
 	}
 
-	if err := service.subtitleConfig.RemoveLastLockFile(); err != nil {
-		logrus.Errorf("remove last lock file error:%s", err.Error())
-	}
+	// if err := service.subtitleConfig.RemoveLastLockFile(); err != nil {
+	// 	logrus.Errorf("remove last lock file error:%s", err.Error())
+	// }
 
 	err := task.Finish(errMsg)
 	if err != nil {
