@@ -82,7 +82,7 @@ func (service *SubtitleService) ReGenerateBilingualSubtitleFromSegmentList(ctx c
 		sub.AddLine(segment.Num, segment.Start, segment.End, segment.Text, translatedText)
 	}
 
-	subFile, err := os.Create(savePath)
+	subFile, _ := os.Create(savePath)
 	defer subFile.Close()
 	return sub.WriteToFile(subFile)
 }

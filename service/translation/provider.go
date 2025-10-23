@@ -46,6 +46,13 @@ func NewTranslationProviderHub(config TranslationProviderHubConfig, httpClient *
 			t := NewOpenAiCompatibleTranslation(p.OpenAiCompatible)
 			logrus.Infof("register translation provider '%s' type '%s'", p.Name, p.Type)
 			hub.RegisterTranslationProvider(t)
+		case "google":
+			if p.GoogleTranslationConfig == nil {
+				return nil, fmt.Errorf("provider %s: missing GoogleTranslation config", p.Name)
+			}
+			t := NewGoogleTranslation(p.GoogleTranslationConfig, httpClient)
+			logrus.Infof("register translation provider '%s' type '%s'", p.Name, p.Type)
+			hub.RegisterTranslationProvider(t)
 
 		default:
 			return nil, fmt.Errorf("unknown provider type: %s", p.Type)
@@ -53,6 +60,10 @@ func NewTranslationProviderHub(config TranslationProviderHubConfig, httpClient *
 	}
 
 	return hub, nil
+}
+
+func (translation *TranslationProviderHub) GetName() string {
+	return "TranslationHub"
 }
 
 func (hub *TranslationProviderHub) SupportMultipleTextBySeparator() (bool, string) {
@@ -79,11 +90,6 @@ func (hub *TranslationProviderHub) GetRandomProvider() ITranslation {
 }
 
 func (hub *TranslationProviderHub) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
-	provider := hub.GetRandomProvider()
-	if provider == nil {
-		return "", fmt.Errorf("none provider registered")
-	}
-
 	var (
 		lastErr        error
 		maxAttempts    = 3
@@ -92,6 +98,11 @@ func (hub *TranslationProviderHub) Translate(ctx context.Context, text string, s
 	)
 	for attempts < maxAttempts {
 		attempts++
+		provider := hub.GetRandomProvider()
+		if provider == nil {
+			return "", fmt.Errorf("none provider registered")
+		}
+
 		translatedText, lastErr = provider.Translate(ctx, text, sourceLang, targetLang)
 		if lastErr == nil {
 			return translatedText, nil
@@ -100,4 +111,64 @@ func (hub *TranslationProviderHub) Translate(ctx context.Context, text string, s
 
 	return "", fmt.Errorf("translate failed after %d attempts of text '%s',last error: %v", attempts, text, lastErr)
 
+}
+
+func (hub *TranslationProviderHub) BatchTranslate(ctx context.Context, textList []string, sourceLang string, targetLang string) ([]string, error) {
+	var (
+		wg        sync.WaitGroup
+		errMu     sync.Mutex
+		lastErr   error
+		batchSize = 10
+		results   = make([]string, len(textList))
+	)
+
+	for i := 0; i < len(textList); i += batchSize {
+		end := min(i+batchSize, len(textList))
+
+		batch := textList[i:end]
+		provider := hub.GetRandomProvider()
+
+		if provider == nil {
+			return nil, fmt.Errorf("none provider registered")
+		}
+
+		supportsBatch, separator := provider.SupportMultipleTextBySeparator()
+		if supportsBatch {
+			translatedBatch, err := provider.Translate(ctx, strings.Join(batch, separator), sourceLang, targetLang)
+			if err == nil {
+				translatedTexts := strings.Split(translatedBatch, separator)
+				if len(translatedTexts) == len(batch) {
+					for j, translatedText := range translatedTexts {
+						results[i+j] = translatedText
+					}
+					continue
+				}
+			}
+			lastErr = err
+
+			logrus.Warnf("provider '%s'  translations error or not match batch size, falling back to individual translation,err: %s", provider.GetName(), err)
+		}
+
+		for j, text := range batch {
+			wg.Add(1)
+			go func(j int, text string) {
+				defer wg.Done()
+				translatedText, err := provider.Translate(ctx, text, sourceLang, targetLang)
+				if err != nil {
+					errMu.Lock()
+					lastErr = err
+					errMu.Unlock()
+					return
+				}
+				results[i+j] = translatedText
+			}(j, text)
+		}
+		wg.Wait()
+	}
+
+	if lastErr != nil {
+		return nil, fmt.Errorf("translate failed after all attempts, last error: %v", lastErr)
+	}
+
+	return results, nil
 }

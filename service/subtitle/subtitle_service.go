@@ -22,11 +22,11 @@ import (
 
 type SubtitleService struct {
 	tempAudioPath string
-	translation   translation.ITranslation
+	translation   *translation.TranslationProviderHub
 	cache         *infra.FileCache
 }
 
-func NewSubtitleService(tempAudioPath string, cache *infra.FileCache, translation translation.ITranslation) *SubtitleService {
+func NewSubtitleService(tempAudioPath string, cache *infra.FileCache, translation *translation.TranslationProviderHub) *SubtitleService {
 	RegisterWhisperProvider()
 
 	return &SubtitleService{
@@ -150,7 +150,7 @@ func (service *SubtitleService) GenerateSubtitle(ctx context.Context, input aggr
 				allTextList[i] = segment.Text
 			}
 
-			translatedTextList, err = service.BatchTranslate(ctx, allTextList, "", input.TranslateTo)
+			translatedTextList, err = service.translation.BatchTranslate(ctx, allTextList, "", input.TranslateTo)
 			if err != nil {
 				return nil, err
 			}

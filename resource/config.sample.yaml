@@ -44,6 +44,14 @@ translation:
         RPM: 0
         contextLen: 20
     
+    - name: google
+      enable: true
+      type: google
+      googleTranslationConfig:
+        multipleTextSeparator: "\n"
+        RPM: 100
+
+    
 
 whisperCppClientConfig:
   inferenceUrl: http://127.0.0.1:8080/inference_async

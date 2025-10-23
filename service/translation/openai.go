@@ -38,7 +38,7 @@ func NewOpenAiCompatibleTranslation(config *OpenAiCompatibleConfig) *OpenAiCompa
 			}
 			return next(request)
 		}
-		logrus.Infof("enable openAi compatible translation rate limit RPM %d burst %d", config.RPM,burst)
+		logrus.Infof("enable openAi compatible translation rate limit RPM %d burst %d", config.RPM, burst)
 
 		opts = append(opts, option.WithMiddleware(rateLimitMiddleware))
 	}
@@ -53,8 +53,12 @@ func NewOpenAiCompatibleTranslation(config *OpenAiCompatibleConfig) *OpenAiCompa
 	}
 }
 
+func (translation *OpenAiCompatibleTranslation) GetName() string {
+	return "OpenAiCompatibleTranslation"
+}
+
 func (translation *OpenAiCompatibleTranslation) SupportMultipleTextBySeparator() (bool, string) {
-	return false, "\n"
+	return len(translation.config.MultipleTextSeparator) > 0, translation.config.MultipleTextSeparator
 }
 
 func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
@@ -83,7 +87,7 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 		Messages: openai.F(translation.messages),
 	})
 	if err != nil {
-		return "",err
+		return "", err
 	}
 	logrus.Debugf("openAi compatible translation chatCompletion Choices %+v", chatCompletion)
 	result := chatCompletion.Choices[0].Message.Content

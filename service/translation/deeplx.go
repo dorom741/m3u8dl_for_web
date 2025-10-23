@@ -49,8 +49,9 @@ func NewDeepLXTranslation(config *DeepLXConfig, httpClient *http.Client) *DeepLX
 	return translation
 }
 
-type Result struct {
-	Data string
+
+func (translation *DeepLXTranslation) GetName() string {
+	return "DeepLX"
 }
 
 func (translation *DeepLXTranslation) httpClientDo(req *http.Request) (*http.Response, error) {
@@ -89,7 +90,7 @@ func (translation *DeepLXTranslation) removeUrl(url string) {
 }
 
 func (translation *DeepLXTranslation) SupportMultipleTextBySeparator() (bool, string) {
-	return false, "\n"
+	return len(translation.config.MultipleTextSeparator) > 0, translation.config.MultipleTextSeparator
 }
 
 func (translation *DeepLXTranslation) translateOnce(ctx context.Context, url string, postData map[string]string) (string, error) {
@@ -118,7 +119,7 @@ func (translation *DeepLXTranslation) translateOnce(ctx context.Context, url str
 		return "", fmt.Errorf("DeepLX: status %d", resp.StatusCode)
 	}
 
-	result := new(Result)
+	result := new(DeepLXResult)
 	if err := json.Unmarshal(body, result); err != nil {
 		return "", err
 	}

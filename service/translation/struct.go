@@ -10,27 +10,34 @@ import (
 
 // ITranslation 是翻译实现必须实现的接口
 type ITranslation interface {
+	GetName() string
 	Translate(ctx context.Context, text string, sourceLang string, targetLang string) (string, error)
 	SupportMultipleTextBySeparator() (bool, string)
 }
 
 type TranslationProviderConfig struct {
-	Name             string                  `yaml:"name"`
-	Enable           bool                    `yaml:"enable"`
-	Type             string                  `yaml:"type"` // deeplx, openai
-	DeepLX           *DeepLXConfig           `yaml:"deepLXConfig,omitempty"`
-	OpenAiCompatible *OpenAiCompatibleConfig `yaml:"openaiConfig,omitempty"`
+	Name                    string                   `yaml:"name"`
+	Enable                  bool                     `yaml:"enable"`
+	Type                    string                   `yaml:"type"` // deeplx, openai,google
+	DeepLX                  *DeepLXConfig            `yaml:"deepLXConfig,omitempty"`
+	OpenAiCompatible        *OpenAiCompatibleConfig  `yaml:"openaiConfig,omitempty"`
+	GoogleTranslationConfig *GoogleTranslationConfig `yaml:"googleTranslationConfig,omitempty"`
 }
 
 type TranslationProviderHubConfig struct {
 	Providers []TranslationProviderConfig `yaml:"providers"`
 }
 
+type DeepLXResult struct {
+	Data string
+}
+
 type DeepLXConfig struct {
-	UrlsFile string   `yaml:"urlsFile"`
-	Urls     []string `yaml:"urls"`
-	ApiKey   string   `yaml:"apiKey"`
-	RPM      int      `yaml:"RPM"`
+	UrlsFile              string   `yaml:"urlsFile"`
+	Urls                  []string `yaml:"urls"`
+	ApiKey                string   `yaml:"apiKey"`
+	RPM                   int      `yaml:"RPM"`
+	MultipleTextSeparator string   `yaml:"multipleTextSeparator"`
 }
 
 func (deepLXConfig *DeepLXConfig) ParseUrlFile() {
@@ -62,13 +69,14 @@ func (deepLXConfig *DeepLXConfig) WriteUrlFile(urls []string) {
 }
 
 type OpenAiCompatibleConfig struct {
-	BaseUrl      string `yaml:"baseUrl"`
-	ApiKey       string `yaml:"apiKey"`
-	Model        string `yaml:"model"`
-	SystemPrompt string `yaml:"systemPrompt"`
-	Prompt       string `yaml:"prompt"`
-	ContextLen   int    `yaml:"contextLen"`
-	RPM          int    `yaml:"RPM"`
+	BaseUrl               string `yaml:"baseUrl"`
+	ApiKey                string `yaml:"apiKey"`
+	Model                 string `yaml:"model"`
+	SystemPrompt          string `yaml:"systemPrompt"`
+	Prompt                string `yaml:"prompt"`
+	ContextLen            int    `yaml:"contextLen"`
+	RPM                   int    `yaml:"RPM"`
+	MultipleTextSeparator string `yaml:"multipleTextSeparator"`
 }
 
 func removeEmptyStrings(strs []string) []string {
@@ -80,4 +88,9 @@ func removeEmptyStrings(strs []string) []string {
 		}
 	}
 	return result
+}
+
+type GoogleTranslationConfig struct {
+	RPM                   int    `yaml:"RPM"`
+	MultipleTextSeparator string `yaml:"multipleTextSeparator"`
 }

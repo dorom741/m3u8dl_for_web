@@ -2,9 +2,12 @@ package test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"m3u8dl_for_web/service"
+
+	"github.com/sirupsen/logrus"
 )
 
 var translateFragmentList = []string{
@@ -27,6 +30,19 @@ func TestTranslateHub(t *testing.T) {
 		t.Logf("translate %d result %+v", i, result)
 
 	}
+}
+
+func TestTranslateHubBatchTranslate(t *testing.T) {
+	ctx := context.Background()
+	translation := service.TranslationServiceInstance
+
+	result, err := translation.BatchTranslate(ctx, translateFragmentList, "en", "zh")
+	if err != nil {
+		logrus.Error(err.Error())
+		t.Error(err)
+	}
+
+	logrus.Infof("batch translate result '%+v'", strings.Join(result, "','"))
 }
 
 // func TestTranslate(t *testing.T) {

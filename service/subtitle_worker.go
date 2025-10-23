@@ -31,7 +31,7 @@ func NewSubtitleWorkerService(subtitleConfig *conf.SubtitleConfig) *SubtitleWork
 	service.worker = queue_worker.NewQueueWorker(option, service)
 
 	go service.worker.Run()
-	if subtitleConfig != nil {
+	if subtitleConfig != nil && subtitleConfig.DirPath != "" && subtitleConfig.Pattern != "" {
 		go func() {
 			err := service.ScanDirToAddTask(subtitleConfig)
 			if err != nil {
