@@ -23,10 +23,15 @@ type OpenAiCompatibleTranslation struct {
 	messages []openai.ChatCompletionMessageParamUnion
 }
 
-func NewOpenAiCompatibleTranslation(config *OpenAiCompatibleConfig) *OpenAiCompatibleTranslation {
+func NewOpenAiCompatibleTranslation(config *OpenAiCompatibleConfig, httpClient *http.Client) *OpenAiCompatibleTranslation {
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+
 	opts := []option.RequestOption{
 		option.WithAPIKey(config.ApiKey),
 		option.WithBaseURL(config.BaseUrl),
+		option.WithHTTPClient(httpClient),
 	}
 
 	if config.RPM > 0 {

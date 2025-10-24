@@ -43,7 +43,7 @@ func NewTranslationProviderHub(config TranslationProviderHubConfig, httpClient *
 			if p.OpenAiCompatible == nil {
 				return nil, fmt.Errorf("provider %s: missing openAiCompatible config", p.Name)
 			}
-			t := NewOpenAiCompatibleTranslation(p.OpenAiCompatible)
+			t := NewOpenAiCompatibleTranslation(p.OpenAiCompatible, httpClient)
 			logrus.Infof("register translation provider '%s' type '%s'", p.Name, p.Type)
 			hub.RegisterTranslationProvider(t)
 		case "google":

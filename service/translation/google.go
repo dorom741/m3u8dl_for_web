@@ -43,7 +43,6 @@ func NewGoogleTranslation(config *GoogleTranslationConfig, httpClient *http.Clie
 	return translation
 }
 
-
 func (translation *GoogleTranslation) GetName() string {
 	return "GoogleTranslate"
 }
@@ -64,13 +63,15 @@ func (translation *GoogleTranslation) SupportMultipleTextBySeparator() (bool, st
 func (translation *GoogleTranslation) translateOnce(ctx context.Context, text string, sourceLang string, targetLang string) (string, error) {
 	var (
 		urlStr = fmt.Sprintf(translation.baseUrl, sourceLang, targetLang, url.QueryEscape(text))
-		result []interface{}
+		result []any
 	)
 
+	println(urlStr)
 	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return "", fmt.Errorf("google translation: create request for %s failed: %v", urlStr, err)
 	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
 
 	resp, err := translation.httpClientDo(req)
 	if err != nil {
@@ -84,7 +85,7 @@ func (translation *GoogleTranslation) translateOnce(ctx context.Context, text st
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("google translation: status %d", resp.StatusCode)
+		return "", fmt.Errorf("google translation: status %d,body %s", resp.StatusCode, string(body))
 	}
 
 	if err := json.Unmarshal(body, &result); err != nil {
@@ -110,6 +111,10 @@ func (translation *GoogleTranslation) Translate(ctx context.Context, text string
 		attempts    = 0
 		maxAttempts = 3
 	)
+
+	if sourceLang == "" {
+		sourceLang = "auto"
+	}
 
 	for attempts < maxAttempts {
 		attempts++
