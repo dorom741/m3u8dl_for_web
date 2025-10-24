@@ -3,9 +3,10 @@ package subtitle
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"m3u8dl_for_web/pkg/whisper"
 
@@ -73,13 +74,21 @@ func (service *SubtitleService) ReGenerateBilingualSubtitleFromSegmentList(ctx c
 		return nil
 	}
 	logrus.Infof("start regenerate subtitle on %s", subtitlePath)
-	for _, segment := range subtitleList {
-		translatedText, err := service.translation.Translate(ctx, segment.Text, "", targetLang)
-		if err != nil {
-			continue
-		}
 
-		sub.AddLine(segment.Num, segment.Start, segment.End, segment.Text, translatedText)
+	subtitleTextList := make([]string, len(subtitleList))
+
+	for i, segment := range subtitleList {
+		subtitleTextList[i] = segment.Text
+	}
+	logrus.Infof("start regenerate subtitle on %s", subtitleTextList)
+
+	translatedTextList, err := service.translation.BatchTranslate(ctx, subtitleTextList, "", targetLang)
+	if err != nil {
+		return err
+	}
+
+	for i, segment := range subtitleList {
+		sub.AddLine(segment.Num, segment.Start, segment.End, segment.Text, translatedTextList[i])
 	}
 
 	subFile, _ := os.Create(savePath)

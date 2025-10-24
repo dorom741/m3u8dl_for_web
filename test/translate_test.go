@@ -36,7 +36,7 @@ func TestTranslateHubBatchTranslate(t *testing.T) {
 	ctx := context.Background()
 	translation := service.TranslationServiceInstance
 
-	result, err := translation.BatchTranslate(ctx, translateFragmentList, "en", "zh")
+	result, err := translation.BatchTranslate(ctx, translateFragmentList, "auto", "zh")
 	if err != nil {
 		logrus.Error(err.Error())
 		t.Error(err)

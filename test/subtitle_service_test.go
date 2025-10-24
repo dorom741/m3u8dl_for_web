@@ -75,7 +75,7 @@ func TestScanDirToAddTask(t *testing.T) {
 func TestReGenerateSubtitle(t *testing.T) {
 	ctx := context.Background()
 	inputPath := "../resource/samples/jfk.ass"
-	outputPath := "../resource/samples/jfk.ass"
+	outputPath := "../resource/samples/jfk.zh.ass"
 
 	err := service.SubtitleServiceInstance.ReGenerateBilingualSubtitleFromSegmentList(ctx, inputPath, "en", "zh", outputPath, true)
 	if err != nil {
