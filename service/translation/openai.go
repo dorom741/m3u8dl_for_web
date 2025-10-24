@@ -110,8 +110,9 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 	if idx := strings.Index(result, words); idx != -1 {
 		// 获取 </think> 后面的内容
 		result = result[idx+len(words):]
-		result = strings.TrimSpace(result) // 去掉开头和结尾的空白字符
 	}
 
+	result = strings.TrimSpace(result)        // 去掉开头和结尾的空白字符
+	result = strings.TrimSuffix(strings.TrimPrefix(result, "\n"), "\n") // 去掉开头和结尾的换行字符
 	return result, nil
 }

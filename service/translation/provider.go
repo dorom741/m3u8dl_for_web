@@ -143,11 +143,12 @@ func (hub *TranslationProviderHub) BatchTranslate(ctx context.Context, textList 
 					}
 					continue
 				}
+				logrus.Warnf("provider '%s' translations not match batch size %d/%d, falling back to individual translation", provider.GetName(),len(translatedTexts),len(batch))
 			}
 			lastErr = err
-
-			logrus.Warnf("provider '%s'  translations error or not match batch size, falling back to individual translation,err: %s", provider.GetName(), err)
+			logrus.Warnf("provider '%s' translations error, falling back to individual translation,err: %s", provider.GetName(), err)
 		}
+		
 
 		for j, text := range batch {
 			wg.Add(1)
