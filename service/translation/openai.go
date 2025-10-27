@@ -3,6 +3,7 @@ package translation
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"text/template"
@@ -95,6 +96,9 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 		return "", err
 	}
 	logrus.Debugf("openAi compatible translation chatCompletion Choices %+v", chatCompletion)
+	if len(chatCompletion.Choices) == 0 {
+		return "", fmt.Errorf("openAi compatible translation: no choices returned")
+	}
 	result := chatCompletion.Choices[0].Message.Content
 	translation.messages = append(translation.messages, chatCompletion.Choices[0].Message)
 
@@ -112,7 +116,7 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 		result = result[idx+len(words):]
 	}
 
-	result = strings.TrimSpace(result)        // 去掉开头和结尾的空白字符
+	result = strings.TrimSpace(result)                                  // 去掉开头和结尾的空白字符
 	result = strings.TrimSuffix(strings.TrimPrefix(result, "\n"), "\n") // 去掉开头和结尾的换行字符
 	return result, nil
 }
