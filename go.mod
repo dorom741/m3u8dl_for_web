@@ -13,7 +13,7 @@ require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-audio/wav v1.1.0
 	github.com/k2-fsa/sherpa-onnx-go v1.8.14
-	github.com/openai/openai-go v0.1.0-alpha.65
+	github.com/openai/openai-go v1.12.0
 	github.com/orestonce/m3u8d v1.24.39
 	github.com/pemistahl/lingua-go v1.4.0
 	github.com/sirupsen/logrus v1.9.3
@@ -34,7 +34,7 @@ require (
 	github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	golang.org/x/exp v0.0.0-20221106115401-f9659909a136 // indirect
@@ -76,10 +76,10 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	golang.org/x/arch v0.12.0 // indirect
-	golang.org/x/crypto v0.29.0 // indirect
-	golang.org/x/net v0.31.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	modernc.org/libc v1.37.6 // indirect

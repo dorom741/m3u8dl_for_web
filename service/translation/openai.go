@@ -20,7 +20,7 @@ var _ ITranslation = &OpenAiCompatibleTranslation{}
 
 type OpenAiCompatibleTranslation struct {
 	config   *OpenAiCompatibleConfig
-	client   *openai.Client
+	client   openai.Client
 	messages []openai.ChatCompletionMessageParamUnion
 }
 
@@ -89,8 +89,8 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 	translation.messages = append(translation.messages, openai.UserMessage(directiveBuffer.String()))
 
 	chatCompletion, err := translation.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model:    openai.F(translation.config.Model),
-		Messages: openai.F(translation.messages),
+		Model:    openai.ChatModel(translation.config.Model),
+		Messages: translation.messages,
 	})
 	if err != nil {
 		return "", err
@@ -100,7 +100,7 @@ func (translation *OpenAiCompatibleTranslation) Translate(ctx context.Context, t
 		return "", fmt.Errorf("openAi compatible translation: no choices returned")
 	}
 	result := chatCompletion.Choices[0].Message.Content
-	translation.messages = append(translation.messages, chatCompletion.Choices[0].Message)
+	translation.messages = append(translation.messages, chatCompletion.Choices[0].Message.ToParam())
 
 	messagesLen := len(translation.messages)
 	if messagesLen > translation.config.ContextLen+1 {
