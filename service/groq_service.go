@@ -78,7 +78,7 @@ func (service *GroqService) HandleWhisper(ctx context.Context, input whisper.Whi
 		return service.GetWhisperOutput(*response), nil
 	}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		tempResponse, err := service.client.CreateTranscription(ctx, groq.AudioRequest{
 			Model:       groq.WhisperLargeV3,
 			Format:      groq.AudioResponseFormatVerboseJSON,
