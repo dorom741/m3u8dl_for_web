@@ -12,7 +12,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-audio/wav v1.1.0
-	github.com/k2-fsa/sherpa-onnx-go v1.8.14
+	github.com/k2-fsa/sherpa-onnx-go v1.13.0
 	github.com/openai/openai-go v1.12.0
 	github.com/orestonce/m3u8d v1.24.39
 	github.com/pemistahl/lingua-go v1.4.0
@@ -29,9 +29,9 @@ require (
 	github.com/asticode/go-astits v1.8.0 // indirect
 	github.com/go-audio/audio v1.0.0 // indirect
 	github.com/go-audio/riff v1.0.0 // indirect
-	github.com/k2-fsa/sherpa-onnx-go-linux v1.10.30 // indirect
-	github.com/k2-fsa/sherpa-onnx-go-macos v1.10.31 // indirect
-	github.com/k2-fsa/sherpa-onnx-go-windows v1.10.30 // indirect
+	github.com/k2-fsa/sherpa-onnx-go-linux v1.13.0 // indirect
+	github.com/k2-fsa/sherpa-onnx-go-macos v1.13.0 // indirect
+	github.com/k2-fsa/sherpa-onnx-go-windows v1.13.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
