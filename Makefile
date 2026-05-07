@@ -8,6 +8,7 @@ GOOS ?= linux
 IMAGE_NAME = "ghcr.io/dorom741/m3u8dl_for_web"
 GIT_HASH = $(shell git rev-parse --short  HEAD)
 DOCKERFILE_PATH = Dockerfile
+DOCKERFILE_CUDA_PATH = Dockerfile.cuda
 
 
 # DOCKER_USERNAME ?= your_docker_username
@@ -30,10 +31,32 @@ build_arm64_linux:
 
 
 build_docker:
-	docker build -t $(IMAGE_NAME):$(GIT_HASH) -t $(IMAGE_NAME):latest -f $(DOCKERFILE_PATH) . 
+	docker build \
+		--build-arg HTTP_PROXY="$${HTTP_PROXY:-$${http_proxy}}" \
+		--build-arg HTTPS_PROXY="$${HTTPS_PROXY:-$${https_proxy}}" \
+		--build-arg NO_PROXY="$${NO_PROXY:-$${no_proxy}}" \
+		--build-arg http_proxy="$${http_proxy:-$${HTTP_PROXY}}" \
+		--build-arg https_proxy="$${https_proxy:-$${HTTPS_PROXY}}" \
+		--build-arg no_proxy="$${no_proxy:-$${NO_PROXY}}" \
+		-t $(IMAGE_NAME):$(GIT_HASH) -t $(IMAGE_NAME):latest -f $(DOCKERFILE_PATH) .
+
+build_docker_cuda:
+	docker build \
+		--build-arg HTTP_PROXY="$${HTTP_PROXY:-$${http_proxy}}" \
+		--build-arg HTTPS_PROXY="$${HTTPS_PROXY:-$${https_proxy}}" \
+		--build-arg NO_PROXY="$${NO_PROXY:-$${no_proxy}}" \
+		--build-arg http_proxy="$${http_proxy:-$${HTTP_PROXY}}" \
+		--build-arg https_proxy="$${https_proxy:-$${HTTPS_PROXY}}" \
+		--build-arg no_proxy="$${no_proxy:-$${NO_PROXY}}" \
+		-t $(IMAGE_NAME):$(GIT_HASH)-cuda -t $(IMAGE_NAME):latest-cuda -f $(DOCKERFILE_CUDA_PATH) .
 
 
 docker_push:
 	echo $(DOCKER_PASSWORD) |  docker login -u $(DOCKER_USERNAME) --password-stdin  $(DOCKER_REGISTRY)
 	docker push $(IMAGE_NAME):$(GIT_HASH)
 	docker push $(IMAGE_NAME):latest
+
+docker_push_cuda:
+	echo $(DOCKER_PASSWORD) |  docker login -u $(DOCKER_USERNAME) --password-stdin  $(DOCKER_REGISTRY)
+	docker push $(IMAGE_NAME):$(GIT_HASH)-cuda
+	docker push $(IMAGE_NAME):latest-cuda

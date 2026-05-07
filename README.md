@@ -34,4 +34,36 @@
 * 默认不编译`whisper.cpp via golang`和`sherpa via golang`,使用`-tags localWhisper`可编译进去，使用这个tag需要启用CGO
 * 具体动态依赖可参考`Dockerfile`
 
+# CUDA Docker
+* 镜像标签
+    - `ghcr.io/dorom741/m3u8dl_for_web:latest-cuda`
+    - `ghcr.io/dorom741/m3u8dl_for_web:<git-hash>-cuda`
+* 宿主机要求
+    - Linux
+    - NVIDIA Driver
+    - NVIDIA Container Toolkit
+    - 驱动与 CUDA 12.8 兼容
+
+## 运行示例
+
+```bash
+docker run --rm --gpus all -p 2045:2045 \
+  -v $(pwd)/config.yaml:/app/config.yaml \
+  -v $(pwd)/resource:/resource \
+  ghcr.io/dorom741/m3u8dl_for_web:latest-cuda
+```
+
+## GPU 配置
+
+CUDA 镜像中 whisper.cpp 和 sherpa-onnx 均支持 GPU 加速。在 `config.yaml` 中配置 sherpa-onnx 使用 GPU：
+
+```yaml
+whisper:
+  sherpa:
+    offlineModelConfig:
+      provider: "cuda"  # 启用 GPU 加速（推荐）
+      # provider: "cpu"  # 回退到 CPU 模式
+```
+
+如果不配置或配置为 "cpu"，sherpa-onnx 将使用 CPU 模式。
 

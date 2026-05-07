@@ -21,6 +21,12 @@ jobs:
       - name: Build Docker image
         run: make build_docker
 
+      # - name: Build CUDA Docker image
+      #   run: make build_docker_cuda
+
       - name: Push Docker image
         run: make  docker_push
+
+      # - name: Push CUDA Docker image
+      #   run: make docker_push_cuda
        

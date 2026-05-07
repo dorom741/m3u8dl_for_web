@@ -79,7 +79,9 @@ func (sherpaWhisper *SherpaWhisper) SpeakerDiarization(inputdata []float32) ([]s
 	c.Segmentation.Pyannote.Model = sherpaWhisper.pyannoteModelPath
 	c.Segmentation.NumThreads = sherpaWhisper.modelConfig.NumThreads
 	c.Segmentation.Debug = sherpaWhisper.modelConfig.Debug
+	c.Segmentation.Provider = sherpaWhisper.modelConfig.Provider
 
+	c.Embedding.Provider = sherpaWhisper.modelConfig.Provider
 	c.Embedding.Model = sherpaWhisper.embeddingModelPath
 	c.Embedding.NumThreads = sherpaWhisper.modelConfig.NumThreads
 	c.Embedding.Debug = sherpaWhisper.modelConfig.Debug

@@ -1,0 +1,107 @@
+FROM ubuntu:22.04 AS build
+
+ARG GO_VERSION=1.23.0
+ARG SHERPA_ONNX_VERSION=1.10.30
+ARG CUDNN_VERSION=8.9.7.29
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV HTTP_PROXY=${HTTP_PROXY}
+ENV HTTPS_PROXY=${HTTPS_PROXY}
+ENV NO_PROXY=${NO_PROXY}
+ENV http_proxy=${http_proxy}
+ENV https_proxy=${https_proxy}
+ENV no_proxy=${no_proxy}
+
+# Install basic dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends --no-install-suggests \
+      build-essential git cmake libsdl2-dev clang ca-certificates wget unzip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Download and install CUDA 11.6.1 local installer
+RUN wget -q https://developer.download.nvidia.com/compute/cuda/11.6.1/local_installers/cuda_11.6.1_510.47.03_linux.run && \
+    sh cuda_11.6.1_510.47.03_linux.run --silent --toolkit --no-opengl-libs --no-man-page && \
+    rm cuda_11.6.1_510.47.03_linux.run
+
+# Download and install cuDNN 8.9.7
+RUN wget -q https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.7.29_cuda11-archive.tar.xz && \
+    tar -xf cudnn-linux-x86_64-8.9.7.29_cuda11-archive.tar.xz && \
+    cp -r cudnn-linux-x86_64-8.9.7.29_cuda11-archive/include/* /usr/local/cuda-11.6/include/ && \
+    cp -r cudnn-linux-x86_64-8.9.7.29_cuda11-archive/lib/* /usr/local/cuda-11.6/lib64/ && \
+    ldconfig && \
+    rm -rf cudnn-linux-x86_64-8.9.7.29_cuda11-archive*
+
+ENV PATH=/usr/local/cuda-11.6/bin:${PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda-11.6/lib64
+ENV CUDA_HOME=/usr/local/cuda-11.6
+
+RUN wget -q https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz && \
+    rm -rf /usr/local/go && \
+    tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz && \
+    rm -f go${GO_VERSION}.linux-amd64.tar.gz
+
+ENV PATH=/usr/local/go/bin:${PATH}
+ENV GOPROXY=https://goproxy.io,direct
+ENV GOSUMDB=sum.golang.org
+
+WORKDIR /whisper.cpp
+RUN wget -q -O whisper.cpp.zip https://github.com/ggml-org/whisper.cpp/archive/refs/heads/master.zip && \
+    unzip -q whisper.cpp.zip && \
+    cp -a whisper.cpp-master/. . && \
+    rm -rf whisper.cpp-master whisper.cpp.zip
+RUN cmake -B build -DGGML_CUDA=ON -DWHISPER_SDL2=on && cmake --build build --target whisper --parallel $(nproc)
+
+ENV LIBRARY_PATH=/whisper.cpp:/whisper.cpp/build/src:/whisper.cpp/build/ggml/src
+ENV C_INCLUDE_PATH=/whisper.cpp/include:/whisper.cpp/ggml/include
+
+# Download sherpa-onnx prebuilt GPU libraries
+WORKDIR /sherpa-onnx
+RUN wget -q https://github.com/k2-fsa/sherpa-onnx/releases/download/v${SHERPA_ONNX_VERSION}/sherpa-onnx-v${SHERPA_ONNX_VERSION}-linux-x64-gpu.tar.bz2 && \
+    tar -xjf sherpa-onnx-v${SHERPA_ONNX_VERSION}-linux-x64-gpu.tar.bz2 && \
+    mv sherpa-onnx-v${SHERPA_ONNX_VERSION}-linux-x64-gpu/* . && \
+    rm -rf sherpa-onnx-v${SHERPA_ONNX_VERSION}-linux-x64-gpu sherpa-onnx-v${SHERPA_ONNX_VERSION}-linux-x64-gpu.tar.bz2
+
+WORKDIR /app
+COPY . .
+
+RUN go mod download
+RUN go build -tags localWhisper -o app ./cmd/
+
+RUN mkdir -p /app/lib/ && \
+    cp /sherpa-onnx/lib/*.so* /app/lib/ && \
+    find /whisper.cpp/build \( -type f -name "*.so*" -o -type l -name "*.so*" \) -exec cp {} /app/lib/ \;
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV GIN_MODE=release
+
+# Install runtime dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=mwader/static-ffmpeg:latest /ffmpeg /usr/local/bin/
+COPY --from=mwader/static-ffmpeg:latest /ffprobe /usr/local/bin/
+
+# Copy CUDA runtime libraries from build stage
+COPY --from=build /usr/local/cuda-11.6/lib64/*.so* /usr/local/cuda-11.6/lib64/
+
+COPY --from=build /app/lib/ /app/
+COPY --from=build /app/app .
+
+ENV LD_LIBRARY_PATH=/usr/local/cuda-11.6/lib64:/app
+ENV PATH=/app:${PATH}
+
+ADD resource resource
+COPY resource/config.sample.yaml config.yaml
+
+CMD ["./app"]
